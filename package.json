@@ -1,0 +1,16 @@
+{
+  "name": "@genfeedai/marketplace",
+  "private": true,
+  "workspaces": ["apps/*", "packages/*"],
+  "packageManager": "bun@1.2.12",
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "lint": "turbo lint",
+    "typecheck": "turbo typecheck",
+    "test": "turbo test"
+  },
+  "devDependencies": {
+    "turbo": "^2.5.0"
+  }
+}
