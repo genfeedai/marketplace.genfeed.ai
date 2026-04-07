@@ -6,12 +6,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useResource } from '../../../hooks/use-resource';
 import { AdminMarketplaceService } from '../../../services/marketplace.service';
-import type {
-  IListing,
-  IPurchase,
-  ISeller,
-  MarketplaceAnalyticsOverview,
-} from '../../../types/marketplace';
+import type { IListing, IPurchase, ISeller } from '@genfeedai/interfaces';
+import type { MarketplaceAnalyticsOverview } from '../../../types/marketplace';
 
 /* ------------------------------------------------------------------ */
 /*  Constants                                                          */

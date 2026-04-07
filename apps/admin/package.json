@@ -10,7 +10,9 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@genfeedai/enums": "*",
+    "@genfeedai/constants": "^2.2.9",
+    "@genfeedai/enums": "^2.3.2",
+    "@genfeedai/interfaces": "^2.3.19",
     "next": "^15.3.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"

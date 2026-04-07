@@ -10,6 +10,10 @@
     "typecheck": "turbo typecheck",
     "test": "turbo test"
   },
+  "overrides": {
+    "@genfeedai/constants": "^2.2.9",
+    "@genfeedai/enums": "^2.3.2"
+  },
   "devDependencies": {
     "@biomejs/biome": "^1.9.0",
     "turbo": "^2.5.0",
