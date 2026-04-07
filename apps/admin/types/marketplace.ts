@@ -1,3 +1,11 @@
+/**
+ * Marketplace types for admin UI.
+ *
+ * TODO: Once @genfeedai/interfaces is published with marketplace types,
+ * replace these with: import type { IListing, ... } from '@genfeedai/interfaces';
+ * Only MarketplaceAnalyticsOverview is admin-specific and should stay here.
+ */
+
 import type {
   ListingStatus,
   ListingType,
@@ -6,15 +14,6 @@ import type {
   SellerBadgeTier,
   SellerStatus,
 } from '@genfeedai/enums';
-
-export interface ITimestamps {
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface IIdentifiable extends ITimestamps {
-  id: string;
-}
 
 export interface ISellerPreview {
   id: string;
@@ -26,14 +25,8 @@ export interface ISellerPreview {
   totalSales: number;
 }
 
-export interface ISellerSocial {
-  twitter?: string;
-  github?: string;
-  linkedin?: string;
-  youtube?: string;
-}
-
-export interface ISeller extends IIdentifiable {
+export interface ISeller {
+  id: string;
   user: string;
   organization: string;
   displayName: string;
@@ -41,7 +34,7 @@ export interface ISeller extends IIdentifiable {
   bio?: string;
   avatar?: string;
   website?: string;
-  social: ISellerSocial;
+  social: { twitter?: string; github?: string; linkedin?: string; youtube?: string };
   stripeOnboardingComplete: boolean;
   payoutEnabled: boolean;
   totalEarnings: number;
@@ -51,27 +44,12 @@ export interface ISeller extends IIdentifiable {
   followerCount: number;
   badgeTier: SellerBadgeTier;
   status: SellerStatus;
+  createdAt: string;
+  updatedAt: string;
 }
 
-export interface IListingPreview {
+export interface IListing {
   id: string;
-  type: ListingType;
-  title: string;
-  slug: string;
-  shortDescription: string;
-  price: number;
-  currency: string;
-  thumbnail?: string;
-  rating: number;
-  reviewCount: number;
-  downloads: number;
-  pricingTier?: PricingTier;
-  isOfficial?: boolean;
-  installCount?: number;
-  seller?: ISellerPreview;
-}
-
-export interface IListing extends IIdentifiable {
   seller: ISeller;
   organization: string;
   type: ListingType;
@@ -84,8 +62,6 @@ export interface IListing extends IIdentifiable {
   tags: string[];
   thumbnail?: string;
   previewImages: string[];
-  previewVideo?: string;
-  previewData: Record<string, unknown>;
   views: number;
   downloads: number;
   purchases: number;
@@ -99,24 +75,18 @@ export interface IListing extends IIdentifiable {
   rejectionReason?: string;
   pricingTier?: PricingTier;
   isOfficial?: boolean;
-  packageSource?: string;
-  packageSlug?: string;
   installCount?: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
-export interface IListingSnapshot {
-  title: string;
-  type: string;
-  version: string;
-  price: number;
-}
-
-export interface IPurchase extends IIdentifiable {
+export interface IPurchase {
+  id: string;
   buyer: string;
   seller: string;
   listing: string;
   organization: string;
-  listingSnapshot: IListingSnapshot;
+  listingSnapshot: { title: string; type: string; version: string; price: number };
   subtotal: number;
   discount: number;
   total: number;
@@ -131,9 +101,8 @@ export interface IPurchase extends IIdentifiable {
   lastDownloadedAt?: string;
   hasReviewed: boolean;
   isGift: boolean;
-  giftRecipient?: string;
-  giftMessage?: string;
-  discountCode?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface MarketplaceAnalyticsOverview {
