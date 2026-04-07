@@ -1,1 +1,13 @@
 # Marketplace Docker Compose
+services:
+  mongodb:
+    image: mongo:7
+    ports:
+      - "27018:27017"
+    volumes:
+      - marketplace-mongo-data:/data/db
+    environment:
+      MONGO_INITDB_DATABASE: marketplace
+
+volumes:
+  marketplace-mongo-data:
