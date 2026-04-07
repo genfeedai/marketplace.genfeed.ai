@@ -23,7 +23,7 @@ export interface AggregatePaginateModel<T> {
   new (doc?: Partial<T>): T & { save(): Promise<T> };
   collection: { name: string };
   modelName: string;
-  aggregate(pipeline: PipelineStage[]): { exec(): Promise<T[]> };
+  aggregate(pipeline: PipelineStage[]): { exec(): Promise<unknown[]> };
   aggregatePaginate(
     aggregate: ReturnType<AggregatePaginateModel<T>['aggregate']>,
     options: AggregationOptions,
@@ -37,6 +37,7 @@ export interface AggregatePaginateModel<T> {
   };
   findById(id: unknown): {
     populate(p: unknown[]): { exec(): Promise<T | null> };
+    exec(): Promise<T | null>;
   };
   findByIdAndUpdate(
     id: unknown,
@@ -180,6 +181,14 @@ export abstract class BaseService<
     return (this.model as unknown as QueryableModel)
       .findByIdAndUpdate(id, { isDeleted: true }, { returnDocument: 'after' })
       .exec() as Promise<T | null>;
+  }
+
+  protected logOperation(
+    method: string,
+    status: string,
+    meta?: Record<string, unknown>,
+  ): void {
+    this.logger.log(`${method} ${status}`, meta);
   }
 
   public processSearchParams(params: MongoFilter): MongoFilter {
