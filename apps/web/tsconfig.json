@@ -16,8 +16,9 @@
     "incremental": true,
     "plugins": [{ "name": "next" }],
     "paths": {
-      "@/*": ["./app/*"],
-      "@components/*": ["./components/*"]
+      "@/*": ["./*"],
+      "@components/*": ["./components/*"],
+      "@hooks/*": ["./hooks/*"]
     },
     "baseUrl": "."
   },
