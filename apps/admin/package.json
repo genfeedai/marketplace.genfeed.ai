@@ -1,26 +1,26 @@
 {
-  "name": "@marketplace/admin",
-  "version": "0.1.0",
-  "private": true,
-  "scripts": {
-    "dev": "next dev -p 3205",
-    "build": "next build",
-    "start": "next start",
-    "lint": "biome check app/",
-    "typecheck": "tsc --noEmit"
-  },
   "dependencies": {
-    "@genfeedai/constants": "^2.2.9",
-    "@genfeedai/enums": "^2.3.2",
-    "@genfeedai/interfaces": "^2.3.19",
-    "next": "^15.3.0",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "@genfeedai/constants": "2.2.9",
+    "@genfeedai/enums": "2.3.2",
+    "@genfeedai/interfaces": "2.3.20",
+    "next": "16.2.2",
+    "react": "19.2.4",
+    "react-dom": "19.2.4"
   },
   "devDependencies": {
-    "@types/node": "^22.0.0",
-    "@types/react": "^19.0.0",
-    "@types/react-dom": "^19.0.0",
-    "typescript": "^5.7.0"
-  }
+    "@types/node": "25.5.2",
+    "@types/react": "19.2.14",
+    "@types/react-dom": "19.2.3",
+    "typescript": "5.9.3"
+  },
+  "name": "@marketplace/admin",
+  "private": true,
+  "scripts": {
+    "build": "next build",
+    "dev": "next dev -p 3205",
+    "lint": "biome check app/",
+    "start": "next start",
+    "typecheck": "tsc --noEmit"
+  },
+  "version": "0.1.0"
 }

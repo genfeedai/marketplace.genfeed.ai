@@ -1,11 +1,15 @@
-import type { ListingStatus, ListingType, SellerStatus } from '@genfeedai/enums';
+import type {
+  ListingStatus,
+  ListingType,
+  SellerStatus,
+} from '@genfeedai/enums';
 
+import type { IListing, IPurchase, ISeller } from '@genfeedai/interfaces';
 import {
+  type JsonApiDocument,
   deserializeCollection,
   deserializeResource,
-  type JsonApiDocument,
 } from '../lib/json-api';
-import type { IListing, IPurchase, ISeller } from '@genfeedai/interfaces';
 import type { MarketplaceAnalyticsOverview } from '../types/marketplace';
 
 const API_BASE =
@@ -105,8 +109,9 @@ export class AdminMarketplaceService {
 
     return {
       listings: deserializeCollection<IListing>(doc),
-      pagination: (doc.links as Record<string, unknown>)
-        ?.pagination as PaginationMeta | undefined,
+      pagination: (doc.links as Record<string, unknown>)?.pagination as
+        | PaginationMeta
+        | undefined,
     };
   }
 
@@ -140,8 +145,9 @@ export class AdminMarketplaceService {
     );
 
     return {
-      pagination: (doc.links as Record<string, unknown>)
-        ?.pagination as PaginationMeta | undefined,
+      pagination: (doc.links as Record<string, unknown>)?.pagination as
+        | PaginationMeta
+        | undefined,
       sellers: deserializeCollection<ISeller>(doc),
     };
   }
@@ -169,8 +175,9 @@ export class AdminMarketplaceService {
     );
 
     return {
-      pagination: (doc.links as Record<string, unknown>)
-        ?.pagination as PaginationMeta | undefined,
+      pagination: (doc.links as Record<string, unknown>)?.pagination as
+        | PaginationMeta
+        | undefined,
       purchases: deserializeCollection<IPurchase>(doc),
     };
   }
@@ -185,15 +192,14 @@ export class AdminMarketplaceService {
     );
 
     return {
-      pagination: (doc.links as Record<string, unknown>)
-        ?.pagination as PaginationMeta | undefined,
+      pagination: (doc.links as Record<string, unknown>)?.pagination as
+        | PaginationMeta
+        | undefined,
       payouts: deserializeCollection<ISeller>(doc),
     };
   }
 
-  async getAnalyticsOverview(
-    days: number = 30,
-  ): Promise<MarketplaceAnalyticsOverview> {
+  async getAnalyticsOverview(days = 30): Promise<MarketplaceAnalyticsOverview> {
     const doc = await apiFetch<JsonApiDocument>(
       buildUrl('/analytics/overview', { days }),
       this.token,

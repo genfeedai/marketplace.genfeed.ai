@@ -1,4 +1,7 @@
-import { getIsSuperAdmin, getPublicMetadata } from '@api/common/utils/clerk.util';
+import {
+  getIsSuperAdmin,
+  getPublicMetadata,
+} from '@api/common/utils/clerk.util';
 import type { User } from '@clerk/backend';
 import {
   type CanActivate,
@@ -7,7 +10,7 @@ import {
   HttpStatus,
   Injectable,
 } from '@nestjs/common';
-import { Reflector } from '@nestjs/core';
+import type { Reflector } from '@nestjs/core';
 import type { Request } from 'express';
 
 @Injectable()

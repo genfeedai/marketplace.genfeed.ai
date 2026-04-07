@@ -4,7 +4,9 @@ interface LoadingProps {
   label?: string;
 }
 
-export default function Loading({ label = 'Loading...' }: LoadingProps): ReactNode {
+export default function Loading({
+  label = 'Loading...',
+}: LoadingProps): ReactNode {
   return (
     <div className="flex items-center justify-center py-20">
       <div className="flex flex-col items-center gap-3">

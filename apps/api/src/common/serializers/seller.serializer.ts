@@ -6,11 +6,16 @@ class SellerSerializerClass implements IJsonApiSerializer {
   serialize(data: unknown): unknown {
     if (Array.isArray(data)) {
       return {
-        data: data.map((item: Record<string, unknown>) => this.serializeItem(item)),
+        data: data.map((item: Record<string, unknown>) =>
+          this.serializeItem(item),
+        ),
         ...this.opts,
       };
     }
-    return { data: this.serializeItem(data as Record<string, unknown>), ...this.opts };
+    return {
+      data: this.serializeItem(data as Record<string, unknown>),
+      ...this.opts,
+    };
   }
 
   private serializeItem(item: Record<string, unknown>): unknown {

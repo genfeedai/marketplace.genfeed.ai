@@ -3,17 +3,59 @@
   "organizeImports": {
     "enabled": true
   },
-  "linter": {
-    "enabled": true,
-    "rules": {
-      "recommended": true
-    }
-  },
   "formatter": {
     "enabled": true,
     "indentStyle": "space",
     "indentWidth": 2
   },
+  "javascript": {
+    "formatter": {
+      "quoteStyle": "single",
+      "semicolons": "always",
+      "trailingCommas": "all"
+    },
+    "parser": {
+      "unsafeParameterDecoratorsEnabled": true
+    }
+  },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "recommended": true,
+      "style": {
+        "noNonNullAssertion": "warn"
+      }
+    }
+  },
+  "overrides": [
+    {
+      "include": ["apps/api/**"],
+      "linter": {
+        "rules": {
+          "complexity": {
+            "noStaticOnlyClass": "off",
+            "noForEach": "off"
+          }
+        }
+      }
+    },
+    {
+      "include": ["apps/web/**", "apps/admin/**"],
+      "linter": {
+        "rules": {
+          "a11y": {
+            "noSvgWithoutTitle": "off",
+            "useButtonType": "warn",
+            "useKeyWithClickEvents": "warn",
+            "useMediaCaption": "warn"
+          },
+          "correctness": {
+            "useExhaustiveDependencies": "warn"
+          }
+        }
+      }
+    }
+  ],
   "files": {
     "ignore": ["node_modules", "dist", ".next", ".turbo"]
   }

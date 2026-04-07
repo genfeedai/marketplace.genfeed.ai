@@ -1,8 +1,8 @@
 import { HandleErrors } from '@api/common/decorators/error-handler.decorator';
-import { MarketplaceStripeService } from '@api/common/services/stripe.service';
-import { MarketplaceConfigService } from '@api/config/config.service';
+import type { MarketplaceStripeService } from '@api/common/services/stripe.service';
+import type { MarketplaceConfigService } from '@api/config/config.service';
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
-import Stripe from 'stripe';
+import type Stripe from 'stripe';
 
 @Injectable()
 export class StripeConnectService {
@@ -154,7 +154,7 @@ export class StripeConnectService {
   @HandleErrors('list payouts', 'stripe-connect')
   async listPayouts(
     accountId: string,
-    limit: number = 10,
+    limit = 10,
   ): Promise<Stripe.ApiList<Stripe.Payout>> {
     return await this.stripeService.client.payouts.list(
       { limit },

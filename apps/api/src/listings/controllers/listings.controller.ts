@@ -1,31 +1,28 @@
+import { AutoSwagger } from '@api/common/decorators/auto-swagger.decorator';
+import { CurrentUser } from '@api/common/decorators/current-user.decorator';
 import { LogMethod } from '@api/common/decorators/log-method.decorator';
 import { Public } from '@api/common/decorators/public.decorator';
 import { RolesDecorator } from '@api/common/decorators/roles.decorator';
-import { AutoSwagger } from '@api/common/decorators/auto-swagger.decorator';
-import { CurrentUser } from '@api/common/decorators/current-user.decorator';
 import { RolesGuard } from '@api/common/guards/roles.guard';
+import type {
+  JsonApiCollectionResponse,
+  JsonApiSingleResponse,
+} from '@api/common/interfaces/json-api.interface';
+import { ListingSerializer, PurchaseSerializer } from '@api/common/serializers';
 import { getPublicMetadata } from '@api/common/utils/clerk.util';
 import {
   returnNotFound,
   serializeCollection,
   serializeSingle,
 } from '@api/common/utils/response.util';
-import {
-  ListingSerializer,
-  PurchaseSerializer,
-} from '@api/common/serializers';
-import { CreateListingDto } from '@api/listings/dto/create-listing.dto';
-import { ListingQueryDto } from '@api/listings/dto/listing-query.dto';
-import { ReviewListingDto } from '@api/listings/dto/review-listing.dto';
-import { UpdateListingDto } from '@api/listings/dto/update-listing.dto';
-import { ListingsService } from '@api/listings/services/listings.service';
-import { PurchasesService } from '@api/purchases/services/purchases.service';
-import { SellersService } from '@api/sellers/services/sellers.service';
+import type { CreateListingDto } from '@api/listings/dto/create-listing.dto';
+import type { ListingQueryDto } from '@api/listings/dto/listing-query.dto';
+import type { ReviewListingDto } from '@api/listings/dto/review-listing.dto';
+import type { UpdateListingDto } from '@api/listings/dto/update-listing.dto';
+import type { ListingsService } from '@api/listings/services/listings.service';
+import type { PurchasesService } from '@api/purchases/services/purchases.service';
+import type { SellersService } from '@api/sellers/services/sellers.service';
 import type { User } from '@clerk/backend';
-import type {
-  JsonApiCollectionResponse,
-  JsonApiSingleResponse,
-} from '@api/common/interfaces/json-api.interface';
 import {
   Body,
   Controller,
@@ -64,7 +61,11 @@ export class ListingsController {
     @Query() query: ListingQueryDto,
   ): Promise<JsonApiCollectionResponse> {
     const data = await this.listingsService.getPublicListings(query);
-    return serializeCollection(request, ListingSerializer, data) as JsonApiCollectionResponse;
+    return serializeCollection(
+      request,
+      ListingSerializer,
+      data,
+    ) as JsonApiCollectionResponse;
   }
 
   /**
@@ -126,7 +127,11 @@ export class ListingsController {
     // Increment view count
     await this.listingsService.incrementViews(listing._id.toString());
 
-    return serializeSingle(request, ListingSerializer, listing) as JsonApiSingleResponse;
+    return serializeSingle(
+      request,
+      ListingSerializer,
+      listing,
+    ) as JsonApiSingleResponse;
   }
 
   /**
@@ -167,7 +172,11 @@ export class ListingsController {
     @Req() request: Request,
   ): Promise<JsonApiCollectionResponse> {
     const data = await this.listingsService.getFeaturedListings(12);
-    return serializeCollection(request, ListingSerializer, data) as JsonApiCollectionResponse;
+    return serializeCollection(
+      request,
+      ListingSerializer,
+      data,
+    ) as JsonApiCollectionResponse;
   }
 
   /**
@@ -207,7 +216,11 @@ export class ListingsController {
       query,
     );
 
-    return serializeCollection(request, PurchaseSerializer, data) as JsonApiCollectionResponse;
+    return serializeCollection(
+      request,
+      PurchaseSerializer,
+      data,
+    ) as JsonApiCollectionResponse;
   }
 
   /**
@@ -229,7 +242,11 @@ export class ListingsController {
       publicMetadata.organization,
     );
 
-    return serializeSingle(request, PurchaseSerializer, purchase) as JsonApiSingleResponse;
+    return serializeSingle(
+      request,
+      PurchaseSerializer,
+      purchase,
+    ) as JsonApiSingleResponse;
   }
 }
 
@@ -281,7 +298,11 @@ export class SellerListingsController {
       query,
     );
 
-    return serializeCollection(request, ListingSerializer, data) as JsonApiCollectionResponse;
+    return serializeCollection(
+      request,
+      ListingSerializer,
+      data,
+    ) as JsonApiCollectionResponse;
   }
 
   /**
@@ -308,7 +329,11 @@ export class SellerListingsController {
       createListingDto,
     );
 
-    return serializeSingle(request, ListingSerializer, listing) as JsonApiSingleResponse;
+    return serializeSingle(
+      request,
+      ListingSerializer,
+      listing,
+    ) as JsonApiSingleResponse;
   }
 
   /**
@@ -339,7 +364,11 @@ export class SellerListingsController {
       return returnNotFound(this.constructorName, listingId);
     }
 
-    return serializeSingle(request, ListingSerializer, listing) as JsonApiSingleResponse;
+    return serializeSingle(
+      request,
+      ListingSerializer,
+      listing,
+    ) as JsonApiSingleResponse;
   }
 
   /**
@@ -376,7 +405,11 @@ export class SellerListingsController {
       updateListingDto,
     );
 
-    return serializeSingle(request, ListingSerializer, updated) as JsonApiSingleResponse;
+    return serializeSingle(
+      request,
+      ListingSerializer,
+      updated,
+    ) as JsonApiSingleResponse;
   }
 
   /**
@@ -432,7 +465,11 @@ export class SellerListingsController {
       seller._id.toString(),
     );
 
-    return serializeSingle(request, ListingSerializer, listing) as JsonApiSingleResponse;
+    return serializeSingle(
+      request,
+      ListingSerializer,
+      listing,
+    ) as JsonApiSingleResponse;
   }
 }
 
@@ -458,7 +495,11 @@ export class AdminListingsController {
       query,
     );
 
-    return serializeCollection(request, ListingSerializer, data) as JsonApiCollectionResponse;
+    return serializeCollection(
+      request,
+      ListingSerializer,
+      data,
+    ) as JsonApiCollectionResponse;
   }
 
   @Get(':listingId')
@@ -479,7 +520,11 @@ export class AdminListingsController {
       return returnNotFound('AdminListingsController', listingId);
     }
 
-    return serializeSingle(request, ListingSerializer, listing) as JsonApiSingleResponse;
+    return serializeSingle(
+      request,
+      ListingSerializer,
+      listing,
+    ) as JsonApiSingleResponse;
   }
 
   @Post(':listingId/approve')
@@ -496,7 +541,11 @@ export class AdminListingsController {
       body.reason,
     );
 
-    return serializeSingle(request, ListingSerializer, listing) as JsonApiSingleResponse;
+    return serializeSingle(
+      request,
+      ListingSerializer,
+      listing,
+    ) as JsonApiSingleResponse;
   }
 
   @Post(':listingId/reject')
@@ -513,6 +562,10 @@ export class AdminListingsController {
       body.reason,
     );
 
-    return serializeSingle(request, ListingSerializer, listing) as JsonApiSingleResponse;
+    return serializeSingle(
+      request,
+      ListingSerializer,
+      listing,
+    ) as JsonApiSingleResponse;
   }
 }

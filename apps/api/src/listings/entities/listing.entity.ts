@@ -1,5 +1,5 @@
-import { ListingStatus, ListingType } from '@genfeedai/enums';
-import { Types } from 'mongoose';
+import type { ListingStatus, ListingType } from '@genfeedai/enums';
+import type { Types } from 'mongoose';
 
 export class ListingEntity {
   seller!: Types.ObjectId;

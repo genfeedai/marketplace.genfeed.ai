@@ -1,6 +1,6 @@
-import { MarketplaceStripeService } from '@api/common/services/stripe.service';
-import { MarketplaceConfigService } from '@api/config/config.service';
-import { CheckoutService } from '@api/purchases/services/checkout.service';
+import type { MarketplaceStripeService } from '@api/common/services/stripe.service';
+import type { MarketplaceConfigService } from '@api/config/config.service';
+import type { CheckoutService } from '@api/purchases/services/checkout.service';
 import { Injectable, Logger } from '@nestjs/common';
 import type Stripe from 'stripe';
 

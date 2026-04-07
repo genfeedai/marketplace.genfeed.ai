@@ -17,9 +17,7 @@ export const returnBadRequest = (
   throw new HttpException(response, HttpStatus.BAD_REQUEST);
 };
 
-export const returnUnauthorized = (
-  message: string = 'Unauthorized',
-): never => {
+export const returnUnauthorized = (message = 'Unauthorized'): never => {
   throw new HttpException(
     { detail: message, title: 'Unauthorized' },
     HttpStatus.UNAUTHORIZED,

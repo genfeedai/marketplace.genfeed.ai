@@ -38,9 +38,7 @@ export function deserializeResource<T>(document: JsonApiDocument): T {
 
 export function deserializeCollection<T>(document: JsonApiDocument): T[] {
   if (!document.data || !Array.isArray(document.data)) {
-    throw new TypeError(
-      'Invalid JSON:API document: expected collection data',
-    );
+    throw new TypeError('Invalid JSON:API document: expected collection data');
   }
   return document.data.map((resource) => flattenResource<T>(resource));
 }

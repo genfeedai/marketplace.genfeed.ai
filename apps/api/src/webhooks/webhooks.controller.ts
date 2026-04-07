@@ -1,5 +1,5 @@
 import { Public } from '@api/common/decorators/public.decorator';
-import { StripeWebhookService } from '@api/webhooks/stripe-webhook.service';
+import type { StripeWebhookService } from '@api/webhooks/stripe-webhook.service';
 import {
   Controller,
   Headers,
@@ -16,9 +16,7 @@ import { ApiExcludeController } from '@nestjs/swagger';
 export class WebhooksController {
   private readonly logger = new Logger(WebhooksController.name);
 
-  constructor(
-    private readonly stripeWebhookService: StripeWebhookService,
-  ) {}
+  constructor(private readonly stripeWebhookService: StripeWebhookService) {}
 
   @Post('stripe')
   @Public()

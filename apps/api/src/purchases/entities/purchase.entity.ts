@@ -1,5 +1,5 @@
-import { PurchaseStatus } from '@genfeedai/enums';
-import { Types } from 'mongoose';
+import type { PurchaseStatus } from '@genfeedai/enums';
+import type { Types } from 'mongoose';
 
 export class PurchaseEntity {
   buyer!: Types.ObjectId;

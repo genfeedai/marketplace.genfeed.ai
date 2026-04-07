@@ -3,10 +3,7 @@ import {
   AdminSellersController,
   SellersController,
 } from '@api/sellers/controllers/sellers.controller';
-import {
-  Seller,
-  SellerSchema,
-} from '@api/sellers/schemas/seller.schema';
+import { Seller, SellerSchema } from '@api/sellers/schemas/seller.schema';
 import { SellersService } from '@api/sellers/services/sellers.service';
 import { StripeConnectService } from '@api/sellers/services/stripe-connect.service';
 import { Module } from '@nestjs/common';

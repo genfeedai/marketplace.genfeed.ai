@@ -4,9 +4,9 @@ import { ListingStatus, ListingType, SellerStatus } from '@genfeedai/enums';
 import { useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
+import type { IListing, IPurchase, ISeller } from '@genfeedai/interfaces';
 import { useResource } from '../../../hooks/use-resource';
 import { AdminMarketplaceService } from '../../../services/marketplace.service';
-import type { IListing, IPurchase, ISeller } from '@genfeedai/interfaces';
 import type { MarketplaceAnalyticsOverview } from '../../../types/marketplace';
 
 /* ------------------------------------------------------------------ */
@@ -116,14 +116,12 @@ function DataTable<T extends { id?: string }>({
         </thead>
         <tbody>
           {items.map((item, idx) => (
-            <tr key={(item as Record<string, unknown>).id as string ?? idx}>
+            <tr key={((item as Record<string, unknown>).id as string) ?? idx}>
               {columns.map((col) => (
                 <td key={col.key}>
                   {col.render
                     ? col.render(item)
-                    : String(
-                        (item as Record<string, unknown>)[col.key] ?? '-',
-                      )}
+                    : String((item as Record<string, unknown>)[col.key] ?? '-')}
                 </td>
               ))}
             </tr>
@@ -780,8 +778,8 @@ export default function MarketplacePage() {
             <div className="dialog-title">Reject Listing</div>
             <div>
               <p className="text-sm text-muted" style={{ marginBottom: 8 }}>
-                Add a reason for rejecting{' '}
-                <strong>{rejectTarget.title}</strong>.
+                Add a reason for rejecting <strong>{rejectTarget.title}</strong>
+                .
               </p>
               <textarea
                 className="textarea"

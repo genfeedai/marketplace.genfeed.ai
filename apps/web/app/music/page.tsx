@@ -50,9 +50,7 @@ export default function MusicPage(): ReactNode {
 
     audioRef.current?.pause();
 
-    const audio = new Audio(
-      `${API_URL}/public/musics/${musicId}/audio.mp3`,
-    );
+    const audio = new Audio(`${API_URL}/public/musics/${musicId}/audio.mp3`);
     audio.play();
     audio.onended = () => setPlayingId(null);
 

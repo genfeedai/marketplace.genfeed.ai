@@ -8,10 +8,7 @@ async function bootstrap() {
 
   app.enableCors({
     credentials: true,
-    origin: [
-      /\.genfeed\.ai$/,
-      /localhost:\d+$/,
-    ],
+    origin: [/\.genfeed\.ai$/, /localhost:\d+$/],
   });
 
   app.useGlobalPipes(

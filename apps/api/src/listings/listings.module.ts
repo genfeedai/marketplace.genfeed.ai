@@ -3,14 +3,11 @@ import {
   ListingsController,
   SellerListingsController,
 } from '@api/listings/controllers/listings.controller';
-import {
-  Listing,
-  ListingSchema,
-} from '@api/listings/schemas/listing.schema';
+import { Listing, ListingSchema } from '@api/listings/schemas/listing.schema';
 import { ListingsService } from '@api/listings/services/listings.service';
 import { PurchasesModule } from '@api/purchases/purchases.module';
 import { SellersModule } from '@api/sellers/sellers.module';
-import { forwardRef, Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import mongooseAggregatePaginateV2 from 'mongoose-aggregate-paginate-v2';
 

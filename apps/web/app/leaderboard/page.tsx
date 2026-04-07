@@ -1,15 +1,21 @@
 'use client';
 
-import { fetchLeaderboard, type GalleryItem } from '@/lib/api';
+import { type GalleryItem, fetchLeaderboard } from '@/lib/api';
 import EmptyState from '@components/empty-state';
 import Loading from '@components/loading';
 import PageHeader from '@components/page-header';
 import { useSearchParams } from 'next/navigation';
-import { Suspense, type ReactNode, useCallback, useEffect, useState } from 'react';
+import {
+  type ReactNode,
+  Suspense,
+  useCallback,
+  useEffect,
+  useState,
+} from 'react';
 
 function LeaderboardContent(): ReactNode {
   const searchParams = useSearchParams();
-  const page = parseInt(searchParams?.get('page') ?? '1', 10);
+  const page = Number.parseInt(searchParams?.get('page') ?? '1', 10);
 
   const [posts, setPosts] = useState<GalleryItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);

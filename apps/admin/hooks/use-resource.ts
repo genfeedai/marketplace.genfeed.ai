@@ -21,12 +21,7 @@ export function useResource<T>(
   fetcher: () => Promise<T>,
   options: UseResourceOptions<T>,
 ): UseResourceReturn<T> {
-  const {
-    defaultValue,
-    dependencies = [],
-    enabled = true,
-    onError,
-  } = options;
+  const { defaultValue, dependencies = [], enabled = true, onError } = options;
 
   const [data, setData] = useState<T>(defaultValue);
   const [error, setError] = useState<Error | null>(null);
@@ -47,8 +42,7 @@ export function useResource<T>(
         const result = await fetcher();
         setData(result);
       } catch (err) {
-        const fetchError =
-          err instanceof Error ? err : new Error(String(err));
+        const fetchError = err instanceof Error ? err : new Error(String(err));
         setError(fetchError);
         onError?.(fetchError);
       } finally {

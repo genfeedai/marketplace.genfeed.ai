@@ -1,32 +1,32 @@
-import { LogMethod } from '@api/common/decorators/log-method.decorator';
-import { RolesDecorator } from '@api/common/decorators/roles.decorator';
 import { AutoSwagger } from '@api/common/decorators/auto-swagger.decorator';
 import { CurrentUser } from '@api/common/decorators/current-user.decorator';
+import { LogMethod } from '@api/common/decorators/log-method.decorator';
+import { RolesDecorator } from '@api/common/decorators/roles.decorator';
 import { RolesGuard } from '@api/common/guards/roles.guard';
+import type {
+  JsonApiCollectionResponse,
+  JsonApiSingleResponse,
+} from '@api/common/interfaces/json-api.interface';
+import {
+  MarketplaceAnalyticsOverviewSerializer,
+  PurchaseSerializer,
+  SellerSerializer,
+} from '@api/common/serializers';
 import { getPublicMetadata } from '@api/common/utils/clerk.util';
 import {
   returnNotFound,
   serializeCollection,
   serializeSingle,
 } from '@api/common/utils/response.util';
-import {
-  MarketplaceAnalyticsOverviewSerializer,
-  PurchaseSerializer,
-  SellerSerializer,
-} from '@api/common/serializers';
-import { ListingsService } from '@api/listings/services/listings.service';
-import { AdminPurchaseQueryDto } from '@api/purchases/dto/admin-purchase-query.dto';
-import { CheckoutDto } from '@api/purchases/dto/checkout.dto';
-import { PurchaseQueryDto } from '@api/purchases/dto/purchase-query.dto';
-import { CheckoutService } from '@api/purchases/services/checkout.service';
-import { PurchasesService } from '@api/purchases/services/purchases.service';
-import { AdminSellerQueryDto } from '@api/sellers/dto/admin-seller-query.dto';
-import { SellersService } from '@api/sellers/services/sellers.service';
+import type { ListingsService } from '@api/listings/services/listings.service';
+import type { AdminPurchaseQueryDto } from '@api/purchases/dto/admin-purchase-query.dto';
+import type { CheckoutDto } from '@api/purchases/dto/checkout.dto';
+import type { PurchaseQueryDto } from '@api/purchases/dto/purchase-query.dto';
+import type { CheckoutService } from '@api/purchases/services/checkout.service';
+import type { PurchasesService } from '@api/purchases/services/purchases.service';
+import type { AdminSellerQueryDto } from '@api/sellers/dto/admin-seller-query.dto';
+import type { SellersService } from '@api/sellers/services/sellers.service';
 import type { User } from '@clerk/backend';
-import type {
-  JsonApiCollectionResponse,
-  JsonApiSingleResponse,
-} from '@api/common/interfaces/json-api.interface';
 import {
   Body,
   Controller,
@@ -137,7 +137,11 @@ export class PurchasesController {
       publicMetadata.organization,
     );
 
-    return serializeSingle(request, PurchaseSerializer, purchase) as JsonApiSingleResponse;
+    return serializeSingle(
+      request,
+      PurchaseSerializer,
+      purchase,
+    ) as JsonApiSingleResponse;
   }
 
   /**
@@ -158,7 +162,11 @@ export class PurchasesController {
       query,
     );
 
-    return serializeCollection(request, PurchaseSerializer, data) as JsonApiCollectionResponse;
+    return serializeCollection(
+      request,
+      PurchaseSerializer,
+      data,
+    ) as JsonApiCollectionResponse;
   }
 
   /**
@@ -183,7 +191,11 @@ export class PurchasesController {
       return returnNotFound(this.constructorName, purchaseId);
     }
 
-    return serializeSingle(request, PurchaseSerializer, purchase) as JsonApiSingleResponse;
+    return serializeSingle(
+      request,
+      PurchaseSerializer,
+      purchase,
+    ) as JsonApiSingleResponse;
   }
 
   /**
@@ -365,7 +377,11 @@ export class PurchasesController {
       query,
     );
 
-    return serializeCollection(request, PurchaseSerializer, data) as JsonApiCollectionResponse;
+    return serializeCollection(
+      request,
+      PurchaseSerializer,
+      data,
+    ) as JsonApiCollectionResponse;
   }
 
   /**
@@ -420,7 +436,11 @@ export class AdminMarketplacePurchasesController {
       query,
     );
 
-    return serializeCollection(request, PurchaseSerializer, data) as JsonApiCollectionResponse;
+    return serializeCollection(
+      request,
+      PurchaseSerializer,
+      data,
+    ) as JsonApiCollectionResponse;
   }
 
   @Get(':purchaseId')
@@ -441,7 +461,11 @@ export class AdminMarketplacePurchasesController {
       return returnNotFound('AdminMarketplacePurchasesController', purchaseId);
     }
 
-    return serializeSingle(request, PurchaseSerializer, purchase) as JsonApiSingleResponse;
+    return serializeSingle(
+      request,
+      PurchaseSerializer,
+      purchase,
+    ) as JsonApiSingleResponse;
   }
 }
 
@@ -492,6 +516,10 @@ export class AdminMarketplaceController {
       query,
     );
 
-    return serializeCollection(request, SellerSerializer, data) as JsonApiCollectionResponse;
+    return serializeCollection(
+      request,
+      SellerSerializer,
+      data,
+    ) as JsonApiCollectionResponse;
   }
 }

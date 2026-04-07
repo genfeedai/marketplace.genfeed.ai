@@ -1,5 +1,5 @@
-import { SellerBadgeTier, SellerStatus } from '@genfeedai/enums';
-import { Types } from 'mongoose';
+import type { SellerBadgeTier, SellerStatus } from '@genfeedai/enums';
+import type { Types } from 'mongoose';
 
 export class SellerEntity {
   user!: Types.ObjectId;

@@ -3,6 +3,7 @@ import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { DECORATORS } from '@nestjs/swagger/dist/constants';
 
 export function AutoSwagger(tag?: string): ClassDecorator {
+  // biome-ignore lint/complexity/noBannedTypes: ClassDecorator requires Function type
   return (target: Function) => {
     const controllerPath = Reflect.getMetadata(PATH_METADATA, target);
     if (controllerPath && !Reflect.getMetadata(DECORATORS.API_TAGS, target)) {

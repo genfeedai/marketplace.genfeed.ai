@@ -9,9 +9,9 @@
  *   bun run apps/api/scripts/seeds/marketplace.seed.ts --live
  */
 
+import { ObjectId } from 'mongodb';
 import { runScript } from '../db/connection';
 import { parseArgs, seedDocuments } from '../db/seed-utils';
-import { ObjectId } from 'mongodb';
 
 const logger = {
   log: (...args: unknown[]) => console.log(...args),

@@ -2,21 +2,24 @@
   "name": "@genfeedai/marketplace",
   "private": true,
   "workspaces": ["apps/*", "packages/*"],
-  "packageManager": "bun@1.2.12",
+  "packageManager": "bun@1.3.11",
   "scripts": {
     "dev": "turbo dev",
     "build": "turbo build",
     "lint": "turbo lint",
     "typecheck": "turbo typecheck",
-    "test": "turbo test"
+    "test": "turbo test",
+    "deps:update": "bunx npm-check-updates -u --deep --reject typescript && bun install",
+    "format": "biome format --write apps/",
+    "check": "biome check --fix apps/"
   },
   "overrides": {
-    "@genfeedai/constants": "^2.2.9",
-    "@genfeedai/enums": "^2.3.2"
+    "@genfeedai/constants": "2.2.9",
+    "@genfeedai/enums": "2.3.2"
   },
   "devDependencies": {
-    "@biomejs/biome": "^1.9.0",
-    "turbo": "^2.5.0",
-    "typescript": "^5.7.0"
+    "@biomejs/biome": "2.4.10",
+    "turbo": "2.9.4",
+    "typescript": "5.9.3"
   }
 }

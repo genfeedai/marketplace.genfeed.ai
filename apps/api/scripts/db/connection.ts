@@ -72,14 +72,14 @@ export async function connect(options: ConnectionOptions = {}): Promise<Db> {
     return db;
   }
 
-  logger.log(`Connecting to MongoDB...`);
+  logger.log('Connecting to MongoDB...');
   logger.log(`   Database: ${database}`);
 
   client = new MongoClient(uri) as MongoClient;
   await client.connect();
   db = client.db(database);
 
-  logger.log(`Connected to MongoDB\n`);
+  logger.log('Connected to MongoDB\n');
   return db;
 }
 
@@ -88,7 +88,7 @@ export async function disconnect(): Promise<void> {
     await client.close();
     client = null;
     db = null;
-    logger.log(`\nDisconnected from MongoDB`);
+    logger.log('\nDisconnected from MongoDB');
   }
 }
 

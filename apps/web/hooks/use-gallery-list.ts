@@ -1,11 +1,11 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
 import {
-  fetchGallery,
   type GalleryItem,
   type GalleryQueryParams,
+  fetchGallery,
 } from '@/lib/api';
+import { useCallback, useEffect, useState } from 'react';
 
 interface UseGalleryListOptions {
   type: string;
@@ -39,9 +39,7 @@ function useGalleryList({
 
         if (signal.aborted) return;
 
-        const data = Array.isArray(response)
-          ? response
-          : response.data ?? [];
+        const data = Array.isArray(response) ? response : (response.data ?? []);
 
         setItems(data);
       } catch (err) {

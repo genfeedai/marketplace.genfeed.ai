@@ -12,7 +12,7 @@ import type { ListingQueryDto } from '@api/listings/dto/listing-query.dto';
 import type { UpdateListingDto } from '@api/listings/dto/update-listing.dto';
 import { ListingEntity } from '@api/listings/entities/listing.entity';
 import { Listing } from '@api/listings/schemas/listing.schema';
-import { SellersService } from '@api/sellers/services/sellers.service';
+import type { SellersService } from '@api/sellers/services/sellers.service';
 import { ListingStatus } from '@genfeedai/enums';
 import {
   BadRequestException,
@@ -187,7 +187,7 @@ export class ListingsService extends BaseService<
     this.logOperation('reviewListing', 'completed', {
       isApproved,
       listingId,
-      status: updated!.status,
+      status: updated?.status,
     });
 
     return updated!;
@@ -500,9 +500,7 @@ export class ListingsService extends BaseService<
    * Get featured listings (official, highest rated)
    */
   @HandleErrors('get featured listings', 'listings')
-  getFeaturedListings(
-    limit: number = 12,
-  ): Promise<AggregatePaginateResult<Listing>> {
+  getFeaturedListings(limit = 12): Promise<AggregatePaginateResult<Listing>> {
     const options = {
       customLabels,
       limit,
@@ -537,27 +535,29 @@ export class ListingsService extends BaseService<
    */
   @HandleErrors('get categories', 'listings')
   async getCategoryCounts(): Promise<Array<{ type: string; count: number }>> {
-    const result = await this.model.aggregate([
-      {
-        $match: {
-          isDeleted: false,
-          status: ListingStatus.PUBLISHED,
+    const result = await this.model
+      .aggregate([
+        {
+          $match: {
+            isDeleted: false,
+            status: ListingStatus.PUBLISHED,
+          },
         },
-      },
-      {
-        $group: {
-          _id: '$type',
-          count: { $sum: 1 },
+        {
+          $group: {
+            _id: '$type',
+            count: { $sum: 1 },
+          },
         },
-      },
-      {
-        $project: {
-          _id: 0,
-          count: 1,
-          type: '$_id',
+        {
+          $project: {
+            _id: 0,
+            count: 1,
+            type: '$_id',
+          },
         },
-      },
-    ]).exec();
+      ])
+      .exec();
 
     return result as Array<{ type: string; count: number }>;
   }

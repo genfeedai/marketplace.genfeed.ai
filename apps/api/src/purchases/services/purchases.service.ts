@@ -7,12 +7,12 @@ import { BaseService } from '@api/common/services/base.service';
 import { customLabels } from '@api/common/utils/pagination.util';
 import { QueryDefaultsUtil } from '@api/common/utils/query-defaults.util';
 import { handleQuerySort } from '@api/common/utils/sort.util';
-import { ListingsService } from '@api/listings/services/listings.service';
-import { CreatePurchaseDto } from '@api/purchases/dto/create-purchase.dto';
-import { PurchaseQueryDto } from '@api/purchases/dto/purchase-query.dto';
+import type { ListingsService } from '@api/listings/services/listings.service';
+import type { CreatePurchaseDto } from '@api/purchases/dto/create-purchase.dto';
+import type { PurchaseQueryDto } from '@api/purchases/dto/purchase-query.dto';
 import { PurchaseEntity } from '@api/purchases/entities/purchase.entity';
 import { Purchase } from '@api/purchases/schemas/purchase.schema';
-import { SellersService } from '@api/sellers/services/sellers.service';
+import type { SellersService } from '@api/sellers/services/sellers.service';
 import { PurchaseStatus } from '@genfeedai/enums';
 import {
   BadRequestException,
@@ -669,7 +669,7 @@ export class PurchasesService extends BaseService<
   @HandleErrors('get admin analytics overview', 'purchases')
   async getAdminAnalyticsOverview(
     organizationId: string,
-    days: number = 30,
+    days = 30,
   ): Promise<{
     totalRevenue: number;
     totalSales: number;

@@ -103,7 +103,7 @@ async function fetchLeaderboard(
 
   const data = await response.json();
 
-  return Array.isArray(data) ? data : data.data ?? [];
+  return Array.isArray(data) ? data : (data.data ?? []);
 }
 
 export { fetchGallery, fetchLeaderboard, ITEMS_PER_PAGE, API_URL };

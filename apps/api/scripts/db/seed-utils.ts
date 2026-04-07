@@ -137,11 +137,9 @@ export async function seedDocuments<T extends Document>(
   const collection = db.collection<T>(collectionName);
   const keyField = options.keyField || 'key';
 
-  logger.log(
-    `Seeding ${documents.length} documents to "${collectionName}"...`,
-  );
+  logger.log(`Seeding ${documents.length} documents to "${collectionName}"...`);
   if (options.dryRun) {
-    logger.log(`*** DRY RUN MODE - No changes will be made ***`);
+    logger.log('*** DRY RUN MODE - No changes will be made ***');
   }
   logger.log('');
 

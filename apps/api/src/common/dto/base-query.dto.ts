@@ -23,7 +23,7 @@ export class BaseQueryDto {
   @Transform(({ value }) =>
     value !== undefined && value !== null ? Number(value) : 1,
   )
-  page: number = 1;
+  page = 1;
 
   @ApiProperty({
     default: 10,
@@ -39,7 +39,7 @@ export class BaseQueryDto {
   @Transform(({ value }) =>
     value !== undefined && value !== null ? Number(value) : 10,
   )
-  limit: number = 10;
+  limit = 10;
 
   @ApiProperty({
     default: true,
@@ -57,7 +57,7 @@ export class BaseQueryDto {
     return Boolean(value);
   })
   @IsBoolean()
-  pagination: boolean = true;
+  pagination = true;
 
   @ApiProperty({
     default: false,
@@ -73,7 +73,7 @@ export class BaseQueryDto {
     return Boolean(value);
   })
   @IsBoolean()
-  isDeleted: boolean = false;
+  isDeleted = false;
 
   @ApiProperty({
     default: 'createdAt: -1',
@@ -85,5 +85,5 @@ export class BaseQueryDto {
   @Transform(({ value }) =>
     value !== undefined && value !== null ? value : 'createdAt: -1',
   )
-  sort: string = 'createdAt: -1';
+  sort = 'createdAt: -1';
 }

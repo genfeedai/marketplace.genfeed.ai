@@ -21,11 +21,10 @@ export default async function ListingPage({
         <h1 className="text-3xl font-bold text-white mb-4">{listingSlug}</h1>
         <div className="rounded-lg border border-white/10 bg-white/5 p-8 text-center">
           <span className="text-5xl block mb-4">{'\uD83D\uDED2'}</span>
-          <p className="text-white/60">
-            Listing detail page — coming soon.
-          </p>
+          <p className="text-white/60">Listing detail page — coming soon.</p>
           <p className="text-sm text-white/40 mt-2">
-            This page will display the full listing with preview, pricing, and purchase options.
+            This page will display the full listing with preview, pricing, and
+            purchase options.
           </p>
         </div>
       </div>

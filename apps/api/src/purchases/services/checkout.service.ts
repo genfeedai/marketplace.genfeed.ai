@@ -1,11 +1,11 @@
 import { HandleErrors } from '@api/common/decorators/error-handler.decorator';
-import { MarketplaceStripeService } from '@api/common/services/stripe.service';
-import { MarketplaceConfigService } from '@api/config/config.service';
-import { ListingsService } from '@api/listings/services/listings.service';
+import type { MarketplaceStripeService } from '@api/common/services/stripe.service';
+import type { MarketplaceConfigService } from '@api/config/config.service';
+import type { ListingsService } from '@api/listings/services/listings.service';
 import { PurchaseEntity } from '@api/purchases/entities/purchase.entity';
-import { Purchase } from '@api/purchases/schemas/purchase.schema';
-import { PurchasesService } from '@api/purchases/services/purchases.service';
-import { SellersService } from '@api/sellers/services/sellers.service';
+import type { Purchase } from '@api/purchases/schemas/purchase.schema';
+import type { PurchasesService } from '@api/purchases/services/purchases.service';
+import type { SellersService } from '@api/sellers/services/sellers.service';
 import { PurchaseStatus } from '@genfeedai/enums';
 import {
   BadRequestException,
@@ -14,7 +14,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { Types } from 'mongoose';
-import Stripe from 'stripe';
+import type Stripe from 'stripe';
 
 @Injectable()
 export class CheckoutService {
@@ -249,14 +249,11 @@ export class CheckoutService {
       stripePaymentIntentId: session.payment_intent as string,
     });
 
-    this.logger.log(
-      `${this.constructorName} checkout completed successfully`,
-      {
-        listingId: session.metadata?.listingId,
-        purchaseId,
-        sessionId: session.id,
-      },
-    );
+    this.logger.log(`${this.constructorName} checkout completed successfully`, {
+      listingId: session.metadata?.listingId,
+      purchaseId,
+      sessionId: session.id,
+    });
 
     return { purchase, success: true };
   }
@@ -275,14 +272,11 @@ export class CheckoutService {
         status: PurchaseStatus.FAILED,
       });
 
-      this.logger.log(
-        `${this.constructorName} checkout marked as failed`,
-        {
-          purchaseId,
-          reason,
-          sessionId,
-        },
-      );
+      this.logger.log(`${this.constructorName} checkout marked as failed`, {
+        purchaseId,
+        reason,
+        sessionId,
+      });
     }
   }
 }

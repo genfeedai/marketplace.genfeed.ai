@@ -1,6 +1,6 @@
+import Nav from '@components/nav';
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
-import Nav from '@components/nav';
 import './globals.css';
 import '../styles/marketplace.css';
 

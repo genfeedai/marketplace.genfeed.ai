@@ -1,8 +1,13 @@
-import { LogMethod } from '@api/common/decorators/log-method.decorator';
-import { RolesDecorator } from '@api/common/decorators/roles.decorator';
 import { AutoSwagger } from '@api/common/decorators/auto-swagger.decorator';
 import { CurrentUser } from '@api/common/decorators/current-user.decorator';
+import { LogMethod } from '@api/common/decorators/log-method.decorator';
+import { RolesDecorator } from '@api/common/decorators/roles.decorator';
 import { RolesGuard } from '@api/common/guards/roles.guard';
+import type {
+  JsonApiCollectionResponse,
+  JsonApiSingleResponse,
+} from '@api/common/interfaces/json-api.interface';
+import { SellerSerializer } from '@api/common/serializers';
 import {
   getIsSuperAdmin,
   getPublicMetadata,
@@ -12,19 +17,14 @@ import {
   serializeCollection,
   serializeSingle,
 } from '@api/common/utils/response.util';
-import { SellerSerializer } from '@api/common/serializers';
-import { MarketplaceConfigService } from '@api/config/config.service';
-import { AdminSellerQueryDto } from '@api/sellers/dto/admin-seller-query.dto';
-import { CreateSellerDto } from '@api/sellers/dto/create-seller.dto';
-import { UpdateSellerDto } from '@api/sellers/dto/update-seller.dto';
-import { UpdateSellerStatusDto } from '@api/sellers/dto/update-seller-status.dto';
-import { SellersService } from '@api/sellers/services/sellers.service';
-import { StripeConnectService } from '@api/sellers/services/stripe-connect.service';
+import type { MarketplaceConfigService } from '@api/config/config.service';
+import type { AdminSellerQueryDto } from '@api/sellers/dto/admin-seller-query.dto';
+import type { CreateSellerDto } from '@api/sellers/dto/create-seller.dto';
+import type { UpdateSellerStatusDto } from '@api/sellers/dto/update-seller-status.dto';
+import type { UpdateSellerDto } from '@api/sellers/dto/update-seller.dto';
+import type { SellersService } from '@api/sellers/services/sellers.service';
+import type { StripeConnectService } from '@api/sellers/services/stripe-connect.service';
 import type { User } from '@clerk/backend';
-import type {
-  JsonApiCollectionResponse,
-  JsonApiSingleResponse,
-} from '@api/common/interfaces/json-api.interface';
 import {
   Body,
   Controller,
@@ -96,7 +96,11 @@ export class SellersController {
       return returnNotFound(this.constructorName, publicMetadata.user);
     }
 
-    return serializeSingle(request, SellerSerializer, seller) as JsonApiSingleResponse;
+    return serializeSingle(
+      request,
+      SellerSerializer,
+      seller,
+    ) as JsonApiSingleResponse;
   }
 
   /**
@@ -123,7 +127,11 @@ export class SellersController {
       );
     }
 
-    return serializeSingle(request, SellerSerializer, seller) as JsonApiSingleResponse;
+    return serializeSingle(
+      request,
+      SellerSerializer,
+      seller,
+    ) as JsonApiSingleResponse;
   }
 
   /**
@@ -144,7 +152,11 @@ export class SellersController {
       createSellerDto,
     );
 
-    return serializeSingle(request, SellerSerializer, seller) as JsonApiSingleResponse;
+    return serializeSingle(
+      request,
+      SellerSerializer,
+      seller,
+    ) as JsonApiSingleResponse;
   }
 
   /**
@@ -170,7 +182,11 @@ export class SellersController {
       updateSellerDto,
     );
 
-    return serializeSingle(request, SellerSerializer, updated) as JsonApiSingleResponse;
+    return serializeSingle(
+      request,
+      SellerSerializer,
+      updated,
+    ) as JsonApiSingleResponse;
   }
 
   /**
@@ -404,7 +420,11 @@ export class AdminSellersController {
       query,
     );
 
-    return serializeCollection(request, SellerSerializer, data) as JsonApiCollectionResponse;
+    return serializeCollection(
+      request,
+      SellerSerializer,
+      data,
+    ) as JsonApiCollectionResponse;
   }
 
   @Get(':sellerId')
@@ -425,7 +445,11 @@ export class AdminSellersController {
       return returnNotFound('AdminSellersController', sellerId);
     }
 
-    return serializeSingle(request, SellerSerializer, seller) as JsonApiSingleResponse;
+    return serializeSingle(
+      request,
+      SellerSerializer,
+      seller,
+    ) as JsonApiSingleResponse;
   }
 
   @Patch(':sellerId/status')
@@ -444,6 +468,10 @@ export class AdminSellersController {
       body.status,
     );
 
-    return serializeSingle(request, SellerSerializer, updated) as JsonApiSingleResponse;
+    return serializeSingle(
+      request,
+      SellerSerializer,
+      updated,
+    ) as JsonApiSingleResponse;
   }
 }

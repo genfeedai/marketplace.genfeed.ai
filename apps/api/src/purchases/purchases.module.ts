@@ -12,7 +12,7 @@ import {
 import { CheckoutService } from '@api/purchases/services/checkout.service';
 import { PurchasesService } from '@api/purchases/services/purchases.service';
 import { SellersModule } from '@api/sellers/sellers.module';
-import { forwardRef, Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import mongooseAggregatePaginateV2 from 'mongoose-aggregate-paginate-v2';
 
