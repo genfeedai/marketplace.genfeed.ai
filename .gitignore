@@ -9,3 +9,6 @@ dist/
 .DS_Store
 coverage/
 .vercel
+
+# Local-only session logs (never committed)
+.agents/sessions/
