@@ -1,7 +1,7 @@
 /**
  * Mapping tests for the official packages seed.
  *
- * Pure functions only — no MongoDB connection is opened. Fixture-driven cases
+ * Pure functions only — no database connection is opened. Fixture-driven cases
  * pin the mapping contract; the final block runs the same mapping over the
  * real installed catalogs to catch upstream package drift.
  */
@@ -9,7 +9,6 @@
 import { ListingStatus, ListingType, PricingTier } from '@genfeedai/enums';
 import type { PromptTemplate } from '@genfeedai/prompts';
 import type { WorkflowJson, WorkflowMetadata } from '@genfeedai/workflows';
-import { ObjectId } from 'mongodb';
 import { describe, expect, it } from 'vitest';
 import {
   buildOfficialSeller,
@@ -27,8 +26,8 @@ import {
 } from '../marketplace-packages.mapping';
 
 const REFS = {
-  organizationId: new ObjectId('687514009f59b22a757bcf04'),
-  sellerId: new ObjectId('6813b131bc7686bf101cb35b'),
+  organizationId: '687514009f59b22a757bcf04',
+  sellerId: '6813b131bc7686bf101cb35b',
 };
 
 const SEEDED_AT = new Date('2026-01-01T00:00:00.000Z');
@@ -105,8 +104,8 @@ describe('buildOfficialSeller', () => {
       status: 'approved',
       website: 'https://genfeed.ai',
     });
-    expect(seller.organization.equals(REFS.organizationId)).toBe(true);
-    expect(seller.user.equals(REFS.sellerId)).toBe(true);
+    expect(seller.organization).toBe(REFS.organizationId);
+    expect(seller.user).toBe(REFS.sellerId);
   });
 });
 
@@ -114,8 +113,8 @@ describe('resolveOfficialRefs', () => {
   it('falls back to the production identities', () => {
     const refs = resolveOfficialRefs({});
 
-    expect(refs.user.toHexString()).toBe('6813b131bc7686bf101cb35b');
-    expect(refs.organization.toHexString()).toBe('687514009f59b22a757bcf04');
+    expect(refs.user).toBe('6813b131bc7686bf101cb35b');
+    expect(refs.organization).toBe('687514009f59b22a757bcf04');
   });
 
   it('honours environment overrides', () => {
@@ -124,8 +123,8 @@ describe('resolveOfficialRefs', () => {
       GENFEED_OFFICIAL_USER_ID: '0000000000000000000000aa',
     });
 
-    expect(refs.user.toHexString()).toBe('0000000000000000000000aa');
-    expect(refs.organization.toHexString()).toBe('0000000000000000000000ff');
+    expect(refs.user).toBe('0000000000000000000000aa');
+    expect(refs.organization).toBe('0000000000000000000000ff');
   });
 });
 
@@ -152,8 +151,8 @@ describe('buildWorkflowListings', () => {
   });
 
   it('references the official seller and organization', () => {
-    expect(listing.seller.equals(REFS.sellerId)).toBe(true);
-    expect(listing.organization.equals(REFS.organizationId)).toBe(true);
+    expect(listing.seller).toBe(REFS.sellerId);
+    expect(listing.organization).toBe(REFS.organizationId);
   });
 
   it('appends category and "official" to the catalog tags', () => {

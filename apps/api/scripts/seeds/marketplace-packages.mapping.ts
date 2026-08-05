@@ -2,10 +2,10 @@
  * Marketplace Packages — Catalog → Listing Mapping
  *
  * Pure mapping layer between the official GenFeed package catalogs
- * (`@genfeedai/workflows`, `@genfeedai/prompts`) and marketplace documents.
+ * (`@genfeedai/workflows`, `@genfeedai/prompts`) and marketplace records.
  *
  * Kept free of database access so the mapping can be unit tested without a
- * live MongoDB connection. All I/O lives in `marketplace-packages.seed.ts`.
+ * live database connection. All I/O lives in `marketplace-packages.seed.ts`.
  */
 
 import { createRequire } from 'node:module';
@@ -26,7 +26,6 @@ import {
   type WorkflowJson,
   type WorkflowMetadata,
 } from '@genfeedai/workflows';
-import { ObjectId } from 'mongodb';
 
 // ============================================================================
 // CONSTANTS
@@ -44,7 +43,7 @@ export const PROMPT_PACKAGE_SOURCE = '@genfeedai/prompts';
  * Deterministic placeholder used only in dry-run mode, where the seller is
  * never written and therefore has no real `_id` to reference.
  */
-export const DRY_RUN_SELLER_ID = new ObjectId('000000000000000000000001');
+export const DRY_RUN_SELLER_ID = '000000000000000000000001';
 
 /**
  * Production identities for the official seller, carried over from the
@@ -63,7 +62,7 @@ export const SELLER_FIELDS_TO_CHECK = [
   'badgeTier',
   'status',
   'isDeleted',
-];
+] as const;
 
 export const LISTING_FIELDS_TO_CHECK = [
   'title',
@@ -79,21 +78,21 @@ export const LISTING_FIELDS_TO_CHECK = [
   'packageSource',
   'packageSlug',
   'isDeleted',
-];
+] as const;
 
 // ============================================================================
 // TYPES
 // ============================================================================
 
 export interface OfficialRefs {
-  sellerId: ObjectId;
-  organizationId: ObjectId;
+  sellerId: string;
+  organizationId: string;
 }
 
 export interface SellerDocument {
   slug: string;
-  user: ObjectId;
-  organization: ObjectId;
+  user: string;
+  organization: string;
   displayName: string;
   bio: string;
   avatar: string;
@@ -118,8 +117,8 @@ export interface SellerDocument {
 
 export interface ListingDocument {
   slug: string;
-  seller: ObjectId;
-  organization: ObjectId;
+  seller: string;
+  organization: string;
   type: string;
   title: string;
   shortDescription: string;
@@ -207,12 +206,8 @@ export function resolveOfficialRefs(
   env: NodeJS.ProcessEnv = process.env,
 ): Pick<SellerDocument, 'user' | 'organization'> {
   return {
-    organization: new ObjectId(
-      env.GENFEED_OFFICIAL_ORG_ID || DEFAULT_OFFICIAL_ORG_ID,
-    ),
-    user: new ObjectId(
-      env.GENFEED_OFFICIAL_USER_ID || DEFAULT_OFFICIAL_USER_ID,
-    ),
+    organization: env.GENFEED_OFFICIAL_ORG_ID || DEFAULT_OFFICIAL_ORG_ID,
+    user: env.GENFEED_OFFICIAL_USER_ID || DEFAULT_OFFICIAL_USER_ID,
   };
 }
 

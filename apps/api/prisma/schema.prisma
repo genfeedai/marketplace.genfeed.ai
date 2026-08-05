@@ -1,0 +1,147 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Seller {
+  id                       String     @id @db.VarChar(24)
+  user                     String     @unique
+  organization             String
+  displayName              String     @db.VarChar(100)
+  slug                     String     @unique @db.VarChar(100)
+  bio                      String?    @db.VarChar(500)
+  avatar                   String?
+  website                  String?
+  social                   Json       @default("{}")
+  stripeAccountId          String?
+  stripeOnboardingComplete Boolean    @default(false)
+  payoutEnabled            Boolean    @default(false)
+  totalEarnings            Int        @default(0)
+  totalSales               Int        @default(0)
+  rating                   Float      @default(0)
+  reviewCount              Int        @default(0)
+  followerCount            Int        @default(0)
+  badgeTier                String     @default("new")
+  status                   String     @default("approved")
+  isDeleted                Boolean    @default(false)
+  createdAt                DateTime   @default(now())
+  updatedAt                DateTime   @updatedAt
+  listings                 Listing[]  @relation("listingSeller")
+  purchases                Purchase[] @relation("purchaseSeller")
+  payouts                  Payout[]   @relation("payoutSeller")
+
+  @@index([organization, isDeleted])
+  @@index([badgeTier, status])
+  @@map("sellers")
+}
+
+model Listing {
+  id                  String     @id @db.VarChar(24)
+  seller              String     @db.VarChar(24)
+  organization        String
+  type                String
+  title               String     @db.VarChar(200)
+  slug                String     @unique @db.VarChar(300)
+  shortDescription    String     @db.VarChar(300)
+  description         String
+  price               Int        @default(0)
+  currency            String     @default("usd") @db.VarChar(10)
+  tags                String[]   @default([])
+  thumbnail           String?
+  previewImages       String[]   @default([])
+  previewVideo        String?
+  previewData         Json       @default("{}")
+  downloadData        Json       @default("{}")
+  views               Int        @default(0)
+  downloads           Int        @default(0)
+  purchases           Int        @default(0)
+  rating              Float      @default(0)
+  reviewCount         Int        @default(0)
+  likeCount           Int        @default(0)
+  revenue             Int        @default(0)
+  version             String     @default("1.0.0")
+  changelog           String?
+  status              String     @default("draft")
+  rejectionReason     String?
+  publishedAt         DateTime?
+  packageSource       String?
+  packageSlug         String?
+  pricingTier         String     @default("free")
+  isOfficial          Boolean    @default(false)
+  installCount        Int        @default(0)
+  canBeSoldSeparately Boolean    @default(true)
+  isDeleted           Boolean    @default(false)
+  comfyuiTemplate     Json?
+  createdAt           DateTime   @default(now())
+  updatedAt           DateTime   @updatedAt
+  sellerRecord        Seller     @relation("listingSeller", fields: [seller], references: [id])
+  purchaseRecords     Purchase[] @relation("purchaseListing")
+
+  @@index([seller, isDeleted])
+  @@index([organization, isDeleted, status, type])
+  @@index([publishedAt(sort: Desc), status])
+  @@index([isOfficial, pricingTier, status])
+  @@index([packageSource, packageSlug])
+  @@unique([packageSource, packageSlug])
+  @@map("listings")
+}
+
+model Purchase {
+  id                    String   @id @db.VarChar(24)
+  buyer                 String
+  seller                String   @db.VarChar(24)
+  listing               String   @db.VarChar(24)
+  organization          String
+  listingSnapshot       Json
+  subtotal              Int      @default(0)
+  discount              Int      @default(0)
+  total                 Int      @default(0)
+  currency              String   @default("usd") @db.VarChar(10)
+  platformFee           Int      @default(0)
+  sellerEarnings        Int      @default(0)
+  stripeSessionId       String?
+  stripePaymentIntentId String?
+  paymentMethod         String?
+  status                String   @default("pending")
+  failureReason         String?
+  downloadCount         Int      @default(0)
+  lastDownloadedAt      DateTime?
+  hasReviewed           Boolean  @default(false)
+  review                Json?
+  isGift                Boolean  @default(false)
+  giftRecipient         String?
+  giftMessage           String?
+  discountCode          String?
+  isDeleted             Boolean  @default(false)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  sellerRecord          Seller   @relation("purchaseSeller", fields: [seller], references: [id])
+  listingRecord         Listing  @relation("purchaseListing", fields: [listing], references: [id])
+
+  @@index([buyer, isDeleted, organization])
+  @@index([seller, status])
+  @@index([listing, status])
+  @@index([organization, isDeleted, status])
+  @@map("purchases")
+}
+
+model Payout {
+  id              String   @id @db.VarChar(24)
+  seller          String   @db.VarChar(24)
+  amount          Int
+  currency        String   @default("usd") @db.VarChar(10)
+  status          String   @default("pending")
+  stripePayoutId  String?
+  failureReason   String?
+  completedAt     DateTime?
+  isDeleted       Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  sellerRecord    Seller   @relation("payoutSeller", fields: [seller], references: [id])
+
+  @@map("payouts")
+}

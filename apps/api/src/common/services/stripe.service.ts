@@ -1,59 +1,168 @@
-import { Injectable, Logger } from '@nestjs/common';
-import Stripe from 'stripe';
+import { Injectable } from '@nestjs/common';
 
-/**
- * Thin Stripe SDK wrapper for marketplace operations.
- * Only exposes checkout sessions and Connect account management.
- */
+export interface StripeCheckoutSession {
+  id: string;
+  url: string | null;
+  amount_total?: number | null;
+  currency?: string | null;
+  payment_status?: string | null;
+  status?: string | null;
+  metadata?: Record<string, string> | null;
+  payment_intent?: string | null;
+}
+
+export interface StripeCheckoutSessionCreateParams {
+  [key: string]: unknown;
+  allow_promotion_codes?: boolean;
+  cancel_url?: string;
+  line_items?: unknown[];
+  metadata?: Record<string, string>;
+  mode?: string;
+  payment_intent_data?: {
+    application_fee_amount?: number;
+    transfer_data?: {
+      destination: string;
+    };
+  };
+  payment_method_types?: string[];
+  success_url?: string;
+}
+
+export interface StripeAccount {
+  id: string;
+  charges_enabled?: boolean;
+  details_submitted?: boolean;
+  payouts_enabled?: boolean;
+}
+
+export interface StripeAccountCreateParams {
+  business_profile?: {
+    name?: string;
+  };
+  capabilities?: Record<string, unknown>;
+  email?: string;
+  metadata?: Record<string, string>;
+  type?: string;
+}
+
+export interface StripeAccountLinkCreateParams {
+  account: string;
+  refresh_url: string;
+  return_url: string;
+  type: string;
+}
+
+export interface StripePayout {
+  amount: number;
+  arrival_date: number | null;
+  created: number;
+  currency: string;
+  id: string;
+  status: string;
+}
+
+export interface StripePayoutList {
+  data: StripePayout[];
+}
+
+export interface StripePaymentIntent {
+  id: string;
+}
+
+export interface StripeRefund {
+  id: string;
+}
+
+export type StripeRefundReason =
+  | 'duplicate'
+  | 'fraudulent'
+  | 'requested_by_customer';
+
+export interface StripeBalance {
+  available: Array<{ amount: number }>;
+  pending: Array<{ amount: number }>;
+}
+
+export interface StripeWebhookEvent {
+  id: string;
+  type: string;
+  data: {
+    object: unknown;
+  };
+}
+
+interface StripeLikeClient {
+  checkout: {
+    sessions: {
+      create(
+        params: StripeCheckoutSessionCreateParams,
+      ): Promise<StripeCheckoutSession>;
+      retrieve(sessionId: string): Promise<StripeCheckoutSession>;
+    };
+  };
+  accounts: {
+    create(params: StripeAccountCreateParams): Promise<StripeAccount>;
+    createLoginLink(accountId: string): Promise<{ url: string }>;
+    retrieve(accountId: string): Promise<StripeAccount>;
+  };
+  accountLinks: {
+    create(params: StripeAccountLinkCreateParams): Promise<{ url: string }>;
+  };
+  balance: {
+    retrieve(params: { stripeAccount: string }): Promise<StripeBalance>;
+  };
+  payouts: {
+    create(
+      params: { amount: number; currency: string },
+      options: { stripeAccount: string },
+    ): Promise<StripePayout>;
+    list(
+      params: { limit: number },
+      options: { stripeAccount: string },
+    ): Promise<StripePayoutList>;
+  };
+  paymentIntents: {
+    create(params: Record<string, unknown>): Promise<StripePaymentIntent>;
+  };
+  refunds: {
+    create(params: Record<string, unknown>): Promise<StripeRefund>;
+  };
+  webhooks: {
+    constructEvent(
+      body: Buffer,
+      signature: string,
+      endpointSecret: string,
+    ): StripeWebhookEvent;
+  };
+}
+
+interface StripeConstructor {
+  new (key: string, config?: Record<string, unknown>): StripeLikeClient;
+}
+
 @Injectable()
 export class MarketplaceStripeService {
-  private readonly stripe: Stripe;
-  private readonly logger = new Logger(MarketplaceStripeService.name);
+  private readonly stripe: StripeLikeClient;
 
   constructor() {
     const secretKey = process.env.STRIPE_SECRET_KEY;
     if (!secretKey) {
       throw new Error('STRIPE_SECRET_KEY is required');
     }
-    this.stripe = new Stripe(secretKey);
+
+    const StripeClient = require('stripe') as StripeConstructor;
+    this.stripe = new StripeClient(secretKey);
   }
 
-  get client(): Stripe {
+  get client(): StripeLikeClient {
     return this.stripe;
   }
 
-  /** Create a checkout session for a marketplace purchase */
-  async createCheckoutSession(
-    params: Stripe.Checkout.SessionCreateParams,
-  ): Promise<Stripe.Checkout.Session> {
-    return this.stripe.checkout.sessions.create(params);
-  }
-
-  /** Create a Stripe Connect Express account for a seller */
-  async createConnectAccount(
-    params: Stripe.AccountCreateParams,
-  ): Promise<Stripe.Account> {
-    return this.stripe.accounts.create(params);
-  }
-
-  /** Generate an onboarding link for a Connect account */
-  async createAccountLink(
-    params: Stripe.AccountLinkCreateParams,
-  ): Promise<Stripe.AccountLink> {
-    return this.stripe.accountLinks.create(params);
-  }
-
-  /** Generate a dashboard login link for a Connect account */
-  async createLoginLink(accountId: string): Promise<Stripe.LoginLink> {
-    return this.stripe.accounts.createLoginLink(accountId);
-  }
-
-  /** Verify a webhook signature */
   constructEvent(
     body: Buffer,
     signature: string,
     endpointSecret: string,
-  ): Stripe.Event {
+  ): StripeWebhookEvent {
     return this.stripe.webhooks.constructEvent(body, signature, endpointSecret);
   }
 }

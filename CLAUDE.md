@@ -22,7 +22,8 @@ Consumes `@genfeedai/*` packages from NPM:
 
 ## Architecture
 
-- **Database:** MongoDB (same cluster as genfeed.ai, separate `marketplace` database)
+- **Database target:** AWS Postgres cluster via `DATABASE_URL`
+- **ORM/runtime:** Prisma + PostgreSQL for sellers, listings, purchases, and seed scripts
 - **Auth:** Clerk (shared application with genfeed.ai)
 - **Payments:** Stripe (checkout sessions + Stripe Connect for sellers)
 - **Integration:** HTTP/SDK boundary with genfeed.ai (no compile-time imports)
