@@ -41,6 +41,7 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import type { Request } from 'express';
+import type { StripePayout } from '@api/common/services/stripe.service';
 
 @AutoSwagger()
 @Controller('seller')
@@ -227,7 +228,7 @@ export class SellersController {
     const refreshUrl = `${marketplaceUrl}/dashboard?stripe=refresh`;
 
     const onboardingUrl = await this.stripeConnectService.createOnboardingLink({
-      accountId: stripeAccountId,
+      accountId: stripeAccountId!,
       refreshUrl,
       returnUrl,
     });
@@ -382,7 +383,7 @@ export class SellersController {
     return {
       data: {
         attributes: {
-          payouts: payouts.data.map((p) => ({
+          payouts: payouts.data.map((p: StripePayout) => ({
             amount: p.amount,
             arrivalDate: p.arrival_date,
             created: p.created,

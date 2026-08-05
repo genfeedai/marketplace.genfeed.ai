@@ -1,11 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsMongoId, IsOptional, IsString, MaxLength } from 'class-validator';
+import { IsOptional, IsString, MaxLength } from 'class-validator';
 
 export class CreatePurchaseDto {
   @ApiProperty({
     description: 'ID of the listing to purchase',
   })
-  @IsMongoId()
+  @IsString()
   listingId!: string;
 
   @ApiProperty({
@@ -13,7 +13,7 @@ export class CreatePurchaseDto {
     required: false,
   })
   @IsOptional()
-  @IsMongoId()
+  @IsString()
   giftRecipientId?: string;
 
   @ApiProperty({

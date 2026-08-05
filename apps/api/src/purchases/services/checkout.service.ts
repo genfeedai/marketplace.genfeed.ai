@@ -1,9 +1,13 @@
 import { HandleErrors } from '@api/common/decorators/error-handler.decorator';
-import type { MarketplaceStripeService } from '@api/common/services/stripe.service';
+import type { ListingRecord, PurchaseRecord } from '@api/common/prisma/marketplace.types';
+import { createLegacyId } from '@api/common/prisma/legacy-id.util';
+import type {
+  MarketplaceStripeService,
+  StripeCheckoutSession,
+  StripeCheckoutSessionCreateParams,
+} from '@api/common/services/stripe.service';
 import type { MarketplaceConfigService } from '@api/config/config.service';
 import type { ListingsService } from '@api/listings/services/listings.service';
-import { PurchaseEntity } from '@api/purchases/entities/purchase.entity';
-import type { Purchase } from '@api/purchases/schemas/purchase.schema';
 import type { PurchasesService } from '@api/purchases/services/purchases.service';
 import type { SellersService } from '@api/sellers/services/sellers.service';
 import { PurchaseStatus } from '@genfeedai/enums';
@@ -13,8 +17,7 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { Types } from 'mongoose';
-import type Stripe from 'stripe';
+import type { Prisma } from '@prisma/client';
 
 @Injectable()
 export class CheckoutService {
@@ -29,9 +32,6 @@ export class CheckoutService {
     private readonly sellersService: SellersService,
   ) {}
 
-  /**
-   * Create a Stripe Checkout session for a marketplace listing
-   */
   @HandleErrors('create checkout session', 'checkout')
   async createCheckoutSession(params: {
     listingId: string;
@@ -39,7 +39,7 @@ export class CheckoutService {
     organizationId: string;
     successUrl: string;
     cancelUrl: string;
-  }): Promise<{ url: string; sessionId: string; purchase: Purchase }> {
+  }): Promise<{ url: string; sessionId: string; purchase: PurchaseRecord }> {
     const { listingId, buyerId, organizationId, successUrl, cancelUrl } =
       params;
 
@@ -48,7 +48,6 @@ export class CheckoutService {
       listingId,
     });
 
-    // Check if already purchased
     const alreadyPurchased = await this.purchasesService.hasAlreadyPurchased(
       listingId,
       buyerId,
@@ -57,11 +56,11 @@ export class CheckoutService {
       throw new BadRequestException('You already own this item');
     }
 
-    // Get the listing
     const listing = await this.listingsService.getPublishedListing(listingId);
     if (!listing) {
       throw new NotFoundException('Listing not found');
     }
+
     if (listing.pricingTier === 'premium') {
       throw new BadRequestException(
         'Premium listings are not purchasable via checkout.',
@@ -74,24 +73,23 @@ export class CheckoutService {
       );
     }
 
-    // Calculate commission
     const { platformFee, sellerEarnings } =
       this.purchasesService.calculateCommission(listing.price);
 
-    // Create pending purchase record
-    const purchaseEntity = new PurchaseEntity({
-      buyer: new Types.ObjectId(buyerId),
+    const purchase = await this.purchasesService.create({
+      buyer: buyerId,
       currency: listing.currency,
       discount: 0,
+      id: createLegacyId(),
       isDeleted: false,
-      listing: new Types.ObjectId(listingId),
+      listing: listingId,
       listingSnapshot: {
         price: listing.price,
         title: listing.title,
         type: listing.type,
         version: listing.version,
-      },
-      organization: new Types.ObjectId(organizationId),
+      } as Prisma.InputJsonValue,
+      organization: organizationId,
       platformFee,
       seller: listing.seller,
       sellerEarnings,
@@ -100,23 +98,16 @@ export class CheckoutService {
       total: listing.price,
     });
 
-    const purchase = await this.purchasesService.create(
-      // @ts-expect-error TS2345
-      purchaseEntity as unknown as Purchase,
-    );
-
-    // Create Stripe Checkout session
     const session = await this.createStripeSession({
       buyerId,
       cancelUrl,
       listing,
       organizationId,
-      purchaseId: purchase._id.toString(),
+      purchaseId: purchase._id,
       successUrl,
     });
 
-    // Update purchase with Stripe session ID
-    await this.purchasesService.patch(purchase._id.toString(), {
+    await this.purchasesService.patch(purchase._id, {
       stripeSessionId: session.id,
     });
 
@@ -134,27 +125,14 @@ export class CheckoutService {
     };
   }
 
-  /**
-   * Create Stripe Checkout session.
-   * If the seller has completed Stripe Connect onboarding, funds are routed
-   * via transfer_data with application_fee_amount for platform commission.
-   */
   private async createStripeSession(params: {
-    listing: {
-      _id: Types.ObjectId;
-      title: string;
-      price: number;
-      currency: string;
-      thumbnail?: string;
-      shortDescription: string;
-      seller: Types.ObjectId;
-    };
+    listing: ListingRecord;
     purchaseId: string;
     buyerId: string;
     organizationId: string;
     successUrl: string;
     cancelUrl: string;
-  }): Promise<Stripe.Checkout.Session> {
+  }): Promise<StripeCheckoutSession> {
     const {
       listing,
       purchaseId,
@@ -164,7 +142,7 @@ export class CheckoutService {
       cancelUrl,
     } = params;
 
-    const sessionConfig: Stripe.Checkout.SessionCreateParams = {
+    const sessionConfig: StripeCheckoutSessionCreateParams = {
       allow_promotion_codes: true,
       cancel_url: `${cancelUrl}?session_id={CHECKOUT_SESSION_ID}`,
       line_items: [
@@ -183,10 +161,10 @@ export class CheckoutService {
       ],
       metadata: {
         buyerId,
-        listingId: listing._id.toString(),
+        listingId: listing._id,
         organizationId,
         purchaseId,
-        sellerId: listing.seller.toString(),
+        sellerId: listing.seller,
         type: 'marketplace',
       },
       mode: 'payment',
@@ -194,7 +172,6 @@ export class CheckoutService {
       success_url: `${successUrl}?session_id={CHECKOUT_SESSION_ID}`,
     };
 
-    // Route funds to seller's Stripe Connect account if onboarding is complete
     const seller = await this.sellersService.findOne({
       _id: listing.seller,
       isDeleted: false,
@@ -204,6 +181,7 @@ export class CheckoutService {
       const { platformFee } = this.purchasesService.calculateCommission(
         listing.price,
       );
+
       sessionConfig.payment_intent_data = {
         application_fee_amount: platformFee,
         transfer_data: {
@@ -215,20 +193,14 @@ export class CheckoutService {
     return this.stripeService.client.checkout.sessions.create(sessionConfig);
   }
 
-  /**
-   * Get checkout session details
-   */
   @HandleErrors('get checkout session', 'checkout')
-  getCheckoutSession(sessionId: string): Promise<Stripe.Checkout.Session> {
+  getCheckoutSession(sessionId: string): Promise<StripeCheckoutSession> {
     return this.stripeService.client.checkout.sessions.retrieve(sessionId);
   }
 
-  /**
-   * Handle successful checkout (called by webhook)
-   */
   @HandleErrors('handle successful checkout', 'checkout')
-  async handleSuccessfulCheckout(session: Stripe.Checkout.Session): Promise<{
-    purchase: Purchase;
+  async handleSuccessfulCheckout(session: StripeCheckoutSession): Promise<{
+    purchase: PurchaseRecord;
     success: boolean;
   }> {
     const purchaseId = session.metadata?.purchaseId;
@@ -238,15 +210,14 @@ export class CheckoutService {
         `${this.constructorName} no purchaseId in session metadata`,
         { sessionId: session.id },
       );
-      return { purchase: null as unknown as Purchase, success: false };
+
+      return { purchase: null as unknown as PurchaseRecord, success: false };
     }
 
-    // Complete the purchase
     const purchase = await this.purchasesService.completePurchase(purchaseId);
 
-    // Update with payment details
     await this.purchasesService.patch(purchaseId, {
-      stripePaymentIntentId: session.payment_intent as string,
+      stripePaymentIntentId: session.payment_intent ?? null,
     });
 
     this.logger.log(`${this.constructorName} checkout completed successfully`, {
@@ -258,9 +229,6 @@ export class CheckoutService {
     return { purchase, success: true };
   }
 
-  /**
-   * Handle failed checkout
-   */
   @HandleErrors('handle failed checkout', 'checkout')
   async handleFailedCheckout(sessionId: string, reason: string): Promise<void> {
     const session = await this.getCheckoutSession(sessionId);

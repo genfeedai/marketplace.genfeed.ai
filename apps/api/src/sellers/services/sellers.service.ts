@@ -1,39 +1,174 @@
 import { HandleErrors } from '@api/common/decorators/error-handler.decorator';
-import type {
-  AggregatePaginateModel,
-  AggregatePaginateResult,
-} from '@api/common/services/base.service';
-import { BaseService } from '@api/common/services/base.service';
-import { customLabels } from '@api/common/utils/pagination.util';
+import { buildOrderBy } from '@api/common/prisma/order-by.util';
+import { paginateDocs, type PaginatedResult } from '@api/common/prisma/pagination.util';
+import { PrismaService } from '@api/common/prisma/prisma.service';
+import { createLegacyId } from '@api/common/prisma/legacy-id.util';
+import { mapSellerRecord } from '@api/common/prisma/marketplace.mapper';
+import type { SellerRecord } from '@api/common/prisma/marketplace.types';
 import { QueryDefaultsUtil } from '@api/common/utils/query-defaults.util';
-import { handleQuerySort } from '@api/common/utils/sort.util';
 import type { AdminSellerQueryDto } from '@api/sellers/dto/admin-seller-query.dto';
 import type { CreateSellerDto } from '@api/sellers/dto/create-seller.dto';
 import type { UpdateSellerDto } from '@api/sellers/dto/update-seller.dto';
-import { SellerEntity } from '@api/sellers/entities/seller.entity';
-import { Seller } from '@api/sellers/schemas/seller.schema';
 import { SellerBadgeTier, SellerStatus } from '@genfeedai/enums';
-import { BadRequestException, Injectable } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { type PipelineStage, Types } from 'mongoose';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import slugify from 'slugify';
 
+interface SellerPatchInput extends Partial<UpdateSellerDto> {
+  payoutEnabled?: boolean;
+  status?: string;
+  stripeAccountId?: string | null;
+  stripeOnboardingComplete?: boolean;
+}
+
 @Injectable()
-export class SellersService extends BaseService<
-  Seller,
-  CreateSellerDto,
-  UpdateSellerDto
-> {
-  constructor(
-    @InjectModel(Seller.name)
-    protected readonly model: AggregatePaginateModel<Seller>,
-  ) {
-    super(model);
+export class SellersService {
+  private readonly logger = new Logger(SellersService.name);
+  private static readonly sortableFields = [
+    'badgeTier',
+    'createdAt',
+    'displayName',
+    'followerCount',
+    'rating',
+    'reviewCount',
+    'slug',
+    'status',
+    'totalEarnings',
+    'totalSales',
+    'updatedAt',
+  ] as const;
+
+  constructor(private readonly prisma: PrismaService) {}
+
+  private buildWhere(params: Record<string, unknown>): Prisma.SellerWhereInput {
+    const where: Prisma.SellerWhereInput = {};
+
+    if (typeof params._id === 'string') {
+      where.id = params._id;
+    }
+
+    if (typeof params.slug === 'string') {
+      where.slug = params.slug;
+    }
+
+    if (typeof params.user === 'string') {
+      where.user = params.user;
+    }
+
+    if (typeof params.organization === 'string') {
+      where.organization = params.organization;
+    }
+
+    if (typeof params.isDeleted === 'boolean') {
+      where.isDeleted = params.isDeleted;
+    }
+
+    if (typeof params.status === 'string') {
+      where.status = params.status;
+    }
+
+    if (typeof params.badgeTier === 'string') {
+      where.badgeTier = params.badgeTier;
+    }
+
+    return where;
   }
 
-  /**
-   * Check if a user is eligible to become a seller
-   */
+  private async updateSeller(
+    sellerId: string,
+    data: Prisma.SellerUpdateInput,
+  ): Promise<SellerRecord | null> {
+    try {
+      const seller = await this.prisma.seller.update({
+        data,
+        where: { id: sellerId },
+      });
+
+      return mapSellerRecord(seller);
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2025'
+      ) {
+        return null;
+      }
+
+      throw error;
+    }
+  }
+
+  async create(
+    data: Prisma.SellerUncheckedCreateInput,
+  ): Promise<SellerRecord> {
+    const seller = await this.prisma.seller.create({ data });
+    return mapSellerRecord(seller);
+  }
+
+  async find(params: Record<string, unknown>): Promise<SellerRecord[]> {
+    const sellers = await this.prisma.seller.findMany({
+      where: this.buildWhere(params),
+    });
+
+    return sellers.map(mapSellerRecord);
+  }
+
+  async findOne(params: Record<string, unknown>): Promise<SellerRecord | null> {
+    const seller = await this.prisma.seller.findFirst({
+      where: this.buildWhere(params),
+    });
+
+    return seller ? mapSellerRecord(seller) : null;
+  }
+
+  async patch(
+    id: string,
+    updateDto: SellerPatchInput,
+  ): Promise<SellerRecord | null> {
+    const data: Prisma.SellerUpdateInput = {};
+
+    if (updateDto.avatar !== undefined) {
+      data.avatar = updateDto.avatar;
+    }
+
+    if (updateDto.bio !== undefined) {
+      data.bio = updateDto.bio;
+    }
+
+    if (updateDto.displayName !== undefined) {
+      data.displayName = updateDto.displayName;
+    }
+
+    if (updateDto.social !== undefined) {
+      data.social = updateDto.social as Prisma.InputJsonValue;
+    }
+
+    if (updateDto.stripeAccountId !== undefined) {
+      data.stripeAccountId = updateDto.stripeAccountId;
+    }
+
+    if (updateDto.stripeOnboardingComplete !== undefined) {
+      data.stripeOnboardingComplete = updateDto.stripeOnboardingComplete;
+    }
+
+    if (updateDto.status !== undefined) {
+      data.status = updateDto.status;
+    }
+
+    if (updateDto.payoutEnabled !== undefined) {
+      data.payoutEnabled = updateDto.payoutEnabled;
+    }
+
+    if (updateDto.website !== undefined) {
+      data.website = updateDto.website;
+    }
+
+    if (Object.keys(data).length === 0) {
+      return this.findOne({ _id: id });
+    }
+
+    return this.updateSeller(id, data);
+  }
+
   @HandleErrors('check seller eligibility', 'sellers')
   async checkSellerEligibility(
     userId: string,
@@ -53,9 +188,6 @@ export class SellersService extends BaseService<
     return { eligible: true };
   }
 
-  /**
-   * Generate a unique seller slug from display name
-   */
   @HandleErrors('generate seller slug', 'sellers')
   async generateSellerSlug(displayName: string): Promise<string> {
     const baseSlug = slugify(displayName, {
@@ -67,23 +199,25 @@ export class SellersService extends BaseService<
     let slug = baseSlug;
     let counter = 1;
 
-    while (await this.model.findOne({ slug }).exec()) {
+    while (
+      await this.prisma.seller.findFirst({
+        select: { id: true },
+        where: { slug },
+      })
+    ) {
       slug = `${baseSlug}-${counter}`;
-      counter++;
+      counter += 1;
     }
 
     return slug;
   }
 
-  /**
-   * Create a new seller profile
-   */
   @HandleErrors('create seller profile', 'sellers')
   async createSellerProfile(
     userId: string,
     organizationId: string,
     dto: CreateSellerDto,
-  ): Promise<Seller> {
+  ): Promise<SellerRecord> {
     this.logOperation('createSellerProfile', 'started', { userId });
 
     const eligibility = await this.checkSellerEligibility(
@@ -96,19 +230,22 @@ export class SellersService extends BaseService<
 
     const slug = await this.generateSellerSlug(dto.displayName);
 
-    const sellerEntity = new SellerEntity({
-      ...dto,
+    const seller = await this.create({
+      avatar: dto.avatar,
       badgeTier: SellerBadgeTier.NEW,
+      bio: dto.bio,
+      displayName: dto.displayName,
+      id: createLegacyId(),
       isDeleted: false,
-      organization: new Types.ObjectId(organizationId),
+      organization: organizationId,
+      payoutEnabled: false,
       slug,
+      social: (dto.social ?? {}) as Prisma.InputJsonValue,
       status: SellerStatus.APPROVED,
-      user: new Types.ObjectId(userId),
+      stripeOnboardingComplete: false,
+      user: userId,
+      website: dto.website,
     });
-
-    const seller = await this.create(
-      sellerEntity as unknown as CreateSellerDto,
-    );
 
     this.logOperation('createSellerProfile', 'completed', {
       sellerId: seller._id,
@@ -118,38 +255,33 @@ export class SellersService extends BaseService<
     return seller;
   }
 
-  /**
-   * Find seller by user ID
-   */
   @HandleErrors('find by user id', 'sellers')
-  findByUserId(userId: string): Promise<Seller | null> {
-    return this.model
-      .findOne({
+  async findByUserId(userId: string): Promise<SellerRecord | null> {
+    const seller = await this.prisma.seller.findFirst({
+      where: {
         isDeleted: false,
-        user: new Types.ObjectId(userId),
-      })
-      .exec();
+        user: userId,
+      },
+    });
+
+    return seller ? mapSellerRecord(seller) : null;
   }
 
-  /**
-   * Find seller by slug
-   */
   @HandleErrors('find by slug', 'sellers')
-  findBySlug(slug: string): Promise<Seller | null> {
-    return this.model
-      .findOne({
+  async findBySlug(slug: string): Promise<SellerRecord | null> {
+    const seller = await this.prisma.seller.findFirst({
+      where: {
         isDeleted: false,
         slug,
-      })
-      .exec();
+      },
+    });
+
+    return seller ? mapSellerRecord(seller) : null;
   }
 
-  /**
-   * Update seller badge tier based on total sales
-   */
   @HandleErrors('update badge tier', 'sellers')
-  async updateBadgeTier(sellerId: string): Promise<Seller | null> {
-    const seller = await this.model.findById(sellerId).exec();
+  async updateBadgeTier(sellerId: string): Promise<SellerRecord | null> {
+    const seller = await this.findOne({ _id: sellerId });
     if (!seller) {
       return null;
     }
@@ -163,15 +295,12 @@ export class SellersService extends BaseService<
     }
 
     if (seller.badgeTier !== newBadgeTier) {
-      return this.patch(sellerId, { badgeTier: newBadgeTier });
+      return this.updateSeller(sellerId, { badgeTier: newBadgeTier });
     }
 
     return seller;
   }
 
-  /**
-   * Update seller statistics
-   */
   @HandleErrors('update seller stats', 'sellers')
   async updateSellerStats(
     sellerId: string,
@@ -182,43 +311,38 @@ export class SellersService extends BaseService<
       reviewCount?: number;
       followerCount?: number;
     },
-  ): Promise<Seller | null> {
+  ): Promise<SellerRecord | null> {
     this.logOperation('updateSellerStats', 'started', { sellerId, updates });
 
-    const updateOperations: Record<string, number> = {};
+    const data: Prisma.SellerUpdateInput = {};
 
     if (updates.totalEarnings !== undefined) {
-      updateOperations.totalEarnings = updates.totalEarnings;
-    }
-    if (updates.totalSales !== undefined) {
-      updateOperations.totalSales = updates.totalSales;
-    }
-    if (updates.rating !== undefined) {
-      updateOperations.rating = updates.rating;
-    }
-    if (updates.reviewCount !== undefined) {
-      updateOperations.reviewCount = updates.reviewCount;
-    }
-    if (updates.followerCount !== undefined) {
-      updateOperations.followerCount = updates.followerCount;
+      data.totalEarnings = { increment: updates.totalEarnings };
     }
 
-    const result = await this.model
-      .findByIdAndUpdate(
-        sellerId,
-        { $inc: updateOperations },
-        { returnDocument: 'after' },
-      )
-      .exec();
+    if (updates.totalSales !== undefined) {
+      data.totalSales = { increment: updates.totalSales };
+    }
+
+    if (updates.rating !== undefined) {
+      data.rating = { increment: updates.rating };
+    }
+
+    if (updates.reviewCount !== undefined) {
+      data.reviewCount = { increment: updates.reviewCount };
+    }
+
+    if (updates.followerCount !== undefined) {
+      data.followerCount = { increment: updates.followerCount };
+    }
+
+    const result = await this.updateSeller(sellerId, data);
 
     this.logOperation('updateSellerStats', 'completed', { sellerId });
 
     return result;
   }
 
-  /**
-   * Increment specific stats atomically
-   */
   @HandleErrors('increment seller stats', 'sellers')
   incrementSellerStats(
     sellerId: string,
@@ -228,69 +352,86 @@ export class SellersService extends BaseService<
       reviewCount?: number;
       followerCount?: number;
     },
-  ): Promise<Seller | null> {
-    return this.model
-      .findByIdAndUpdate(
-        sellerId,
-        { $inc: increments },
-        { returnDocument: 'after' },
-      )
-      .exec();
-  }
-
-  private escapeRegex(str: string): string {
-    return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  ): Promise<SellerRecord | null> {
+    return this.updateSellerStats(sellerId, increments);
   }
 
   @HandleErrors('get admin sellers', 'sellers')
   async getAdminSellers(
     organizationId: string,
     query: AdminSellerQueryDto,
-  ): Promise<AggregatePaginateResult<Seller>> {
+  ): Promise<PaginatedResult<SellerRecord>> {
     this.logOperation('getAdminSellers', 'started', {
       organizationId,
       query,
     });
 
-    const options = {
-      customLabels,
-      ...QueryDefaultsUtil.getPaginationDefaults(query),
-    };
+    const { limit, page, pagination } =
+      QueryDefaultsUtil.getPaginationDefaults(query);
 
-    const matchConditions: Record<string, unknown> = {
+    const where: Prisma.SellerWhereInput = {
       isDeleted: false,
-      organization: new Types.ObjectId(organizationId),
+      organization: organizationId,
     };
 
     if (query.status) {
-      matchConditions.status = query.status;
+      where.status = query.status;
     }
 
-    const sanitizedSearch = query.search
-      ? this.escapeRegex(query.search.slice(0, 200))
-      : undefined;
+    const search = query.search?.trim().slice(0, 200);
+    if (search) {
+      where.OR = [
+        { displayName: { contains: search, mode: 'insensitive' } },
+        { slug: { contains: search, mode: 'insensitive' } },
+      ];
+    }
 
-    const aggregate: PipelineStage[] = [
-      { $match: matchConditions },
-      ...(sanitizedSearch
-        ? [
-            {
-              $match: {
-                $or: [
-                  { displayName: { $options: 'i', $regex: sanitizedSearch } },
-                  { slug: { $options: 'i', $regex: sanitizedSearch } },
-                ],
-              },
-            },
-          ]
-        : []),
-      { $sort: handleQuerySort(query.sort) },
-    ];
+    const orderBy = buildOrderBy(
+      query.sort,
+      SellersService.sortableFields,
+      'createdAt',
+    );
 
-    const result = await this.findAll(aggregate, options);
+    if (!pagination) {
+      const docs = await this.prisma.seller.findMany({
+        orderBy,
+        where,
+      });
+
+      const result = paginateDocs({
+        docs: docs.map(mapSellerRecord),
+        limit: Math.max(docs.length, 1),
+        page: 1,
+        total: docs.length,
+      });
+
+      this.logOperation('getAdminSellers', 'completed', {
+        count: result.docs.length,
+        organizationId,
+      });
+
+      return result;
+    }
+
+    const [total, docs] = await this.prisma.$transaction([
+      this.prisma.seller.count({ where }),
+      this.prisma.seller.findMany({
+        orderBy,
+        skip: (page - 1) * limit,
+        take: limit,
+        where,
+      }),
+    ]);
+
+    const result = paginateDocs({
+      docs: docs.map(mapSellerRecord),
+      limit,
+      page,
+      total,
+    });
 
     this.logOperation('getAdminSellers', 'completed', {
-      count: result.docs?.length ?? 0,
+      count: result.docs.length,
       organizationId,
     });
 
@@ -301,19 +442,19 @@ export class SellersService extends BaseService<
   async getAdminSellerById(
     organizationId: string,
     sellerId: string,
-  ): Promise<Seller | null> {
+  ): Promise<SellerRecord | null> {
     this.logOperation('getAdminSellerById', 'started', {
       organizationId,
       sellerId,
     });
 
-    const seller = await this.model
-      .findOne({
-        _id: sellerId,
+    const seller = await this.prisma.seller.findFirst({
+      where: {
+        id: sellerId,
         isDeleted: false,
-        organization: new Types.ObjectId(organizationId),
-      })
-      .exec();
+        organization: organizationId,
+      },
+    });
 
     this.logOperation('getAdminSellerById', 'completed', {
       found: Boolean(seller),
@@ -321,7 +462,7 @@ export class SellersService extends BaseService<
       sellerId,
     });
 
-    return seller;
+    return seller ? mapSellerRecord(seller) : null;
   }
 
   @HandleErrors('set seller status', 'sellers')
@@ -329,38 +470,44 @@ export class SellersService extends BaseService<
     organizationId: string,
     sellerId: string,
     status: SellerStatus,
-  ): Promise<Seller> {
+  ): Promise<SellerRecord> {
     const seller = await this.getAdminSellerById(organizationId, sellerId);
 
     if (!seller) {
       throw new BadRequestException('Seller not found');
     }
 
-    return (await this.patch(sellerId, { status }))!;
+    return (await this.updateSeller(sellerId, { status }))!;
   }
 
   @HandleErrors('get admin payouts', 'sellers')
   async getAdminPayouts(
     organizationId: string,
     query: AdminSellerQueryDto,
-  ): Promise<AggregatePaginateResult<Seller>> {
+  ): Promise<PaginatedResult<SellerRecord>> {
     this.logOperation('getAdminPayouts', 'started', {
       organizationId,
       query,
     });
 
-    const payoutQuery: AdminSellerQueryDto = {
+    const result = await this.getAdminSellers(organizationId, {
       ...query,
       sort: query.sort || 'totalEarnings: -1',
-    };
-
-    const result = await this.getAdminSellers(organizationId, payoutQuery);
+    });
 
     this.logOperation('getAdminPayouts', 'completed', {
-      count: result.docs?.length ?? 0,
+      count: result.docs.length,
       organizationId,
     });
 
     return result;
+  }
+
+  protected logOperation(
+    method: string,
+    status: string,
+    meta?: Record<string, unknown>,
+  ): void {
+    this.logger.log(`${method} ${status}`, meta);
   }
 }

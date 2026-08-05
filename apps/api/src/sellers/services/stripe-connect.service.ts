@@ -1,8 +1,15 @@
 import { HandleErrors } from '@api/common/decorators/error-handler.decorator';
-import type { MarketplaceStripeService } from '@api/common/services/stripe.service';
+import type {
+  MarketplaceStripeService,
+  StripeAccount,
+  StripePaymentIntent,
+  StripePayout,
+  StripePayoutList,
+  StripeRefund,
+  StripeRefundReason,
+} from '@api/common/services/stripe.service';
 import type { MarketplaceConfigService } from '@api/config/config.service';
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
-import type Stripe from 'stripe';
 
 @Injectable()
 export class StripeConnectService {
@@ -22,7 +29,7 @@ export class StripeConnectService {
     email: string;
     sellerId: string;
     displayName: string;
-  }): Promise<Stripe.Account> {
+  }): Promise<StripeAccount> {
     const { email, sellerId, displayName } = params;
 
     this.logger.log(`${this.constructorName} createConnectAccount`, {
@@ -83,7 +90,7 @@ export class StripeConnectService {
    * Retrieve Connect account details
    */
   @HandleErrors('get account details', 'stripe-connect')
-  async getAccountDetails(accountId: string): Promise<Stripe.Account> {
+  async getAccountDetails(accountId: string): Promise<StripeAccount> {
     return await this.stripeService.client.accounts.retrieve(accountId);
   }
 
@@ -116,8 +123,14 @@ export class StripeConnectService {
       stripeAccount: accountId,
     });
 
-    const available = balance.available.reduce((sum, b) => sum + b.amount, 0);
-    const pending = balance.pending.reduce((sum, b) => sum + b.amount, 0);
+    const available = balance.available.reduce(
+      (sum: number, entry: { amount: number }) => sum + entry.amount,
+      0,
+    );
+    const pending = balance.pending.reduce(
+      (sum: number, entry: { amount: number }) => sum + entry.amount,
+      0,
+    );
 
     return { available, pending };
   }
@@ -130,7 +143,7 @@ export class StripeConnectService {
     accountId: string;
     amount: number;
     currency?: string;
-  }): Promise<Stripe.Payout> {
+  }): Promise<StripePayout> {
     const { accountId, amount, currency = 'usd' } = params;
 
     if (amount <= 0) {
@@ -155,7 +168,7 @@ export class StripeConnectService {
   async listPayouts(
     accountId: string,
     limit = 10,
-  ): Promise<Stripe.ApiList<Stripe.Payout>> {
+  ): Promise<StripePayoutList> {
     return await this.stripeService.client.payouts.list(
       { limit },
       { stripeAccount: accountId },
@@ -172,7 +185,7 @@ export class StripeConnectService {
     sellerAccountId: string;
     applicationFeeAmount: number;
     metadata: Record<string, string>;
-  }): Promise<Stripe.PaymentIntent> {
+  }): Promise<StripePaymentIntent> {
     const {
       amount,
       currency,
@@ -199,8 +212,8 @@ export class StripeConnectService {
   async processRefund(params: {
     paymentIntentId: string;
     amount?: number;
-    reason?: Stripe.RefundCreateParams.Reason;
-  }): Promise<Stripe.Refund> {
+    reason?: StripeRefundReason;
+  }): Promise<StripeRefund> {
     const { paymentIntentId, amount, reason } = params;
 
     return await this.stripeService.client.refunds.create({
