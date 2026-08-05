@@ -343,7 +343,7 @@ async function upsertOfficialListing(
     return 'inserted';
   }
 
-  const update: Prisma.ListingUpdateInput = {};
+  const update: Prisma.ListingUncheckedUpdateInput = {};
 
   for (const field of LISTING_FIELDS_TO_CHECK) {
     const nextValue = listing[field];
