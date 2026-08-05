@@ -1,6 +1,5 @@
 'use client';
 
-import { type GalleryItem, fetchLeaderboard } from '@/lib/api';
 import EmptyState from '@components/empty-state';
 import Loading from '@components/loading';
 import PageHeader from '@components/page-header';
@@ -12,6 +11,7 @@ import {
   useEffect,
   useState,
 } from 'react';
+import { fetchLeaderboard, type GalleryItem } from '@/lib/api';
 
 function LeaderboardContent(): ReactNode {
   const searchParams = useSearchParams();
