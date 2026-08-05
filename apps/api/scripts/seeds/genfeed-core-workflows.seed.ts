@@ -412,8 +412,6 @@ async function main(prisma: PrismaClient): Promise<void> {
 }
 
 void runScript('Seed GenFeed Core Workflows', main, args.uri).catch((error) => {
-  logger.error(
-    error instanceof Error ? error.message : 'Unknown seed failure',
-  );
+  logger.error(error instanceof Error ? error.message : 'Unknown seed failure');
   process.exitCode = 1;
 });

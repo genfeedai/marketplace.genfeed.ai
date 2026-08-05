@@ -1,6 +1,9 @@
 import { HandleErrors } from '@api/common/decorators/error-handler.decorator';
-import type { ListingRecord, PurchaseRecord } from '@api/common/prisma/marketplace.types';
 import { createLegacyId } from '@api/common/prisma/legacy-id.util';
+import type {
+  ListingRecord,
+  PurchaseRecord,
+} from '@api/common/prisma/marketplace.types';
 import type {
   MarketplaceStripeService,
   StripeCheckoutSession,

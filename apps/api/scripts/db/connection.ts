@@ -52,7 +52,9 @@ const DEFAULT_URL = process.env.DATABASE_URL;
 
 let prisma: PrismaClient | null = null;
 
-export async function connect(databaseUrl = DEFAULT_URL): Promise<PrismaClient> {
+export async function connect(
+  databaseUrl = DEFAULT_URL,
+): Promise<PrismaClient> {
   if (!databaseUrl) {
     throw new Error(
       'DATABASE_URL is not configured. Set DATABASE_URL or pass --uri=<postgres-url>.',

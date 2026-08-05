@@ -8,6 +8,7 @@ import type {
   JsonApiSingleResponse,
 } from '@api/common/interfaces/json-api.interface';
 import { SellerSerializer } from '@api/common/serializers';
+import type { StripePayout } from '@api/common/services/stripe.service';
 import {
   getIsSuperAdmin,
   getPublicMetadata,
@@ -41,7 +42,6 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import type { Request } from 'express';
-import type { StripePayout } from '@api/common/services/stripe.service';
 
 @AutoSwagger()
 @Controller('seller')

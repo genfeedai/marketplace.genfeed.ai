@@ -172,10 +172,7 @@ export class StripeConnectService {
    * List payouts for a Connect account
    */
   @HandleErrors('list payouts', 'stripe-connect')
-  async listPayouts(
-    accountId: string,
-    limit = 10,
-  ): Promise<StripePayoutList> {
+  async listPayouts(accountId: string, limit = 10): Promise<StripePayoutList> {
     return await this.stripeService.client.payouts.list(
       { limit },
       { stripeAccount: accountId },

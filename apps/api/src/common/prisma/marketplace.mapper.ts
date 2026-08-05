@@ -1,6 +1,17 @@
-import { asJsonObject, asOptionalJsonObject } from '@api/common/prisma/json.util';
-import type { ListingRecord, PurchaseRecord, SellerRecord } from '@api/common/prisma/marketplace.types';
-import type { Listing as PrismaListing, Purchase as PrismaPurchase, Seller as PrismaSeller } from '@prisma/client';
+import {
+  asJsonObject,
+  asOptionalJsonObject,
+} from '@api/common/prisma/json.util';
+import type {
+  ListingRecord,
+  PurchaseRecord,
+  SellerRecord,
+} from '@api/common/prisma/marketplace.types';
+import type {
+  Listing as PrismaListing,
+  Purchase as PrismaPurchase,
+  Seller as PrismaSeller,
+} from '@prisma/client';
 
 export function mapSellerRecord(seller: PrismaSeller): SellerRecord {
   return {
@@ -105,7 +116,9 @@ export function mapPurchaseRecord(
     listingData: purchase.listingRecord
       ? mapListingRecord(purchase.listingRecord)
       : undefined,
-    listingSnapshot: asJsonObject(purchase.listingSnapshot) as PurchaseRecord['listingSnapshot'],
+    listingSnapshot: asJsonObject(
+      purchase.listingSnapshot,
+    ) as PurchaseRecord['listingSnapshot'],
     organization: purchase.organization,
     paymentMethod: purchase.paymentMethod,
     platformFee: purchase.platformFee,

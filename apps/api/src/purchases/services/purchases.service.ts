@@ -1,14 +1,17 @@
 import { HandleErrors } from '@api/common/decorators/error-handler.decorator';
-import { buildOrderBy } from '@api/common/prisma/order-by.util';
-import { paginateDocs, type PaginatedResult } from '@api/common/prisma/pagination.util';
-import { PrismaService } from '@api/common/prisma/prisma.service';
 import { createLegacyId } from '@api/common/prisma/legacy-id.util';
 import { mapPurchaseRecord } from '@api/common/prisma/marketplace.mapper';
 import type { PurchaseRecord } from '@api/common/prisma/marketplace.types';
+import { buildOrderBy } from '@api/common/prisma/order-by.util';
+import {
+  type PaginatedResult,
+  paginateDocs,
+} from '@api/common/prisma/pagination.util';
+import type { PrismaService } from '@api/common/prisma/prisma.service';
 import { QueryDefaultsUtil } from '@api/common/utils/query-defaults.util';
+import type { ListingsService } from '@api/listings/services/listings.service';
 import type { CreatePurchaseDto } from '@api/purchases/dto/create-purchase.dto';
 import type { PurchaseQueryDto } from '@api/purchases/dto/purchase-query.dto';
-import type { ListingsService } from '@api/listings/services/listings.service';
 import type { SellersService } from '@api/sellers/services/sellers.service';
 import { PurchaseStatus } from '@genfeedai/enums';
 import {
@@ -623,7 +626,10 @@ export class PurchasesService {
     const fromDate = new Date();
     fromDate.setDate(fromDate.getDate() - 30);
 
-    const recentSalesMap = new Map<string, { count: number; revenue: number }>();
+    const recentSalesMap = new Map<
+      string,
+      { count: number; revenue: number }
+    >();
 
     for (const purchase of purchases) {
       totalEarnings += purchase.sellerEarnings;
@@ -775,7 +781,10 @@ export class PurchasesService {
     const fromDate = new Date();
     fromDate.setDate(fromDate.getDate() - Math.max(1, days));
 
-    const recentSalesMap = new Map<string, { count: number; revenue: number }>();
+    const recentSalesMap = new Map<
+      string,
+      { count: number; revenue: number }
+    >();
 
     for (const purchase of purchases) {
       totalPlatformFees += purchase.platformFee;

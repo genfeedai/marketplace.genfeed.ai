@@ -1,10 +1,13 @@
 import { HandleErrors } from '@api/common/decorators/error-handler.decorator';
-import { buildOrderBy } from '@api/common/prisma/order-by.util';
-import { paginateDocs, type PaginatedResult } from '@api/common/prisma/pagination.util';
-import { PrismaService } from '@api/common/prisma/prisma.service';
 import { createLegacyId } from '@api/common/prisma/legacy-id.util';
 import { mapSellerRecord } from '@api/common/prisma/marketplace.mapper';
 import type { SellerRecord } from '@api/common/prisma/marketplace.types';
+import { buildOrderBy } from '@api/common/prisma/order-by.util';
+import {
+  type PaginatedResult,
+  paginateDocs,
+} from '@api/common/prisma/pagination.util';
+import type { PrismaService } from '@api/common/prisma/prisma.service';
 import { QueryDefaultsUtil } from '@api/common/utils/query-defaults.util';
 import type { AdminSellerQueryDto } from '@api/sellers/dto/admin-seller-query.dto';
 import type { CreateSellerDto } from '@api/sellers/dto/create-seller.dto';
@@ -97,9 +100,7 @@ export class SellersService {
     }
   }
 
-  async create(
-    data: Prisma.SellerUncheckedCreateInput,
-  ): Promise<SellerRecord> {
+  async create(data: Prisma.SellerUncheckedCreateInput): Promise<SellerRecord> {
     const seller = await this.prisma.seller.create({ data });
     return mapSellerRecord(seller);
   }

@@ -1,19 +1,26 @@
 import { HandleErrors } from '@api/common/decorators/error-handler.decorator';
-import { buildOrderBy } from '@api/common/prisma/order-by.util';
-import { paginateDocs, type PaginatedResult } from '@api/common/prisma/pagination.util';
-import { PrismaService } from '@api/common/prisma/prisma.service';
 import { createLegacyId } from '@api/common/prisma/legacy-id.util';
 import { mapListingRecord } from '@api/common/prisma/marketplace.mapper';
 import type { ListingRecord } from '@api/common/prisma/marketplace.types';
+import { buildOrderBy } from '@api/common/prisma/order-by.util';
+import {
+  type PaginatedResult,
+  paginateDocs,
+} from '@api/common/prisma/pagination.util';
+import type { PrismaService } from '@api/common/prisma/prisma.service';
 import { QueryDefaultsUtil } from '@api/common/utils/query-defaults.util';
 import type { CreateListingDto } from '@api/listings/dto/create-listing.dto';
 import type { ListingQueryDto } from '@api/listings/dto/listing-query.dto';
 import type { UpdateListingDto } from '@api/listings/dto/update-listing.dto';
-import { SellerStatus, ListingStatus } from '@genfeedai/enums';
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import type { SellersService } from '@api/sellers/services/sellers.service';
+import { ListingStatus, SellerStatus } from '@genfeedai/enums';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import slugify from 'slugify';
-import type { SellersService } from '@api/sellers/services/sellers.service';
 
 interface ListingPatchInput extends Partial<UpdateListingDto> {
   canBeSoldSeparately?: boolean;
@@ -47,7 +54,9 @@ export class ListingsService {
     private readonly sellersService: SellersService,
   ) {}
 
-  private buildWhere(params: Record<string, unknown>): Prisma.ListingWhereInput {
+  private buildWhere(
+    params: Record<string, unknown>,
+  ): Prisma.ListingWhereInput {
     const where: Prisma.ListingWhereInput = {};
 
     if (typeof params._id === 'string') {
@@ -120,7 +129,9 @@ export class ListingsService {
     return mapListingRecord(listing);
   }
 
-  async findOne(params: Record<string, unknown>): Promise<ListingRecord | null> {
+  async findOne(
+    params: Record<string, unknown>,
+  ): Promise<ListingRecord | null> {
     const listing = await this.prisma.listing.findFirst({
       include: { sellerRecord: true },
       where: this.buildWhere(params),
