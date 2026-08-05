@@ -112,9 +112,16 @@ export class StripeConnectService {
   async getAccountBalance(
     accountId: string,
   ): Promise<{ available: number; pending: number }> {
-    const balance = await this.stripeService.client.balance.retrieve({
-      stripeAccount: accountId,
-    });
+    // `stripeAccount` is a RequestOption, not a request param. Stripe v22 no
+    // longer merges the two objects, so it belongs in the second argument.
+    // Passing it first would serialize it into the request instead of setting
+    // the Stripe-Account header, reporting the platform balance rather than the
+    // connected account's. `balance.retrieve` takes no params, hence the
+    // explicit `undefined`. Same shape as createPayout/listPayouts below.
+    const balance = await this.stripeService.client.balance.retrieve(
+      undefined,
+      { stripeAccount: accountId },
+    );
 
     const available = balance.available.reduce((sum, b) => sum + b.amount, 0);
     const pending = balance.pending.reduce((sum, b) => sum + b.amount, 0);
