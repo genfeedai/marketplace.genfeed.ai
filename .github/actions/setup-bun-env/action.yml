@@ -1,0 +1,89 @@
+name: Setup Bun Environment
+description: Standardize Node, Bun, dependency install and cache setup for CI jobs.
+
+inputs:
+  node-version:
+    description: Node.js version to install
+    required: false
+    default: '22.x'
+  bun-version:
+    description: Bun version to install. Defaults to the root packageManager pin.
+    required: false
+    default: '1.3.11'
+  install-command:
+    description: Dependency install command to run after toolchain setup
+    required: false
+    default: 'bun install --frozen-lockfile'
+  generate-prisma:
+    description: |
+      Run `prisma generate` when apps/api carries a Prisma schema. Jobs that
+      compile or execute API sources need the generated client on disk; lint
+      does not. The step is a no-op when no schema is present.
+    required: false
+    default: 'false'
+
+runs:
+  using: composite
+  steps:
+    - name: Setup Node.js
+      uses: actions/setup-node@v5
+      with:
+        node-version: ${{ inputs.node-version }}
+
+    - name: Setup Bun
+      uses: oven-sh/setup-bun@v2
+      with:
+        bun-version: ${{ inputs.bun-version }}
+
+    - name: Cache bun modules
+      uses: actions/cache@v5
+      with:
+        path: ~/.bun/install/cache
+        key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-bun-
+
+    - name: Cache Turbo
+      uses: actions/cache@v5
+      with:
+        path: .turbo
+        key: ${{ runner.os }}-turbo-${{ hashFiles('turbo.json', '**/bun.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-turbo-
+
+    # Retry with backoff against registry/CDN transients. `bun install` is
+    # idempotent, so a re-run only re-attempts what is still missing.
+    - name: Install dependencies
+      shell: bash
+      env:
+        MAX_ATTEMPTS: '3'
+      run: |
+        for attempt in $(seq 1 "${MAX_ATTEMPTS}"); do
+          echo "::group::install attempt ${attempt}/${MAX_ATTEMPTS}: ${{ inputs.install-command }}"
+          if ${{ inputs.install-command }}; then
+            echo "::endgroup::"
+            exit 0
+          fi
+          echo "::endgroup::"
+          if [ "${attempt}" -lt "${MAX_ATTEMPTS}" ]; then
+            backoff=$((10 * 2 ** (attempt - 1)))
+            echo "::warning::install attempt ${attempt}/${MAX_ATTEMPTS} failed; retrying in ${backoff}s"
+            sleep "${backoff}"
+          fi
+        done
+        echo "::error::install failed after ${MAX_ATTEMPTS} attempts"
+        exit 1
+
+    # Guarded on the schema existing rather than hardcoded: `master` still runs
+    # the Mongoose data layer, while the Prisma migration branch adds
+    # apps/api/prisma/schema.prisma. Without the guard this step would break one
+    # of the two refs no matter which way it was written.
+    - name: Generate Prisma client
+      if: ${{ inputs.generate-prisma == 'true' }}
+      shell: bash
+      run: |
+        if [ -f apps/api/prisma/schema.prisma ]; then
+          bunx prisma generate --schema apps/api/prisma/schema.prisma
+        else
+          echo "No apps/api/prisma/schema.prisma on this ref — skipping prisma generate."
+        fi
