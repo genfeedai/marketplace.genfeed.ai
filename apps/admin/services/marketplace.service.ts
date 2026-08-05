@@ -6,9 +6,9 @@ import type {
 
 import type { IListing, IPurchase, ISeller } from '@genfeedai/interfaces';
 import {
-  type JsonApiDocument,
   deserializeCollection,
   deserializeResource,
+  type JsonApiDocument,
 } from '../lib/json-api';
 import type { MarketplaceAnalyticsOverview } from '../types/marketplace';
 

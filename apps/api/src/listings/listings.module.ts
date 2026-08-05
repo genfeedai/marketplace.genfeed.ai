@@ -7,7 +7,7 @@ import { Listing, ListingSchema } from '@api/listings/schemas/listing.schema';
 import { ListingsService } from '@api/listings/services/listings.service';
 import { PurchasesModule } from '@api/purchases/purchases.module';
 import { SellersModule } from '@api/sellers/sellers.module';
-import { Module, forwardRef } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import mongooseAggregatePaginateV2 from 'mongoose-aggregate-paginate-v2';
 

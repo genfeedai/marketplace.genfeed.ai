@@ -106,5 +106,5 @@ async function fetchLeaderboard(
   return Array.isArray(data) ? data : (data.data ?? []);
 }
 
-export { fetchGallery, fetchLeaderboard, ITEMS_PER_PAGE, API_URL };
-export type { GalleryItem, GalleryResponse, GalleryQueryParams };
+export type { GalleryItem, GalleryQueryParams, GalleryResponse };
+export { API_URL, fetchGallery, fetchLeaderboard, ITEMS_PER_PAGE };

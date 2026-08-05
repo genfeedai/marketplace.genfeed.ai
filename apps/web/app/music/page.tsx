@@ -1,10 +1,10 @@
 'use client';
 
-import { useGalleryList } from '@/hooks/use-gallery-list';
 import EmptyState from '@components/empty-state';
 import Loading from '@components/loading';
 import PageHeader from '@components/page-header';
 import { type ReactNode, useEffect, useRef, useState } from 'react';
+import { useGalleryList } from '@/hooks/use-gallery-list';
 
 const API_URL =
   process.env.NEXT_PUBLIC_GENFEED_API_URL ?? 'https://api.genfeed.ai';

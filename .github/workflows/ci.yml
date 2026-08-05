@@ -1,0 +1,139 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+    types: [opened, synchronize, reopened]
+
+# `cancel-in-progress` is PULL-REQUEST ONLY. On a PR a new push makes the
+# running validation obsolete, so cancelling is free. On `master` it is not:
+# every merge shares one group, so an unconditional `true` would let each merge
+# kill the previous commit's validation before it could report — and a broken
+# commit could then ride master with no run ever surviving long enough to fail.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+env:
+  TZ: UTC
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - name: Setup Bun environment
+        uses: ./.github/actions/setup-bun-env
+      # Deliberately NOT `bun run lint`. The per-app lint scripts are scoped to
+      # `src/` (api) and `app/` (web, admin), so `turbo lint` never sees
+      # apps/api/scripts, apps/web/{components,hooks,lib,styles} or
+      # apps/admin/{hooks,lib,services,types}. Checking apps/ directly is the
+      # only way this gate covers the whole tree.
+      #
+      # `biome check` covers formatting, import organization and lint rules in
+      # one pass, so there is no separate format job to duplicate it.
+      - name: Run lint
+        run: bunx biome check apps/
+
+  typecheck:
+    name: Typecheck
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - name: Setup Bun environment
+        uses: ./.github/actions/setup-bun-env
+        with:
+          generate-prisma: 'true'
+      # `--continue` so one failing workspace does not mask the others. Without
+      # it turbo SIGINTs the remaining tasks and a single broken app hides the
+      # true state of the rest.
+      - name: Run typecheck
+        run: bunx turbo run typecheck --continue
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - name: Setup Bun environment
+        uses: ./.github/actions/setup-bun-env
+        with:
+          generate-prisma: 'true'
+      # apps/api compiles with tsc; apps/web and apps/admin are Next.js builds.
+      # Every environment variable those two read has an inline fallback, so the
+      # build needs no secrets.
+      - name: Run build
+        run: bunx turbo run build --continue
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # NON-GATING ON PURPOSE. At the time this workflow landed the repo carried
+    # zero committed test files while apps/api still declared `vitest run`,
+    # which exits non-zero on an empty suite. Reporting that state is useful;
+    # blocking every PR on it is not. Once real tests exist, delete this line so
+    # the job gates like the others.
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - name: Setup Bun environment
+        uses: ./.github/actions/setup-bun-env
+        with:
+          generate-prisma: 'true'
+      - name: Run tests
+        id: tests
+        run: bun run test
+      - name: Report test outcome
+        if: always()
+        run: |
+          if [ "${{ steps.tests.outcome }}" = "success" ]; then
+            echo "✅ Tests passed." >> "$GITHUB_STEP_SUMMARY"
+          else
+            {
+              echo "### ⚠️ Tests did not pass"
+              echo ""
+              echo "This job is \`continue-on-error\` and does not block the PR."
+              echo "If this is still the empty-suite failure, adding the first"
+              echo "real test — or \`--passWithNoTests\` — resolves it; then drop"
+              echo "\`continue-on-error\` from the test job so it gates properly."
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+  ci:
+    name: CI
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    # Single required check to protect master with. `test` is deliberately
+    # excluded while it is non-gating.
+    needs: [lint, typecheck, build]
+    if: always()
+    steps:
+      - name: Verify gating jobs succeeded
+        run: |
+          RESULTS="${{ needs.lint.result }} ${{ needs.typecheck.result }} ${{ needs.build.result }}"
+          echo "lint=${{ needs.lint.result }} typecheck=${{ needs.typecheck.result }} build=${{ needs.build.result }}"
+          for result in $RESULTS; do
+            if [ "$result" != "success" ]; then
+              echo "::error::A required job did not succeed."
+              exit 1
+            fi
+          done
+          echo "✅ All gating jobs passed." >> "$GITHUB_STEP_SUMMARY"
