@@ -8,6 +8,7 @@ import type {
   JsonApiSingleResponse,
 } from '@api/common/interfaces/json-api.interface';
 import { SellerSerializer } from '@api/common/serializers';
+import type { StripePayout } from '@api/common/services/stripe.service';
 import {
   getIsSuperAdmin,
   getPublicMetadata,
@@ -227,7 +228,7 @@ export class SellersController {
     const refreshUrl = `${marketplaceUrl}/dashboard?stripe=refresh`;
 
     const onboardingUrl = await this.stripeConnectService.createOnboardingLink({
-      accountId: stripeAccountId,
+      accountId: stripeAccountId!,
       refreshUrl,
       returnUrl,
     });
@@ -382,7 +383,7 @@ export class SellersController {
     return {
       data: {
         attributes: {
-          payouts: payouts.data.map((p) => ({
+          payouts: payouts.data.map((p: StripePayout) => ({
             amount: p.amount,
             arrivalDate: p.arrival_date,
             created: p.created,

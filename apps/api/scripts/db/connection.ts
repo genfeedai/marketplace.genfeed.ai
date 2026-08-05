@@ -1,28 +1,22 @@
 /**
- * MongoDB Connection Utility for Scripts
+ * Prisma Connection Utility for Scripts
  *
- * Provides a shared connection for all seed and utility scripts.
- * Uses the MongoDB Node.js driver for direct database operations.
- *
- * Loads env vars from .env.local by default, or .env.<env> with --env=staging|production|test.
+ * Loads env vars from .env.local by default, or .env.<env> with
+ * --env=staging|production|test, then boots a Prisma client against DATABASE_URL.
  */
 
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import type { Db, MongoClient } from 'mongodb';
+import { PrismaPg } from '@prisma/adapter-pg';
+import { PrismaClient } from '@prisma/client';
 
 const logger = {
   log: (...args: unknown[]) => console.log(...args),
 };
 
-export interface ConnectionOptions {
-  uri?: string;
-  database?: string;
-}
-
 function loadEnvFile(): void {
   const args = process.argv.slice(2);
-  const envArg = args.find((a) => a.startsWith('--env='))?.split('=')[1];
+  const envArg = args.find((arg) => arg.startsWith('--env='))?.split('=')[1];
   const envSuffix = envArg || 'local';
   const envPath = resolve(__dirname, '..', '..', `.env.${envSuffix}`);
 
@@ -33,16 +27,19 @@ function loadEnvFile(): void {
       if (!trimmed || trimmed.startsWith('#')) {
         continue;
       }
+
       const eqIndex = trimmed.indexOf('=');
       if (eqIndex === -1) {
         continue;
       }
+
       const key = trimmed.slice(0, eqIndex).trim();
       const value = trimmed.slice(eqIndex + 1).trim();
       if (envArg || !process.env[key]) {
         process.env[key] = value;
       }
     }
+
     logger.log(`Loaded env from .env.${envSuffix}`);
   } catch {
     logger.log(`No .env.${envSuffix} found, using process env / defaults`);
@@ -51,68 +48,55 @@ function loadEnvFile(): void {
 
 loadEnvFile();
 
-const DEFAULT_URI = process.env.MONGODB_URI;
-const DEFAULT_DATABASE = 'marketplace';
+const DEFAULT_URL = process.env.DATABASE_URL;
 
-let client: MongoClient | null = null;
-let db: Db | null = null;
+let prisma: PrismaClient | null = null;
 
-export async function connect(options: ConnectionOptions = {}): Promise<Db> {
-  const { MongoClient } = await import('mongodb');
-  const uri = options.uri || DEFAULT_URI;
-  const database = options.database || DEFAULT_DATABASE;
-
-  if (!uri) {
+export async function connect(
+  databaseUrl = DEFAULT_URL,
+): Promise<PrismaClient> {
+  if (!databaseUrl) {
     throw new Error(
-      'MongoDB URI is not configured. Set MONGODB_URI or pass --uri=<mongodb-uri>.',
+      'DATABASE_URL is not configured. Set DATABASE_URL or pass --uri=<postgres-url>.',
     );
   }
 
-  if (db) {
-    return db;
+  if (prisma) {
+    return prisma;
   }
 
-  logger.log('Connecting to MongoDB...');
-  logger.log(`   Database: ${database}`);
+  logger.log('Connecting to PostgreSQL...');
 
-  client = new MongoClient(uri) as MongoClient;
-  await client.connect();
-  db = client.db(database);
+  const adapter = new PrismaPg({ connectionString: databaseUrl });
+  prisma = new PrismaClient({ adapter });
+  await prisma.$connect();
 
-  logger.log('Connected to MongoDB\n');
-  return db;
+  logger.log('Connected to PostgreSQL\n');
+
+  return prisma;
 }
 
 export async function disconnect(): Promise<void> {
-  if (client) {
-    await client.close();
-    client = null;
-    db = null;
-    logger.log('\nDisconnected from MongoDB');
+  if (prisma) {
+    await prisma.$disconnect();
+    prisma = null;
+    logger.log('\nDisconnected from PostgreSQL');
   }
-}
-
-export function getDb(): Db {
-  if (!db) {
-    throw new Error('Not connected to MongoDB. Call connect() first.');
-  }
-  return db;
 }
 
 export async function runScript<T>(
   name: string,
-  fn: (db: Db) => Promise<T>,
-  options: ConnectionOptions = {},
+  fn: (prisma: PrismaClient) => Promise<T>,
+  databaseUrl?: string,
 ): Promise<T> {
   logger.log(`\n${'='.repeat(60)}`);
   logger.log(`Running: ${name}`);
   logger.log(`${'='.repeat(60)}\n`);
 
-  const database = await connect(options);
+  const client = await connect(databaseUrl);
 
   try {
-    const result = await fn(database);
-    return result;
+    return await fn(client);
   } finally {
     await disconnect();
   }

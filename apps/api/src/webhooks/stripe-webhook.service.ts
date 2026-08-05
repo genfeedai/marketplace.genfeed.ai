@@ -1,8 +1,11 @@
-import type { MarketplaceStripeService } from '@api/common/services/stripe.service';
+import type {
+  MarketplaceStripeService,
+  StripeCheckoutSession,
+  StripeWebhookEvent,
+} from '@api/common/services/stripe.service';
 import type { MarketplaceConfigService } from '@api/config/config.service';
 import type { CheckoutService } from '@api/purchases/services/checkout.service';
 import { Injectable, Logger } from '@nestjs/common';
-import type Stripe from 'stripe';
 
 @Injectable()
 export class StripeWebhookService {
@@ -18,7 +21,7 @@ export class StripeWebhookService {
    * Verify and process a Stripe webhook event
    */
   async handleWebhook(rawBody: Buffer, signature: string): Promise<void> {
-    let event: Stripe.Event;
+    let event: StripeWebhookEvent;
 
     try {
       event = this.stripeService.constructEvent(
@@ -39,7 +42,7 @@ export class StripeWebhookService {
 
     switch (event.type) {
       case 'checkout.session.completed': {
-        const session = event.data.object as Stripe.Checkout.Session;
+        const session = event.data.object as StripeCheckoutSession;
 
         // Only handle marketplace checkout sessions
         if (session.metadata?.type === 'marketplace') {
@@ -53,7 +56,7 @@ export class StripeWebhookService {
       }
 
       case 'checkout.session.expired': {
-        const session = event.data.object as Stripe.Checkout.Session;
+        const session = event.data.object as StripeCheckoutSession;
         if (session.metadata?.type === 'marketplace') {
           await this.checkoutService.handleFailedCheckout(
             session.id,

@@ -1,45 +1,230 @@
 import { HandleErrors } from '@api/common/decorators/error-handler.decorator';
-import type {
-  AggregatePaginateModel,
-  AggregatePaginateResult,
-} from '@api/common/services/base.service';
-import { BaseService } from '@api/common/services/base.service';
-import { customLabels } from '@api/common/utils/pagination.util';
+import { createLegacyId } from '@api/common/prisma/legacy-id.util';
+import { mapListingRecord } from '@api/common/prisma/marketplace.mapper';
+import type { ListingRecord } from '@api/common/prisma/marketplace.types';
+import { buildOrderBy } from '@api/common/prisma/order-by.util';
+import {
+  type PaginatedResult,
+  paginateDocs,
+} from '@api/common/prisma/pagination.util';
+import type { PrismaService } from '@api/common/prisma/prisma.service';
 import { QueryDefaultsUtil } from '@api/common/utils/query-defaults.util';
-import { handleQuerySort } from '@api/common/utils/sort.util';
 import type { CreateListingDto } from '@api/listings/dto/create-listing.dto';
 import type { ListingQueryDto } from '@api/listings/dto/listing-query.dto';
 import type { UpdateListingDto } from '@api/listings/dto/update-listing.dto';
-import { ListingEntity } from '@api/listings/entities/listing.entity';
-import { Listing } from '@api/listings/schemas/listing.schema';
 import type { SellersService } from '@api/sellers/services/sellers.service';
-import { ListingStatus } from '@genfeedai/enums';
+import { ListingStatus, SellerStatus } from '@genfeedai/enums';
 import {
   BadRequestException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { type PipelineStage, Types } from 'mongoose';
+import { Prisma } from '@prisma/client';
 import slugify from 'slugify';
 
+interface ListingPatchInput extends Partial<UpdateListingDto> {
+  canBeSoldSeparately?: boolean;
+  publishedAt?: Date;
+  rejectionReason?: string | null;
+  status?: string;
+}
+
 @Injectable()
-export class ListingsService extends BaseService<
-  Listing,
-  CreateListingDto,
-  UpdateListingDto
-> {
+export class ListingsService {
+  private static readonly sortableFields = [
+    'createdAt',
+    'downloads',
+    'installCount',
+    'likeCount',
+    'price',
+    'publishedAt',
+    'purchases',
+    'rating',
+    'reviewCount',
+    'revenue',
+    'status',
+    'title',
+    'type',
+    'updatedAt',
+    'views',
+  ] as const;
+
   constructor(
-    @InjectModel(Listing.name)
-    protected readonly model: AggregatePaginateModel<Listing>,
+    private readonly prisma: PrismaService,
     private readonly sellersService: SellersService,
-  ) {
-    super(model);
+  ) {}
+
+  private buildWhere(
+    params: Record<string, unknown>,
+  ): Prisma.ListingWhereInput {
+    const where: Prisma.ListingWhereInput = {};
+
+    if (typeof params._id === 'string') {
+      where.id = params._id;
+    }
+
+    if (typeof params.seller === 'string') {
+      where.seller = params.seller;
+    }
+
+    if (typeof params.organization === 'string') {
+      where.organization = params.organization;
+    }
+
+    if (typeof params.slug === 'string') {
+      where.slug = params.slug;
+    }
+
+    if (typeof params.status === 'string') {
+      where.status = params.status;
+    }
+
+    if (typeof params.packageSource === 'string') {
+      where.packageSource = params.packageSource;
+    }
+
+    if (typeof params.packageSlug === 'string') {
+      where.packageSlug = params.packageSlug;
+    }
+
+    if (typeof params.isDeleted === 'boolean') {
+      where.isDeleted = params.isDeleted;
+    }
+
+    return where;
   }
 
-  /**
-   * Generate a unique listing slug from seller slug and title
-   */
+  private async updateListing(
+    listingId: string,
+    data: Prisma.ListingUpdateInput,
+  ): Promise<ListingRecord | null> {
+    try {
+      const listing = await this.prisma.listing.update({
+        data,
+        include: { sellerRecord: true },
+        where: { id: listingId },
+      });
+
+      return mapListingRecord(listing);
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2025'
+      ) {
+        return null;
+      }
+
+      throw error;
+    }
+  }
+
+  async create(
+    data: Prisma.ListingUncheckedCreateInput,
+  ): Promise<ListingRecord> {
+    const listing = await this.prisma.listing.create({
+      data,
+      include: { sellerRecord: true },
+    });
+
+    return mapListingRecord(listing);
+  }
+
+  async findOne(
+    params: Record<string, unknown>,
+  ): Promise<ListingRecord | null> {
+    const listing = await this.prisma.listing.findFirst({
+      include: { sellerRecord: true },
+      where: this.buildWhere(params),
+    });
+
+    return listing ? mapListingRecord(listing) : null;
+  }
+
+  async patch(
+    listingId: string,
+    updateDto: ListingPatchInput,
+  ): Promise<ListingRecord | null> {
+    const data: Prisma.ListingUpdateInput = {};
+
+    if (updateDto.canBeSoldSeparately !== undefined) {
+      data.canBeSoldSeparately = updateDto.canBeSoldSeparately;
+    }
+
+    if (updateDto.changelog !== undefined) {
+      data.changelog = updateDto.changelog;
+    }
+
+    if (updateDto.description !== undefined) {
+      data.description = updateDto.description;
+    }
+
+    if (updateDto.downloadData !== undefined) {
+      data.downloadData = updateDto.downloadData as Prisma.InputJsonValue;
+    }
+
+    if (updateDto.previewData !== undefined) {
+      data.previewData = updateDto.previewData as Prisma.InputJsonValue;
+    }
+
+    if (updateDto.previewImages !== undefined) {
+      data.previewImages = updateDto.previewImages;
+    }
+
+    if (updateDto.previewVideo !== undefined) {
+      data.previewVideo = updateDto.previewVideo;
+    }
+
+    if (updateDto.price !== undefined) {
+      data.price = updateDto.price;
+    }
+
+    if (updateDto.currency !== undefined) {
+      data.currency = updateDto.currency;
+    }
+
+    if (updateDto.rejectionReason !== undefined) {
+      data.rejectionReason = updateDto.rejectionReason;
+    }
+
+    if (updateDto.shortDescription !== undefined) {
+      data.shortDescription = updateDto.shortDescription;
+    }
+
+    if (updateDto.status !== undefined) {
+      data.status = updateDto.status;
+    }
+
+    if (updateDto.tags !== undefined) {
+      data.tags = updateDto.tags;
+    }
+
+    if (updateDto.thumbnail !== undefined) {
+      data.thumbnail = updateDto.thumbnail;
+    }
+
+    if (updateDto.title !== undefined) {
+      data.title = updateDto.title;
+    }
+
+    if (updateDto.type !== undefined) {
+      data.type = updateDto.type;
+    }
+
+    if (updateDto.version !== undefined) {
+      data.version = updateDto.version;
+    }
+
+    if (updateDto.publishedAt !== undefined) {
+      data.publishedAt = updateDto.publishedAt;
+    }
+
+    if (Object.keys(data).length === 0) {
+      return this.findOne({ _id: listingId });
+    }
+
+    return this.updateListing(listingId, data);
+  }
+
   @HandleErrors('generate listing slug', 'listings')
   async generateListingSlug(
     sellerSlug: string,
@@ -55,28 +240,29 @@ export class ListingsService extends BaseService<
     let slug = baseSlug;
     let counter = 1;
 
-    while (await this.model.findOne({ slug }).exec()) {
+    while (
+      await this.prisma.listing.findFirst({
+        select: { id: true },
+        where: { slug },
+      })
+    ) {
       slug = `${baseSlug}-${counter}`;
-      counter++;
+      counter += 1;
     }
 
     return slug;
   }
 
-  /**
-   * Create a new listing
-   */
   @HandleErrors('create listing', 'listings')
   async createListing(
     sellerId: string,
     organizationId: string,
     dto: CreateListingDto,
-  ): Promise<Listing> {
-    this.logOperation('createListing', 'started', { sellerId });
-
+  ): Promise<ListingRecord> {
     const seller = await this.sellersService.findOne({
       _id: sellerId,
       isDeleted: false,
+      status: SellerStatus.APPROVED,
     });
 
     if (!seller) {
@@ -85,41 +271,44 @@ export class ListingsService extends BaseService<
 
     const slug = await this.generateListingSlug(seller.slug, dto.title);
 
-    const listingEntity = new ListingEntity({
-      ...dto,
+    return this.create({
+      canBeSoldSeparately: true,
+      changelog: dto.changelog,
+      currency: dto.currency ?? 'usd',
+      description: dto.description,
+      downloadData: (dto.downloadData ?? {}) as Prisma.InputJsonValue,
+      id: createLegacyId(),
       isDeleted: false,
-      organization: new Types.ObjectId(organizationId),
-      seller: new Types.ObjectId(sellerId),
+      organization: organizationId,
+      previewData: (dto.previewData ?? {}) as Prisma.InputJsonValue,
+      previewImages: dto.previewImages ?? [],
+      previewVideo: dto.previewVideo,
+      price: dto.price ?? 0,
+      seller: sellerId,
+      shortDescription: dto.shortDescription,
       slug,
       status: ListingStatus.DRAFT,
+      tags: dto.tags ?? [],
+      thumbnail: dto.thumbnail,
+      title: dto.title,
+      type: dto.type,
+      version: dto.version ?? '1.0.0',
     });
-
-    const listing = await this.create(
-      listingEntity as unknown as CreateListingDto,
-    );
-
-    this.logOperation('createListing', 'completed', {
-      listingId: listing._id,
-      sellerId,
-    });
-
-    return listing;
   }
 
-  /**
-   * Submit listing for review
-   */
   @HandleErrors('submit for review', 'listings')
-  async submitForReview(listingId: string, sellerId: string): Promise<Listing> {
-    this.logOperation('submitForReview', 'started', { listingId, sellerId });
-
-    const listing = await this.model
-      .findOne({
-        _id: listingId,
+  async submitForReview(
+    listingId: string,
+    sellerId: string,
+  ): Promise<ListingRecord> {
+    const listing = await this.prisma.listing.findFirst({
+      include: { sellerRecord: true },
+      where: {
+        id: listingId,
         isDeleted: false,
-        seller: new Types.ObjectId(sellerId),
-      })
-      .exec();
+        seller: sellerId,
+      },
+    });
 
     if (!listing) {
       throw new NotFoundException('Listing not found');
@@ -131,35 +320,24 @@ export class ListingsService extends BaseService<
       );
     }
 
-    const updated = await this.patch(listingId, {
+    return (await this.updateListing(listingId, {
       status: ListingStatus.PENDING_REVIEW,
-    });
-
-    this.logOperation('submitForReview', 'completed', { listingId });
-
-    return updated!;
+    }))!;
   }
 
-  /**
-   * Approve or reject a pending listing review.
-   */
   @HandleErrors('review listing', 'listings')
   async reviewListing(
     listingId: string,
     isApproved: boolean,
     reason?: string,
-  ): Promise<Listing> {
-    this.logOperation('reviewListing', 'started', {
-      isApproved,
-      listingId,
-    });
-
-    const listing = await this.model
-      .findOne({
-        _id: listingId,
+  ): Promise<ListingRecord> {
+    const listing = await this.prisma.listing.findFirst({
+      include: { sellerRecord: true },
+      where: {
+        id: listingId,
         isDeleted: false,
-      })
-      .exec();
+      },
+    });
 
     if (!listing) {
       throw new NotFoundException('Listing not found');
@@ -171,312 +349,292 @@ export class ListingsService extends BaseService<
       );
     }
 
-    const updatePayload: Partial<Listing> = isApproved
-      ? {
-          publishedAt: new Date(),
-          rejectionReason: undefined,
-          status: ListingStatus.PUBLISHED,
-        }
-      : {
-          rejectionReason: reason || 'Rejected by moderator',
-          status: ListingStatus.REJECTED,
-        };
-
-    const updated = await this.patch(listingId, updatePayload);
-
-    this.logOperation('reviewListing', 'completed', {
-      isApproved,
-      listingId,
-      status: updated?.status,
-    });
-
-    return updated!;
+    return (await this.updateListing(listingId, {
+      publishedAt: isApproved ? new Date() : undefined,
+      rejectionReason: isApproved ? null : reason || 'Rejected by moderator',
+      status: isApproved ? ListingStatus.PUBLISHED : ListingStatus.REJECTED,
+    }))!;
   }
 
-  /**
-   * Get listings for a specific seller
-   */
   @HandleErrors('get seller listings', 'listings')
-  getSellerListings(
+  async getSellerListings(
     sellerId: string,
     query: ListingQueryDto,
-  ): Promise<AggregatePaginateResult<Listing>> {
-    const options = {
-      customLabels,
-      ...QueryDefaultsUtil.getPaginationDefaults(query),
-    };
+  ): Promise<PaginatedResult<ListingRecord>> {
+    const { limit, page, pagination } =
+      QueryDefaultsUtil.getPaginationDefaults(query);
 
-    const matchConditions: Record<string, unknown> = {
+    const where: Prisma.ListingWhereInput = {
       isDeleted: false,
-      seller: new Types.ObjectId(sellerId),
+      seller: sellerId,
     };
 
     if (query.type) {
-      matchConditions.type = query.type;
+      where.type = query.type;
     }
 
     if (query.status) {
-      matchConditions.status = query.status;
+      where.status = query.status;
     }
 
-    const aggregate: PipelineStage[] = [
-      { $match: matchConditions },
-      { $sort: handleQuerySort(query.sort) },
-    ];
+    const orderBy = buildOrderBy(
+      query.sort,
+      ListingsService.sortableFields,
+      'createdAt',
+    );
 
-    return this.findAll(aggregate, options);
+    if (!pagination) {
+      const docs = await this.prisma.listing.findMany({
+        include: { sellerRecord: true },
+        orderBy,
+        where,
+      });
+
+      return paginateDocs({
+        docs: docs.map(mapListingRecord),
+        limit: Math.max(docs.length, 1),
+        page: 1,
+        total: docs.length,
+      });
+    }
+
+    const [total, docs] = await this.prisma.$transaction([
+      this.prisma.listing.count({ where }),
+      this.prisma.listing.findMany({
+        include: { sellerRecord: true },
+        orderBy,
+        skip: (page - 1) * limit,
+        take: limit,
+        where,
+      }),
+    ]);
+
+    return paginateDocs({
+      docs: docs.map(mapListingRecord),
+      limit,
+      page,
+      total,
+    });
   }
 
-  /**
-   * Escape special regex characters in a string
-   */
-  private escapeRegex(str: string): string {
-    return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  }
-
-  /**
-   * Get public published listings
-   */
   @HandleErrors('get public listings', 'listings')
   async getPublicListings(
     query: ListingQueryDto,
-  ): Promise<AggregatePaginateResult<Listing>> {
-    const options = {
-      customLabels,
-      ...QueryDefaultsUtil.getPaginationDefaults(query),
-    };
+  ): Promise<PaginatedResult<ListingRecord>> {
+    const { limit, page, pagination } =
+      QueryDefaultsUtil.getPaginationDefaults(query);
 
-    const matchConditions: Record<string, unknown> = {
+    const where: Prisma.ListingWhereInput = {
       isDeleted: false,
       status: ListingStatus.PUBLISHED,
     };
 
     if (query.type) {
-      matchConditions.type = query.type;
+      where.type = query.type;
     }
 
     if (query.tags && query.tags.length > 0) {
-      matchConditions.tags = { $in: query.tags };
+      where.tags = { hasSome: query.tags };
     }
 
     if (query.minPrice !== undefined || query.maxPrice !== undefined) {
-      matchConditions.price = {};
+      where.price = {};
       if (query.minPrice !== undefined) {
-        (matchConditions.price as Record<string, number>).$gte = query.minPrice;
+        where.price.gte = query.minPrice;
       }
       if (query.maxPrice !== undefined) {
-        (matchConditions.price as Record<string, number>).$lte = query.maxPrice;
+        where.price.lte = query.maxPrice;
       }
     }
 
     if (query.pricingTier) {
-      matchConditions.pricingTier = query.pricingTier;
+      where.pricingTier = query.pricingTier;
     }
 
     if (query.isOfficial !== undefined) {
-      matchConditions.isOfficial = query.isOfficial;
+      where.isOfficial = query.isOfficial;
     }
 
-    // Resolve sellerSlug to seller ObjectId
     if (query.sellerSlug) {
-      const seller = await this.sellersService.findBySlug(query.sellerSlug);
-      if (!seller) {
-        return {
-          data: [],
-          meta: { limit: options.limit ?? 20, page: 1, pages: 0, total: 0 },
-        } as unknown as AggregatePaginateResult<Listing>;
-      }
-      matchConditions.seller = seller._id;
+      where.sellerRecord = {
+        is: {
+          isDeleted: false,
+          slug: query.sellerSlug,
+        },
+      };
     }
 
-    // Sanitize search: cap length and escape regex special characters
-    const sanitizedSearch = query.search
-      ? this.escapeRegex(query.search.slice(0, 200))
-      : undefined;
+    const search = query.search?.trim().slice(0, 200);
+    if (search) {
+      where.OR = [
+        { description: { contains: search, mode: 'insensitive' } },
+        { shortDescription: { contains: search, mode: 'insensitive' } },
+        { title: { contains: search, mode: 'insensitive' } },
+      ];
+    }
 
-    const aggregate: PipelineStage[] = [
-      { $match: matchConditions },
-      ...(sanitizedSearch
-        ? [
-            {
-              $match: {
-                $or: [
-                  { title: { $options: 'i', $regex: sanitizedSearch } },
-                  {
-                    shortDescription: {
-                      $options: 'i',
-                      $regex: sanitizedSearch,
-                    },
-                  },
-                  { description: { $options: 'i', $regex: sanitizedSearch } },
-                ],
-              },
-            },
-          ]
-        : []),
-      {
-        $lookup: {
-          as: 'sellerData',
-          foreignField: '_id',
-          from: 'sellers',
-          localField: 'seller',
-        },
-      },
-      { $unwind: { path: '$sellerData', preserveNullAndEmptyArrays: true } },
-      { $sort: handleQuerySort(query.sort) },
-    ];
+    const orderBy = buildOrderBy(
+      query.sort,
+      ListingsService.sortableFields,
+      'createdAt',
+    );
 
-    return this.findAll(aggregate, options);
+    if (!pagination) {
+      const docs = await this.prisma.listing.findMany({
+        include: { sellerRecord: true },
+        orderBy,
+        where,
+      });
+
+      return paginateDocs({
+        docs: docs.map(mapListingRecord),
+        limit: Math.max(docs.length, 1),
+        page: 1,
+        total: docs.length,
+      });
+    }
+
+    const [total, docs] = await this.prisma.$transaction([
+      this.prisma.listing.count({ where }),
+      this.prisma.listing.findMany({
+        include: { sellerRecord: true },
+        orderBy,
+        skip: (page - 1) * limit,
+        take: limit,
+        where,
+      }),
+    ]);
+
+    return paginateDocs({
+      docs: docs.map(mapListingRecord),
+      limit,
+      page,
+      total,
+    });
   }
 
-  /**
-   * Get admin listings scoped to organization.
-   */
   @HandleErrors('get admin listings', 'listings')
   async getAdminListings(
     organizationId: string,
     query: ListingQueryDto,
-  ): Promise<AggregatePaginateResult<Listing>> {
-    this.logOperation('getAdminListings', 'started', {
-      organizationId,
-      query,
-    });
+  ): Promise<PaginatedResult<ListingRecord>> {
+    const { limit, page, pagination } =
+      QueryDefaultsUtil.getPaginationDefaults(query);
 
-    const options = {
-      customLabels,
-      ...QueryDefaultsUtil.getPaginationDefaults(query),
-    };
-
-    const matchConditions: Record<string, unknown> = {
+    const where: Prisma.ListingWhereInput = {
       isDeleted: false,
-      organization: new Types.ObjectId(organizationId),
+      organization: organizationId,
     };
 
     if (query.status) {
-      matchConditions.status = query.status;
+      where.status = query.status;
     }
 
     if (query.type) {
-      matchConditions.type = query.type;
+      where.type = query.type;
     }
 
-    const sanitizedSearch = query.search
-      ? this.escapeRegex(query.search.slice(0, 200))
-      : undefined;
+    const search = query.search?.trim().slice(0, 200);
+    if (search) {
+      where.OR = [
+        { shortDescription: { contains: search, mode: 'insensitive' } },
+        { slug: { contains: search, mode: 'insensitive' } },
+        { title: { contains: search, mode: 'insensitive' } },
+      ];
+    }
 
-    const aggregate: PipelineStage[] = [
-      { $match: matchConditions },
-      ...(sanitizedSearch
-        ? [
-            {
-              $match: {
-                $or: [
-                  { title: { $options: 'i', $regex: sanitizedSearch } },
-                  {
-                    shortDescription: {
-                      $options: 'i',
-                      $regex: sanitizedSearch,
-                    },
-                  },
-                  { slug: { $options: 'i', $regex: sanitizedSearch } },
-                ],
-              },
-            },
-          ]
-        : []),
-      {
-        $lookup: {
-          as: 'sellerData',
-          foreignField: '_id',
-          from: 'sellers',
-          localField: 'seller',
-        },
-      },
-      { $unwind: { path: '$sellerData', preserveNullAndEmptyArrays: true } },
-      { $sort: handleQuerySort(query.sort) },
-    ];
+    const orderBy = buildOrderBy(
+      query.sort,
+      ListingsService.sortableFields,
+      'createdAt',
+    );
 
-    const result = await this.findAll(aggregate, options);
+    if (!pagination) {
+      const docs = await this.prisma.listing.findMany({
+        include: { sellerRecord: true },
+        orderBy,
+        where,
+      });
 
-    this.logOperation('getAdminListings', 'completed', {
-      count: result.docs?.length ?? 0,
-      organizationId,
+      return paginateDocs({
+        docs: docs.map(mapListingRecord),
+        limit: Math.max(docs.length, 1),
+        page: 1,
+        total: docs.length,
+      });
+    }
+
+    const [total, docs] = await this.prisma.$transaction([
+      this.prisma.listing.count({ where }),
+      this.prisma.listing.findMany({
+        include: { sellerRecord: true },
+        orderBy,
+        skip: (page - 1) * limit,
+        take: limit,
+        where,
+      }),
+    ]);
+
+    return paginateDocs({
+      docs: docs.map(mapListingRecord),
+      limit,
+      page,
+      total,
     });
-
-    return result;
   }
 
-  /**
-   * Get a single admin listing scoped to organization.
-   */
   @HandleErrors('get admin listing', 'listings')
   async getAdminListingById(
     organizationId: string,
     listingId: string,
-  ): Promise<Listing | null> {
-    this.logOperation('getAdminListingById', 'started', {
-      listingId,
-      organizationId,
-    });
-
-    const listing = await this.model
-      .findOne({
-        _id: listingId,
+  ): Promise<ListingRecord | null> {
+    const listing = await this.prisma.listing.findFirst({
+      include: { sellerRecord: true },
+      where: {
+        id: listingId,
         isDeleted: false,
-        organization: new Types.ObjectId(organizationId),
-      })
-      .exec();
-
-    this.logOperation('getAdminListingById', 'completed', {
-      found: Boolean(listing),
-      listingId,
-      organizationId,
+        organization: organizationId,
+      },
     });
 
-    return listing;
+    return listing ? mapListingRecord(listing) : null;
   }
 
-  /**
-   * Find listing by full slug (seller-slug/listing-slug)
-   */
   @HandleErrors('find by slug', 'listings')
-  findBySlug(fullSlug: string): Promise<Listing | null> {
-    return this.model
-      .findOne({
+  async findBySlug(fullSlug: string): Promise<ListingRecord | null> {
+    const listing = await this.prisma.listing.findFirst({
+      include: { sellerRecord: true },
+      where: {
         isDeleted: false,
         slug: fullSlug,
         status: ListingStatus.PUBLISHED,
-      })
-      .exec();
+      },
+    });
+
+    return listing ? mapListingRecord(listing) : null;
   }
 
-  /**
-   * Get published listing by ID
-   */
   @HandleErrors('get published listing', 'listings')
-  getPublishedListing(listingId: string): Promise<Listing | null> {
-    return this.model
-      .findOne({
-        _id: listingId,
+  async getPublishedListing(listingId: string): Promise<ListingRecord | null> {
+    const listing = await this.prisma.listing.findFirst({
+      include: { sellerRecord: true },
+      where: {
+        id: listingId,
         isDeleted: false,
         status: ListingStatus.PUBLISHED,
-      })
-      .exec();
+      },
+    });
+
+    return listing ? mapListingRecord(listing) : null;
   }
 
-  /**
-   * Increment view count
-   */
   @HandleErrors('increment views', 'listings')
   async incrementViews(listingId: string): Promise<void> {
-    await this.model
-      .findByIdAndUpdate(listingId, { $inc: { views: 1 } })
-      .exec();
+    await this.updateListing(listingId, {
+      views: { increment: 1 },
+    });
   }
 
-  /**
-   * Update listing statistics
-   */
   @HandleErrors('update listing stats', 'listings')
   updateListingStats(
     listingId: string,
@@ -486,126 +644,112 @@ export class ListingsService extends BaseService<
       likeCount?: number;
       revenue?: number;
     },
-  ): Promise<Listing | null> {
-    return this.model
-      .findByIdAndUpdate(
-        listingId,
-        { $inc: increments },
-        { returnDocument: 'after' },
-      )
-      .exec();
+  ): Promise<ListingRecord | null> {
+    const data: Prisma.ListingUpdateInput = {};
+
+    if (increments.downloads !== undefined) {
+      data.downloads = { increment: increments.downloads };
+    }
+
+    if (increments.purchases !== undefined) {
+      data.purchases = { increment: increments.purchases };
+    }
+
+    if (increments.likeCount !== undefined) {
+      data.likeCount = { increment: increments.likeCount };
+    }
+
+    if (increments.revenue !== undefined) {
+      data.revenue = { increment: increments.revenue };
+    }
+
+    return this.updateListing(listingId, data);
   }
 
-  /**
-   * Get featured listings (official, highest rated)
-   */
   @HandleErrors('get featured listings', 'listings')
-  getFeaturedListings(limit = 12): Promise<AggregatePaginateResult<Listing>> {
-    const options = {
-      customLabels,
+  async getFeaturedListings(
+    limit = 12,
+  ): Promise<PaginatedResult<ListingRecord>> {
+    const docs = await this.prisma.listing.findMany({
+      include: { sellerRecord: true },
+      orderBy: [{ purchases: 'desc' }, { rating: 'desc' }],
+      take: limit,
+      where: {
+        isDeleted: false,
+        isOfficial: true,
+        status: ListingStatus.PUBLISHED,
+      },
+    });
+
+    return paginateDocs({
+      docs: docs.map(mapListingRecord),
       limit,
       page: 1,
-    };
-
-    const aggregate: PipelineStage[] = [
-      {
-        $match: {
-          isDeleted: false,
-          isOfficial: true,
-          status: ListingStatus.PUBLISHED,
-        },
-      },
-      {
-        $lookup: {
-          as: 'sellerData',
-          foreignField: '_id',
-          from: 'sellers',
-          localField: 'seller',
-        },
-      },
-      { $unwind: { path: '$sellerData', preserveNullAndEmptyArrays: true } },
-      { $sort: { purchases: -1, rating: -1 } },
-    ];
-
-    return this.findAll(aggregate, options);
+      total: docs.length,
+    });
   }
 
-  /**
-   * Get category counts for published listings
-   */
   @HandleErrors('get categories', 'listings')
   async getCategoryCounts(): Promise<Array<{ type: string; count: number }>> {
-    const result = await this.model
-      .aggregate([
-        {
-          $match: {
-            isDeleted: false,
-            status: ListingStatus.PUBLISHED,
-          },
-        },
-        {
-          $group: {
-            _id: '$type',
-            count: { $sum: 1 },
-          },
-        },
-        {
-          $project: {
-            _id: 0,
-            count: 1,
-            type: '$_id',
-          },
-        },
-      ])
-      .exec();
+    const result = await this.prisma.listing.groupBy({
+      _count: { _all: true },
+      by: ['type'],
+      where: {
+        isDeleted: false,
+        status: ListingStatus.PUBLISHED,
+      },
+    });
 
-    return result as Array<{ type: string; count: number }>;
+    return result.map((item) => ({
+      count: item._count._all,
+      type: item.type,
+    }));
   }
 
-  /**
-   * Increment install count
-   */
   @HandleErrors('increment install count', 'listings')
   async incrementInstallCount(listingId: string): Promise<void> {
-    await this.model
-      .findByIdAndUpdate(listingId, { $inc: { installCount: 1 } })
-      .exec();
+    await this.updateListing(listingId, {
+      installCount: { increment: 1 },
+    });
   }
 
-  /**
-   * Find listing by package source and slug (for seed upsert)
-   */
   @HandleErrors('find by package source', 'listings')
-  findByPackageSource(
+  async findByPackageSource(
     packageSource: string,
     packageSlug: string,
-  ): Promise<Listing | null> {
-    return this.model
-      .findOne({
+  ): Promise<ListingRecord | null> {
+    const listing = await this.prisma.listing.findFirst({
+      include: { sellerRecord: true },
+      where: {
         isDeleted: false,
         packageSlug,
         packageSource,
-      })
-      .exec();
+      },
+    });
+
+    return listing ? mapListingRecord(listing) : null;
   }
 
-  /**
-   * Archive a listing (soft delete for sellers)
-   */
   @HandleErrors('archive listing', 'listings')
-  async archiveListing(listingId: string, sellerId: string): Promise<Listing> {
-    const listing = await this.model
-      .findOne({
-        _id: listingId,
+  async archiveListing(
+    listingId: string,
+    sellerId: string,
+  ): Promise<ListingRecord> {
+    const listing = await this.prisma.listing.findFirst({
+      select: { id: true },
+      where: {
+        id: listingId,
         isDeleted: false,
-        seller: new Types.ObjectId(sellerId),
-      })
-      .exec();
+        seller: sellerId,
+      },
+    });
 
     if (!listing) {
       throw new NotFoundException('Listing not found');
     }
 
-    return (await this.patch(listingId, { status: ListingStatus.ARCHIVED }))!;
+    return (await this.updateListing(listingId, {
+      status: ListingStatus.ARCHIVED,
+    }))!;
   }
 }

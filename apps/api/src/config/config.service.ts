@@ -9,8 +9,8 @@ export class MarketplaceConfigService {
     return this.configService.get<number>('PORT', 3200);
   }
 
-  get mongodbUri(): string {
-    return this.configService.getOrThrow<string>('MONGODB_URI');
+  get databaseUrl(): string {
+    return this.configService.getOrThrow<string>('DATABASE_URL');
   }
 
   get stripeSecretKey(): string {

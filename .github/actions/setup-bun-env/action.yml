@@ -74,16 +74,15 @@ runs:
         echo "::error::install failed after ${MAX_ATTEMPTS} attempts"
         exit 1
 
-    # Guarded on the schema existing rather than hardcoded: `master` still runs
-    # the Mongoose data layer, while the Prisma migration branch adds
-    # apps/api/prisma/schema.prisma. Without the guard this step would break one
-    # of the two refs no matter which way it was written.
+    # Guarded on the schema existing so this action also works on refs that
+    # predate the Prisma migration. Run through the workspace script to use the
+    # repo-pinned Prisma CLI instead of resolving the latest version via bunx.
     - name: Generate Prisma client
       if: ${{ inputs.generate-prisma == 'true' }}
       shell: bash
       run: |
         if [ -f apps/api/prisma/schema.prisma ]; then
-          bunx prisma generate --schema apps/api/prisma/schema.prisma
+          bun run --cwd apps/api prisma:generate
         else
           echo "No apps/api/prisma/schema.prisma on this ref — skipping prisma generate."
         fi
