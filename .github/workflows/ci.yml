@@ -56,8 +56,11 @@ jobs:
         uses: ./.github/actions/setup-bun-env
         with:
           generate-prisma: 'true'
+      # `--continue` so one failing workspace does not mask the others. Without
+      # it turbo SIGINTs the remaining tasks and a single broken app hides the
+      # true state of the rest.
       - name: Run typecheck
-        run: bun run typecheck
+        run: bunx turbo run typecheck --continue
 
   build:
     name: Build
@@ -75,7 +78,7 @@ jobs:
       # Every environment variable those two read has an inline fallback, so the
       # build needs no secrets.
       - name: Run build
-        run: bun run build
+        run: bunx turbo run build --continue
 
   test:
     name: Test
