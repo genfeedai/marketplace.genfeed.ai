@@ -3,13 +3,14 @@ description: Standardize Node, Bun, dependency install and cache setup for CI jo
 
 inputs:
   node-version:
-    description: Node.js version to install
+    description: |
+      Node.js version to install. Tracks Active LTS: 24.x entered LTS on
+      2025-10-28 and stays there until 2026-10-20, whereas 22.x dropped to
+      maintenance on 2025-10-21 and now receives security fixes only. Nothing
+      here compiles against a Node 23+ API — the bump is about staying on a
+      line that still gets bug fixes.
     required: false
-    default: '22.x'
-  bun-version:
-    description: Bun version to install. Defaults to the root packageManager pin.
-    required: false
-    default: '1.3.11'
+    default: '24.x'
   install-command:
     description: Dependency install command to run after toolchain setup
     required: false
@@ -30,10 +31,15 @@ runs:
       with:
         node-version: ${{ inputs.node-version }}
 
+    # Read the version from the root `packageManager` pin rather than repeating
+    # it here. setup-bun parses that field directly
+    # (`pkg.packageManager?.split("bun@")?.[1]`), so package.json is the single
+    # source of truth: bumping Bun is a one-line change and CI cannot silently
+    # drift from what developers run locally.
     - name: Setup Bun
       uses: oven-sh/setup-bun@v2
       with:
-        bun-version: ${{ inputs.bun-version }}
+        bun-version-file: package.json
 
     - name: Cache bun modules
       uses: actions/cache@v5
