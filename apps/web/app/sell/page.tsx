@@ -3,12 +3,9 @@ import ContentSection from '@components/content-section';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
+import { createIndexableMetadata } from '@/lib/seo';
 
-export const metadata: Metadata = {
-  title: 'Sell on the Marketplace | Marketplace',
-  description:
-    'List your workflows, prompts, and skills on the Genfeed.ai marketplace and get paid through Stripe.',
-};
+export const metadata: Metadata = createIndexableMetadata('/sell');
 
 export default function SellPage(): ReactNode {
   return (

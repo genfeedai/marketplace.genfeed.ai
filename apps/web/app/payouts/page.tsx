@@ -3,12 +3,9 @@ import ContentSection from '@components/content-section';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
+import { createIndexableMetadata } from '@/lib/seo';
 
-export const metadata: Metadata = {
-  title: 'Payouts | Marketplace',
-  description:
-    'How sellers get paid on the Genfeed.ai marketplace — revenue split, payout timing, and Stripe Connect.',
-};
+export const metadata: Metadata = createIndexableMetadata('/payouts');
 
 export default function PayoutsPage(): ReactNode {
   return (

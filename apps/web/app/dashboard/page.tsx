@@ -1,6 +1,14 @@
 import EmptyState from '@components/empty-state';
 import PageHeader from '@components/page-header';
+import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
+import { createNoIndexMetadata } from '@/lib/seo';
+
+export const metadata: Metadata = createNoIndexMetadata({
+  title: 'Seller Dashboard',
+  description: 'Manage your marketplace listings, sales, and seller profile.',
+  path: '/dashboard',
+});
 
 export default function DashboardPage(): ReactNode {
   return (

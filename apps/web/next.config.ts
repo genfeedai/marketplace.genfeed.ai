@@ -31,6 +31,18 @@ const nextConfig: NextConfig = {
         destination: 'https://genfeed.ai/articles',
         permanent: true,
       },
+      // The legacy Free Assets view was a filter over the same catalogue. The
+      // current browse page is its stable replacement.
+      {
+        source: '/free',
+        destination: '/browse',
+        permanent: true,
+      },
+      {
+        source: '/free/:path*',
+        destination: '/browse',
+        permanent: true,
+      },
       // `/featured/*` was a hardcoded staff-picks carousel with placeholder
       // slugs — the collections behind it never existed. Browse is the real
       // equivalent.
@@ -40,7 +52,7 @@ const nextConfig: NextConfig = {
         permanent: true,
       },
       {
-        source: '/featured/:slug',
+        source: '/featured/:path*',
         destination: '/browse',
         permanent: true,
       },

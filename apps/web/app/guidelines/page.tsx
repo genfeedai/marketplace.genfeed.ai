@@ -3,12 +3,9 @@ import ContentSection from '@components/content-section';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
+import { createIndexableMetadata } from '@/lib/seo';
 
-export const metadata: Metadata = {
-  title: 'Marketplace Guidelines | Marketplace',
-  description:
-    'The quality, originality, and conduct standards every listing on the Genfeed.ai marketplace must meet.',
-};
+export const metadata: Metadata = createIndexableMetadata('/guidelines');
 
 export default function GuidelinesPage(): ReactNode {
   return (

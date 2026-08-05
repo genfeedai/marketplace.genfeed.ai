@@ -3,12 +3,9 @@ import ContentSection from '@components/content-section';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
+import { createIndexableMetadata } from '@/lib/seo';
 
-export const metadata: Metadata = {
-  title: 'About | Marketplace',
-  description:
-    'What the Genfeed.ai marketplace is, who it is for, and how it relates to Genfeed.ai.',
-};
+export const metadata: Metadata = createIndexableMetadata('/about');
 
 export default function AboutPage(): ReactNode {
   return (

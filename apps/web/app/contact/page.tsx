@@ -3,12 +3,9 @@ import ContentSection from '@components/content-section';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
+import { createIndexableMetadata } from '@/lib/seo';
 
-export const metadata: Metadata = {
-  title: 'Contact | Marketplace',
-  description:
-    'How to reach the Genfeed.ai marketplace team about orders, listings, sellers, or privacy.',
-};
+export const metadata: Metadata = createIndexableMetadata('/contact');
 
 const SUPPORT_EMAIL = 'support@genfeed.ai';
 

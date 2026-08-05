@@ -2,12 +2,9 @@ import PageHeader from '@components/page-header';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
+import { createIndexableMetadata } from '@/lib/seo';
 
-export const metadata: Metadata = {
-  title: 'Browse | Marketplace',
-  description:
-    'Browse every category on the Genfeed.ai marketplace — workflows, prompts, skills, videos, images, music, and posts.',
-};
+export const metadata: Metadata = createIndexableMetadata('/browse');
 
 interface BrowseCategory {
   href: string;

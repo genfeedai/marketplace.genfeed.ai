@@ -3,12 +3,9 @@ import ContentSection from '@components/content-section';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
+import { createIndexableMetadata } from '@/lib/seo';
 
-export const metadata: Metadata = {
-  title: 'Terms of Service | Marketplace',
-  description:
-    'The terms that govern buying and selling on the Genfeed.ai marketplace.',
-};
+export const metadata: Metadata = createIndexableMetadata('/terms');
 
 const LAST_UPDATED = '5 August 2026';
 

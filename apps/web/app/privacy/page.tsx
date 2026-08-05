@@ -3,12 +3,9 @@ import ContentSection from '@components/content-section';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
+import { createIndexableMetadata } from '@/lib/seo';
 
-export const metadata: Metadata = {
-  title: 'Privacy Policy | Marketplace',
-  description:
-    'What data the Genfeed.ai marketplace collects, why, and the rights you have over it.',
-};
+export const metadata: Metadata = createIndexableMetadata('/privacy');
 
 const LAST_UPDATED = '5 August 2026';
 

@@ -1,5 +1,13 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
+import { createNoIndexMetadata } from '@/lib/seo';
+
+export const metadata: Metadata = createNoIndexMetadata({
+  title: 'Purchase Complete',
+  description: 'Your marketplace purchase has completed successfully.',
+  path: '/checkout/success',
+});
 
 export default function CheckoutSuccessPage(): ReactNode {
   return (

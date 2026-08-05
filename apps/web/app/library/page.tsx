@@ -1,6 +1,14 @@
 import EmptyState from '@components/empty-state';
 import PageHeader from '@components/page-header';
+import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
+import { createNoIndexMetadata } from '@/lib/seo';
+
+export const metadata: Metadata = createNoIndexMetadata({
+  title: 'My Library',
+  description: 'Access marketplace purchases and downloads in your library.',
+  path: '/library',
+});
 
 export default function LibraryPage(): ReactNode {
   return (

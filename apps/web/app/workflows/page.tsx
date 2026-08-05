@@ -2,11 +2,9 @@ import EmptyState from '@components/empty-state';
 import PageHeader from '@components/page-header';
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
+import { createIndexableMetadata } from '@/lib/seo';
 
-export const metadata: Metadata = {
-  title: 'Workflows | Marketplace',
-  description: 'Automated content workflows ready to deploy.',
-};
+export const metadata: Metadata = createIndexableMetadata('/workflows');
 
 export default function WorkflowsPage(): ReactNode {
   return (
