@@ -7,7 +7,14 @@
  * - Summary reporting
  */
 
-import type { Collection, Db, Document, Filter } from 'mongodb';
+import type {
+  Collection,
+  Db,
+  Document,
+  Filter,
+  MatchKeysAndValues,
+  OptionalUnlessRequiredId,
+} from 'mongodb';
 
 const logger = {
   error: (...args: unknown[]) => console.error(...args),
@@ -79,9 +86,11 @@ export async function upsertDocument<T extends Document>(
     if (existing) {
       const update: Record<string, unknown> = {};
 
+      const existingFields = existing as Record<string, unknown>;
+
       for (const field of fieldsToCheck) {
         const newValue = document[field as keyof T];
-        const existingValue = existing[field as keyof T];
+        const existingValue = existingFields[field];
         if (newValue === undefined) continue;
         if (!deepEqual(existingValue, newValue)) {
           update[field] = newValue;
@@ -101,7 +110,11 @@ export async function upsertDocument<T extends Document>(
           `[DRY RUN] WOULD UPDATE "${key}": ${Object.keys(update).join(', ')}`,
         );
       } else {
-        await collection.updateOne(filter, { $set: update });
+        // The driver's MatchKeysAndValues<T> cannot express a dynamically
+        // assembled field set over the generic T.
+        await collection.updateOne(filter, {
+          $set: update as MatchKeysAndValues<T>,
+        });
         logger.log(`Updated "${key}": ${Object.keys(update).join(', ')}`);
       }
       return 'updated';
@@ -117,7 +130,9 @@ export async function upsertDocument<T extends Document>(
     if (dryRun) {
       logger.log(`[DRY RUN] WOULD INSERT "${key}"`);
     } else {
-      await collection.insertOne(docToInsert as T);
+      await collection.insertOne(
+        docToInsert as unknown as OptionalUnlessRequiredId<T>,
+      );
       logger.log(`Inserted "${key}"`);
     }
     return 'inserted';

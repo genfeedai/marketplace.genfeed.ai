@@ -2,6 +2,8 @@
   "dependencies": {
     "@clerk/backend": "3.2.7",
     "@genfeedai/enums": "2.3.2",
+    "@genfeedai/prompts": "0.2.2",
+    "@genfeedai/workflows": "0.3.2",
     "@nestjs/common": "11.1.18",
     "@nestjs/config": "4.0.3",
     "@nestjs/core": "11.1.18",
@@ -10,6 +12,7 @@
     "@nestjs/swagger": "11.2.6",
     "class-transformer": "0.5.1",
     "class-validator": "0.15.1",
+    "mongodb": "7.1.1",
     "mongoose": "9.4.1",
     "mongoose-aggregate-paginate-v2": "1.1.4",
     "reflect-metadata": "0.2.2",
@@ -34,11 +37,14 @@
     "build": "tsc -p tsconfig.json && tsc-alias -p tsconfig.json",
     "dev": "nest start --watch",
     "lint": "biome check src/",
+    "seed:packages": "bun run scripts/seeds/marketplace-packages.seed.ts",
+    "seed:packages:live": "bun run scripts/seeds/marketplace-packages.seed.ts --live",
     "start": "node -r tsconfig-paths/register dist/main",
     "start:prod": "node -r tsconfig-paths/register dist/main",
     "test": "vitest run",
     "test:watch": "vitest",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "typecheck:scripts": "tsc --noEmit -p tsconfig.scripts.json"
   },
   "version": "0.1.0"
 }
