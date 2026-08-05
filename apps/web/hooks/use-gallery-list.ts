@@ -1,11 +1,11 @@
 'use client';
 
+import { useCallback, useEffect, useState } from 'react';
 import {
+  fetchGallery,
   type GalleryItem,
   type GalleryQueryParams,
-  fetchGallery,
 } from '@/lib/api';
-import { useCallback, useEffect, useState } from 'react';
 
 interface UseGalleryListOptions {
   type: string;
@@ -69,5 +69,5 @@ function useGalleryList({
   return { items, isLoading, error };
 }
 
+export type { UseGalleryListOptions, UseGalleryListResult };
 export { useGalleryList };
-export type { UseGalleryListResult, UseGalleryListOptions };
