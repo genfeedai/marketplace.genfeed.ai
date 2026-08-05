@@ -1,8 +1,6 @@
 {
-  "$schema": "https://biomejs.dev/schemas/1.9.0/schema.json",
-  "organizeImports": {
-    "enabled": true
-  },
+  "$schema": "https://biomejs.dev/schemas/2.4.10/schema.json",
+  "assist": { "actions": { "source": { "organizeImports": "on" } } },
   "formatter": {
     "enabled": true,
     "indentStyle": "space",
@@ -29,7 +27,7 @@
   },
   "overrides": [
     {
-      "include": ["apps/api/**"],
+      "includes": ["**/apps/api/**"],
       "linter": {
         "rules": {
           "complexity": {
@@ -40,11 +38,12 @@
       }
     },
     {
-      "include": ["apps/web/**", "apps/admin/**"],
+      "includes": ["**/apps/web/**", "**/apps/admin/**"],
       "linter": {
         "rules": {
           "a11y": {
             "noSvgWithoutTitle": "off",
+            "noStaticElementInteractions": "warn",
             "useButtonType": "warn",
             "useKeyWithClickEvents": "warn",
             "useMediaCaption": "warn"
@@ -57,6 +56,12 @@
     }
   ],
   "files": {
-    "ignore": ["node_modules", "dist", ".next", ".turbo"]
+    "includes": [
+      "**",
+      "!**/node_modules",
+      "!**/dist",
+      "!**/.next",
+      "!**/.turbo"
+    ]
   }
 }

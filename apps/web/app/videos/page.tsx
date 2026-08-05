@@ -1,10 +1,10 @@
 'use client';
 
-import { useGalleryList } from '@/hooks/use-gallery-list';
 import EmptyState from '@components/empty-state';
 import Loading from '@components/loading';
 import PageHeader from '@components/page-header';
 import type { ReactNode } from 'react';
+import { useGalleryList } from '@/hooks/use-gallery-list';
 
 export default function VideosPage(): ReactNode {
   const { items: videos, isLoading } = useGalleryList({
