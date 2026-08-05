@@ -1,3 +1,4 @@
+import Footer from '@components/footer';
 import Nav from '@components/nav';
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
@@ -13,9 +14,10 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
-      <body className="min-h-screen bg-black text-white antialiased">
+      <body className="flex min-h-screen flex-col bg-black text-white antialiased">
         <Nav />
-        {children}
+        <div className="flex-1">{children}</div>
+        <Footer />
       </body>
     </html>
   );
