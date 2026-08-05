@@ -6,7 +6,7 @@ import {
 import { ListingsService } from '@api/listings/services/listings.service';
 import { PurchasesModule } from '@api/purchases/purchases.module';
 import { SellersModule } from '@api/sellers/sellers.module';
-import { Module, forwardRef } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 
 @Module({
   controllers: [
@@ -15,10 +15,7 @@ import { Module, forwardRef } from '@nestjs/common';
     AdminListingsController,
   ],
   exports: [ListingsService],
-  imports: [
-    forwardRef(() => PurchasesModule),
-    SellersModule,
-  ],
+  imports: [forwardRef(() => PurchasesModule), SellersModule],
   providers: [ListingsService],
 })
 export class ListingsModule {}

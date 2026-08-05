@@ -2,6 +2,7 @@
   "dependencies": {
     "@clerk/backend": "3.2.7",
     "@genfeedai/enums": "2.3.2",
+    "@genfeedai/prompts": "0.2.2",
     "@genfeedai/workflows": "0.3.2",
     "@nestjs/common": "11.1.18",
     "@nestjs/config": "4.0.3",
@@ -15,7 +16,7 @@
     "reflect-metadata": "0.2.2",
     "rxjs": "7.8.2",
     "slugify": "1.6.9",
-    "stripe": "22.0.0"
+    "stripe": "22.4.0"
   },
   "devDependencies": {
     "@nestjs/cli": "11.0.18",
@@ -39,11 +40,14 @@
     "prisma:validate": "prisma validate --schema prisma/schema.prisma",
     "seed:genfeed-core-workflows": "bun run apps/api/scripts/seeds/genfeed-core-workflows.seed.ts",
     "seed:genfeed-core-workflows:live": "bun run apps/api/scripts/seeds/genfeed-core-workflows.seed.ts --live",
+    "seed:packages": "bun run scripts/seeds/marketplace-packages.seed.ts",
+    "seed:packages:live": "bun run scripts/seeds/marketplace-packages.seed.ts --live",
     "start": "node -r tsconfig-paths/register dist/main",
     "start:prod": "node -r tsconfig-paths/register dist/main",
     "test": "vitest run",
     "test:watch": "vitest",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.scripts.json",
+    "typecheck:scripts": "tsc --noEmit -p tsconfig.scripts.json"
   },
   "version": "0.1.0"
 }

@@ -8,7 +8,7 @@ import {
 import { CheckoutService } from '@api/purchases/services/checkout.service';
 import { PurchasesService } from '@api/purchases/services/purchases.service';
 import { SellersModule } from '@api/sellers/sellers.module';
-import { Module, forwardRef } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 
 @Module({
   controllers: [

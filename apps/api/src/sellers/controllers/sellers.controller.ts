@@ -20,8 +20,8 @@ import {
 import type { MarketplaceConfigService } from '@api/config/config.service';
 import type { AdminSellerQueryDto } from '@api/sellers/dto/admin-seller-query.dto';
 import type { CreateSellerDto } from '@api/sellers/dto/create-seller.dto';
-import type { UpdateSellerStatusDto } from '@api/sellers/dto/update-seller-status.dto';
 import type { UpdateSellerDto } from '@api/sellers/dto/update-seller.dto';
+import type { UpdateSellerStatusDto } from '@api/sellers/dto/update-seller-status.dto';
 import type { SellersService } from '@api/sellers/services/sellers.service';
 import type { StripeConnectService } from '@api/sellers/services/stripe-connect.service';
 import type { User } from '@clerk/backend';

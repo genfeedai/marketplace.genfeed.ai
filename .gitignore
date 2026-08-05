@@ -10,5 +10,8 @@ dist/
 coverage/
 .vercel
 
-# Local-only session logs (never committed)
+# Agent session logs are local-only. Both spellings on purpose: canonical is
+# lowercase, but a case-sensitive filesystem would not ignore a stray uppercase
+# one, and `git add -A` would then commit it.
 .agents/sessions/
+.agents/SESSIONS/
