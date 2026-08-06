@@ -1,10 +1,25 @@
+import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
+import { createNoIndexMetadata } from '@/lib/seo';
 
 interface ListingPageProps {
   params: Promise<{
     sellerSlug: string;
     listingSlug: string;
   }>;
+}
+
+export async function generateMetadata({
+  params,
+}: ListingPageProps): Promise<Metadata> {
+  const { sellerSlug, listingSlug } = await params;
+  const title = listingSlug.replaceAll('-', ' ');
+
+  return createNoIndexMetadata({
+    title,
+    description: `Marketplace listing by ${sellerSlug}.`,
+    path: `/${sellerSlug}/${listingSlug}`,
+  });
 }
 
 export default async function ListingPage({

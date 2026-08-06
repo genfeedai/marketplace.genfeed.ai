@@ -1,5 +1,13 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
+import { createNoIndexMetadata } from '@/lib/seo';
+
+export const metadata: Metadata = createNoIndexMetadata({
+  title: 'Checkout Cancelled',
+  description: 'Your marketplace checkout was cancelled.',
+  path: '/checkout/cancel',
+});
 
 export default function CheckoutCancelPage(): ReactNode {
   return (

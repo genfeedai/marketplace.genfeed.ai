@@ -14,6 +14,50 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  // Legacy marketplace URLs that were linked from the previous nav/footer but
+  // never had a page behind them. They stay reachable so existing backlinks and
+  // sitemap entries resolve instead of 404ing.
+  async redirects() {
+    return [
+      // The marketplace has no journal of its own; editorial lives on the main
+      // site. External destination, so this is a redirect rather than a page.
+      {
+        source: '/blog',
+        destination: 'https://genfeed.ai/articles',
+        permanent: true,
+      },
+      {
+        source: '/blog/:path*',
+        destination: 'https://genfeed.ai/articles',
+        permanent: true,
+      },
+      // The legacy Free Assets view was a filter over the same catalogue. The
+      // current browse page is its stable replacement.
+      {
+        source: '/free',
+        destination: '/browse',
+        permanent: true,
+      },
+      {
+        source: '/free/:path*',
+        destination: '/browse',
+        permanent: true,
+      },
+      // `/featured/*` was a hardcoded staff-picks carousel with placeholder
+      // slugs — the collections behind it never existed. Browse is the real
+      // equivalent.
+      {
+        source: '/featured',
+        destination: '/browse',
+        permanent: true,
+      },
+      {
+        source: '/featured/:path*',
+        destination: '/browse',
+        permanent: true,
+      },
+    ];
+  },
 };
 
 export default nextConfig;
