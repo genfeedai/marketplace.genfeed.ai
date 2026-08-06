@@ -2,6 +2,7 @@
   "dependencies": {
     "@genfeedai/enums": "2.3.2",
     "next": "16.2.2",
+    "posthog-js": "1.413.2",
     "react": "19.2.4",
     "react-dom": "19.2.4"
   },
@@ -19,7 +20,7 @@
   "scripts": {
     "build": "next build",
     "dev": "next dev -p 3204",
-    "lint": "biome check app/",
+    "lint": "biome check app/ lib/ instrumentation-client.ts",
     "start": "next start",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
