@@ -1,12 +1,16 @@
 'use client';
 
 import { ListingStatus, ListingType, SellerStatus } from '@genfeedai/enums';
-import type { IListing, IPurchase, ISeller } from '@genfeedai/interfaces';
 import { useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useResource } from '../../../hooks/use-resource';
 import { AdminMarketplaceService } from '../../../services/marketplace.service';
-import type { MarketplaceAnalyticsOverview } from '../../../types/marketplace';
+import type {
+  IListing,
+  IPurchase,
+  ISeller,
+  MarketplaceAnalyticsOverview,
+} from '../../../types/marketplace';
 
 /* ------------------------------------------------------------------ */
 /*  Constants                                                          */

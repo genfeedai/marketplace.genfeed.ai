@@ -4,13 +4,17 @@ import type {
   SellerStatus,
 } from '@genfeedai/enums';
 
-import type { IListing, IPurchase, ISeller } from '@genfeedai/interfaces';
 import {
   deserializeCollection,
   deserializeResource,
   type JsonApiDocument,
 } from '../lib/json-api';
-import type { MarketplaceAnalyticsOverview } from '../types/marketplace';
+import type {
+  IListing,
+  IPurchase,
+  ISeller,
+  MarketplaceAnalyticsOverview,
+} from '../types/marketplace';
 
 const API_BASE =
   process.env.NEXT_PUBLIC_MARKETPLACE_API_URL ?? 'http://localhost:3200';

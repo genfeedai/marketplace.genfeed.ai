@@ -16,7 +16,6 @@
       "dependencies": {
         "@genfeedai/constants": "2.2.9",
         "@genfeedai/enums": "2.3.2",
-        "@genfeedai/interfaces": "2.3.20",
         "next": "16.2.2",
         "react": "19.2.4",
         "react-dom": "19.2.4",
@@ -184,8 +183,6 @@
     "@genfeedai/constants": ["@genfeedai/constants@2.2.9", "", { "dependencies": { "@genfeedai/enums": "2.3.2" } }, "sha512-cWHHNplRGhAZmg7ioMwGA5gGuQFX6aYEcgN11q/d9w3wac4yyz2uGajk1v/aNqlbZ46Ny4JFdps7vc6FNUpmgA=="],
 
     "@genfeedai/enums": ["@genfeedai/enums@2.3.2", "", {}, "sha512-4isNND8HaJo8TaI8A7jZOO/Cy1r3HBsFKnGYi1hYRAuzecNatzrxpcODmOxUNVznSV/H2MpJW9l1r7oG5mpeoA=="],
-
-    "@genfeedai/interfaces": ["@genfeedai/interfaces@2.3.20", "", { "dependencies": { "@genfeedai/constants": "2.2.9", "@genfeedai/enums": "2.3.2" } }, "sha512-UPbQoZWKTCbCqnA2pfY+z1QwpJUHixdN1ElY/OgAvJngfmmr1O5JnL7OwfCDaBabbuyJJOmRAb18tfUC9gNnMg=="],
 
     "@genfeedai/prompts": ["@genfeedai/prompts@0.2.2", "", {}, "sha512-W99j4VKJ5pV1Z2yJqwxfo6gT6ZCoPEXEU7TQUBgB28VpcLaU6q2vdLxRTSeYBnVyiU/sToD0vANfw07jioFcAA=="],
 
