@@ -1,6 +1,7 @@
 import type { Metadata, MetadataRoute } from 'next';
 
 const MARKETPLACE_ORIGIN = 'https://marketplace.genfeed.ai';
+const RETIRED_SELLER_SLUGS = ['blog', 'featured', 'free'] as const;
 
 interface IndexableRoute {
   path: string;
@@ -216,11 +217,17 @@ function absoluteMarketplaceUrl(path: string): string {
   return new URL(path, MARKETPLACE_ORIGIN).toString();
 }
 
+function isRetiredSellerSlug(sellerSlug: string): boolean {
+  return RETIRED_SELLER_SLUGS.some((retired) => retired === sellerSlug);
+}
+
 export type { IndexablePath, IndexableRoute };
 export {
   absoluteMarketplaceUrl,
   createIndexableMetadata,
   createNoIndexMetadata,
   INDEXABLE_ROUTES,
+  isRetiredSellerSlug,
   MARKETPLACE_ORIGIN,
+  RETIRED_SELLER_SLUGS,
 };

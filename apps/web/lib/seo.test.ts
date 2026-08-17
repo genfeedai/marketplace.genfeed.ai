@@ -7,7 +7,9 @@ import {
   createIndexableMetadata,
   createNoIndexMetadata,
   INDEXABLE_ROUTES,
+  isRetiredSellerSlug,
   MARKETPLACE_ORIGIN,
+  RETIRED_SELLER_SLUGS,
 } from './seo';
 
 describe('marketplace SEO contract', () => {
@@ -83,5 +85,12 @@ describe('marketplace SEO contract', () => {
 
   test('keeps retired marketplace identities as hard cuts', () => {
     expect(nextConfig.redirects).toBeUndefined();
+    expect(RETIRED_SELLER_SLUGS).toEqual(['blog', 'featured', 'free']);
+
+    for (const sellerSlug of RETIRED_SELLER_SLUGS) {
+      expect(isRetiredSellerSlug(sellerSlug)).toBe(true);
+    }
+
+    expect(isRetiredSellerSlug('creator')).toBe(false);
   });
 });

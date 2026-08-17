@@ -1,12 +1,10 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import type { ReactNode } from 'react';
-import { createNoIndexMetadata } from '@/lib/seo';
-
-const RETIRED_SELLER_SLUGS = new Set(['blog', 'featured', 'free']);
+import { createNoIndexMetadata, isRetiredSellerSlug } from '@/lib/seo';
 
 function assertActiveSellerSlug(sellerSlug: string): void {
-  if (RETIRED_SELLER_SLUGS.has(sellerSlug)) {
+  if (isRetiredSellerSlug(sellerSlug)) {
     notFound();
   }
 }
