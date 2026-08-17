@@ -81,19 +81,7 @@ describe('marketplace SEO contract', () => {
     });
   });
 
-  test('redirects retired legacy identities to their real destinations', async () => {
-    const redirects = nextConfig.redirects ? await nextConfig.redirects() : [];
-    const destinations = new Map(
-      redirects.map((redirect) => [redirect.source, redirect.destination]),
-    );
-
-    expect(destinations.get('/free')).toBe('/browse');
-    expect(destinations.get('/free/:path*')).toBe('/browse');
-    expect(destinations.get('/featured')).toBe('/browse');
-    expect(destinations.get('/featured/:path*')).toBe('/browse');
-    expect(destinations.get('/blog')).toBe('https://genfeed.ai/articles');
-    expect(destinations.get('/blog/:path*')).toBe(
-      'https://genfeed.ai/articles',
-    );
+  test('keeps retired marketplace identities as hard cuts', () => {
+    expect(nextConfig.redirects).toBeUndefined();
   });
 });
