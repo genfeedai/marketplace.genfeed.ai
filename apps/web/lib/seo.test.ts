@@ -11,6 +11,10 @@ import {
 } from './seo';
 
 describe('marketplace SEO contract', () => {
+  test('serves pre-optimized CDN images without Vercel transformations', () => {
+    expect(nextConfig.images?.unoptimized).toBe(true);
+  });
+
   test('keeps the complete public route inventory in the index', () => {
     expect(INDEXABLE_ROUTES.map((route) => route.path)).toEqual([
       '/',
