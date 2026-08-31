@@ -6,8 +6,10 @@ import Nav from '../components/nav';
 
 vi.mock('next/navigation', () => ({ usePathname: () => '/' }));
 
-const PRODUCT_ROUTES = ['/workflows', '/prompts', '/skills'] as const;
-const RETIRED_MEDIA_ROUTES = [
+const PUBLIC_ROUTES = [
+  '/workflows',
+  '/prompts',
+  '/skills',
   '/videos',
   '/images',
   '/music',
@@ -20,7 +22,7 @@ describe('marketplace public navigation', () => {
     vi.unstubAllGlobals();
   });
 
-  test('advertises product categories without retired media galleries', () => {
+  test('advertises products and public Genfeed content', () => {
     vi.stubGlobal('React', React);
 
     const html = [
@@ -28,12 +30,8 @@ describe('marketplace public navigation', () => {
       renderToStaticMarkup(Footer()),
     ].join('');
 
-    for (const href of PRODUCT_ROUTES) {
+    for (const href of PUBLIC_ROUTES) {
       expect(html).toContain(`href="${href}"`);
-    }
-
-    for (const href of RETIRED_MEDIA_ROUTES) {
-      expect(html).not.toContain(`href="${href}"`);
     }
   });
 });
