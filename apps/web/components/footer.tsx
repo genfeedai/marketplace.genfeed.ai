@@ -20,6 +20,11 @@ const FOOTER_SECTIONS: FooterSection[] = [
       { href: '/workflows', label: 'Workflows' },
       { href: '/prompts', label: 'Prompts' },
       { href: '/skills', label: 'Skills' },
+      { href: '/videos', label: 'Videos' },
+      { href: '/images', label: 'Images' },
+      { href: '/music', label: 'Music' },
+      { href: '/posts', label: 'Posts' },
+      { href: '/leaderboard', label: 'Leaderboard' },
     ],
   },
   {
@@ -95,8 +100,7 @@ export default function Footer(): ReactNode {
               Marketplace
             </Link>
             <p className="max-w-xs text-sm text-white/60">
-              Premium workflows, prompts, and skills for creators who care about
-              output quality, not just volume.
+              Creator products and public content from the Genfeed community.
             </p>
           </div>
 
