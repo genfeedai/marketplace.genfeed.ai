@@ -20,6 +20,36 @@ const MARKETPLACE_ITEMS = [
     icon: '\uD83E\uDDE0',
     label: 'Skills',
   },
+  {
+    description: 'Public AI-generated videos from Genfeed creators',
+    href: '/videos',
+    icon: '\uD83C\uDFA5',
+    label: 'Videos',
+  },
+  {
+    description: 'Public AI-generated images from Genfeed creators',
+    href: '/images',
+    icon: '\uD83D\uDDBC\uFE0F',
+    label: 'Images',
+  },
+  {
+    description: 'Public AI-composed music from Genfeed creators',
+    href: '/music',
+    icon: '\uD83C\uDFB5',
+    label: 'Music',
+  },
+  {
+    description: 'Public content published by the Genfeed community',
+    href: '/posts',
+    icon: '\uD83D\uDCDD',
+    label: 'Posts',
+  },
+  {
+    description: 'The most-viewed public posts on Genfeed',
+    href: '/leaderboard',
+    icon: '\uD83C\uDFC6',
+    label: 'Leaderboard',
+  },
 ];
 
 export default function HomePage(): ReactNode {
@@ -30,7 +60,7 @@ export default function HomePage(): ReactNode {
           Marketplace
         </h1>
         <p className="text-lg text-white/70">
-          Discover curated workflows, prompts, and agent skills
+          Discover creator products and public content from Genfeed
         </p>
       </div>
 

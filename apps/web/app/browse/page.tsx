@@ -32,6 +32,36 @@ const BROWSE_CATEGORIES: BrowseCategory[] = [
     label: 'Skills',
     description: 'Agent skills that extend what your AI can do',
   },
+  {
+    href: '/videos',
+    icon: '\uD83C\uDFA5',
+    label: 'Videos',
+    description: 'Public AI-generated videos from Genfeed creators',
+  },
+  {
+    href: '/images',
+    icon: '\uD83D\uDDBC\uFE0F',
+    label: 'Images',
+    description: 'Public AI-generated images from Genfeed creators',
+  },
+  {
+    href: '/music',
+    icon: '\uD83C\uDFB5',
+    label: 'Music',
+    description: 'Public AI-composed music from Genfeed creators',
+  },
+  {
+    href: '/posts',
+    icon: '\uD83D\uDCDD',
+    label: 'Posts',
+    description: 'Public content published by the Genfeed community',
+  },
+  {
+    href: '/leaderboard',
+    icon: '\uD83C\uDFC6',
+    label: 'Leaderboard',
+    description: 'The most-viewed public posts on Genfeed',
+  },
 ];
 
 export default function BrowsePage(): ReactNode {
@@ -40,7 +70,7 @@ export default function BrowsePage(): ReactNode {
       <PageHeader
         icon={'\uD83E\uDDED'}
         title="Browse"
-        description="Browse every marketplace product category"
+        description="Browse creator products and public Genfeed content"
       />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">

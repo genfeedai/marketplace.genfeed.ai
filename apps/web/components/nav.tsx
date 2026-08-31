@@ -10,6 +10,11 @@ const NAV_ITEMS = [
   { href: '/workflows', label: 'Workflows' },
   { href: '/prompts', label: 'Prompts' },
   { href: '/skills', label: 'Skills' },
+  { href: '/videos', label: 'Videos' },
+  { href: '/images', label: 'Images' },
+  { href: '/music', label: 'Music' },
+  { href: '/posts', label: 'Posts' },
+  { href: '/leaderboard', label: 'Leaderboard' },
 ];
 
 export default function Nav(): ReactNode {
