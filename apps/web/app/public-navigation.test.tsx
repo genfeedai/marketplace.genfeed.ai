@@ -3,7 +3,6 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 import Footer from '../components/footer';
 import Nav from '../components/nav';
-import BrowsePage from './browse/page';
 
 vi.mock('next/navigation', () => ({ usePathname: () => '/' }));
 
@@ -26,7 +25,6 @@ describe('marketplace public navigation', () => {
 
     const html = [
       renderToStaticMarkup(Nav()),
-      renderToStaticMarkup(BrowsePage()),
       renderToStaticMarkup(Footer()),
     ].join('');
 

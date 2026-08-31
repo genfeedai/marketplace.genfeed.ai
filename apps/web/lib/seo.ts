@@ -16,7 +16,7 @@ const INDEXABLE_ROUTES = [
     path: '/',
     title: 'Creator Marketplace',
     description:
-      'Discover curated workflows, prompts, skills, and AI-generated media from the Genfeed.ai creator community.',
+      'Discover curated workflows, prompts, and agent skills from the Genfeed.ai creator community.',
     changeFrequency: 'daily',
     priority: 1,
   },
@@ -24,7 +24,7 @@ const INDEXABLE_ROUTES = [
     path: '/browse',
     title: 'Browse',
     description:
-      'Browse every category on the Genfeed.ai marketplace, including workflows, prompts, skills, videos, images, music, and posts.',
+      'Browse workflows, prompts, and agent skills from the Genfeed.ai creator marketplace.',
     changeFrequency: 'daily',
     priority: 0.9,
   },
@@ -51,46 +51,6 @@ const INDEXABLE_ROUTES = [
       'Discover packaged agent skills that extend what your AI can do.',
     changeFrequency: 'weekly',
     priority: 0.8,
-  },
-  {
-    path: '/videos',
-    title: 'Videos',
-    description:
-      'Browse AI-generated videos shared by the Genfeed.ai creator community.',
-    changeFrequency: 'daily',
-    priority: 0.8,
-  },
-  {
-    path: '/images',
-    title: 'Images',
-    description:
-      'Explore AI-generated images shared by the Genfeed.ai creator community.',
-    changeFrequency: 'daily',
-    priority: 0.8,
-  },
-  {
-    path: '/music',
-    title: 'Music',
-    description:
-      'Listen to AI-composed music shared by the Genfeed.ai creator community.',
-    changeFrequency: 'daily',
-    priority: 0.7,
-  },
-  {
-    path: '/posts',
-    title: 'Posts',
-    description:
-      'Read AI-generated articles and creative content from the Genfeed.ai community.',
-    changeFrequency: 'daily',
-    priority: 0.7,
-  },
-  {
-    path: '/leaderboard',
-    title: 'Leaderboard',
-    description:
-      'See the most-viewed AI-generated video posts from the Genfeed.ai community.',
-    changeFrequency: 'daily',
-    priority: 0.7,
   },
   {
     path: '/sell',

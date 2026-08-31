@@ -32,36 +32,6 @@ const BROWSE_CATEGORIES: BrowseCategory[] = [
     label: 'Skills',
     description: 'Agent skills that extend what your AI can do',
   },
-  {
-    href: '/videos',
-    icon: '\uD83C\uDFA5',
-    label: 'Videos',
-    description: 'Browse our collection of AI-generated videos',
-  },
-  {
-    href: '/images',
-    icon: '\uD83D\uDDBC\uFE0F',
-    label: 'Images',
-    description: 'Explore stunning AI-generated images',
-  },
-  {
-    href: '/music',
-    icon: '\uD83C\uDFB5',
-    label: 'Music',
-    description: 'Listen to AI-composed music',
-  },
-  {
-    href: '/posts',
-    icon: '\uD83D\uDCDD',
-    label: 'Posts',
-    description: 'Read AI-generated articles and content',
-  },
-  {
-    href: '/leaderboard',
-    icon: '\uD83C\uDFC6',
-    label: 'Leaderboard',
-    description: 'Most viewed video posts',
-  },
 ];
 
 export default function BrowsePage(): ReactNode {
@@ -70,7 +40,7 @@ export default function BrowsePage(): ReactNode {
       <PageHeader
         icon={'\uD83E\uDDED'}
         title="Browse"
-        description="Every category on the marketplace, in one place"
+        description="Browse every marketplace product category"
       />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
