@@ -20,9 +20,6 @@ const FOOTER_SECTIONS: FooterSection[] = [
       { href: '/workflows', label: 'Workflows' },
       { href: '/prompts', label: 'Prompts' },
       { href: '/skills', label: 'Skills' },
-      { href: '/images', label: 'Images' },
-      { href: '/videos', label: 'Videos' },
-      { href: '/music', label: 'Music' },
     ],
   },
   {

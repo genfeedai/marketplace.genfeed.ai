@@ -3,34 +3,10 @@ import type { ReactNode } from 'react';
 
 const MARKETPLACE_ITEMS = [
   {
-    description: 'Browse our collection of AI-generated videos',
-    href: '/videos',
-    icon: '\uD83C\uDFA5',
-    label: 'Videos',
-  },
-  {
-    description: 'Explore stunning AI-generated images',
-    href: '/images',
-    icon: '\uD83D\uDDBC\uFE0F',
-    label: 'Images',
-  },
-  {
-    description: 'Listen to AI-composed music',
-    href: '/music',
-    icon: '\uD83C\uDFB5',
-    label: 'Music',
-  },
-  {
-    description: 'Read AI-generated articles and content',
-    href: '/posts',
-    icon: '\uD83D\uDCDD',
-    label: 'Posts',
-  },
-  {
-    description: 'Most viewed video posts',
-    href: '/leaderboard',
-    icon: '\uD83C\uDFC6',
-    label: 'Leaderboard',
+    description: 'Automated content workflows ready to deploy',
+    href: '/workflows',
+    icon: '\u2699\uFE0F',
+    label: 'Workflows',
   },
   {
     description: 'Expertly crafted prompts for AI generation',
@@ -39,10 +15,10 @@ const MARKETPLACE_ITEMS = [
     label: 'Prompts',
   },
   {
-    description: 'Automated content workflows ready to deploy',
-    href: '/workflows',
-    icon: '\u2699\uFE0F',
-    label: 'Workflows',
+    description: 'Agent skills that extend what your AI can do',
+    href: '/skills',
+    icon: '\uD83E\uDDE0',
+    label: 'Skills',
   },
 ];
 
@@ -54,7 +30,7 @@ export default function HomePage(): ReactNode {
           Marketplace
         </h1>
         <p className="text-lg text-white/70">
-          Explore our collection of AI-generated content
+          Discover curated workflows, prompts, and agent skills
         </p>
       </div>
 

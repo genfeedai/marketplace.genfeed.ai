@@ -6,12 +6,10 @@ import type { ReactNode } from 'react';
 
 const NAV_ITEMS = [
   { href: '/', label: 'Home' },
-  { href: '/videos', label: 'Videos' },
-  { href: '/images', label: 'Images' },
-  { href: '/music', label: 'Music' },
-  { href: '/posts', label: 'Posts' },
-  { href: '/leaderboard', label: 'Leaderboard' },
+  { href: '/browse', label: 'Browse' },
+  { href: '/workflows', label: 'Workflows' },
   { href: '/prompts', label: 'Prompts' },
+  { href: '/skills', label: 'Skills' },
 ];
 
 export default function Nav(): ReactNode {
