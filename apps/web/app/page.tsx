@@ -1,59 +1,54 @@
-import Image from 'next/image';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 
-const ASSETS_URL =
-  process.env.NEXT_PUBLIC_GENFEED_ASSETS_URL ?? 'https://assets.genfeed.ai';
-
 const MARKETPLACE_ITEMS = [
   {
-    bgImage: `${ASSETS_URL}/placeholders/portrait.jpg`,
-    description: 'Browse our collection of AI-generated videos',
-    href: '/videos',
-    icon: '\uD83C\uDFA5',
-    label: 'Videos',
+    description: 'Automated content workflows ready to deploy',
+    href: '/workflows',
+    icon: '\u2699\uFE0F',
+    label: 'Workflows',
   },
   {
-    bgImage: `${ASSETS_URL}/placeholders/landscape.jpg`,
-    description: 'Explore stunning AI-generated images',
-    href: '/images',
-    icon: '\uD83D\uDDBC\uFE0F',
-    label: 'Images',
-  },
-  {
-    bgImage: `${ASSETS_URL}/placeholders/square.jpg`,
-    description: 'Listen to AI-composed music',
-    href: '/music',
-    icon: '\uD83C\uDFB5',
-    label: 'Music',
-  },
-  {
-    bgImage: `${ASSETS_URL}/placeholders/landscape.jpg`,
-    description: 'Read AI-generated articles and content',
-    href: '/posts',
-    icon: '\uD83D\uDCDD',
-    label: 'Posts',
-  },
-  {
-    bgImage: `${ASSETS_URL}/placeholders/portrait.jpg`,
-    description: 'Most viewed video posts',
-    href: '/leaderboard',
-    icon: '\uD83C\uDFC6',
-    label: 'Leaderboard',
-  },
-  {
-    bgImage: `${ASSETS_URL}/placeholders/square.jpg`,
     description: 'Expertly crafted prompts for AI generation',
     href: '/prompts',
     icon: '\uD83D\uDCA1',
     label: 'Prompts',
   },
   {
-    bgImage: `${ASSETS_URL}/placeholders/landscape.jpg`,
-    description: 'Automated content workflows ready to deploy',
-    href: '/workflows',
-    icon: '\u2699\uFE0F',
-    label: 'Workflows',
+    description: 'Agent skills that extend what your AI can do',
+    href: '/skills',
+    icon: '\uD83E\uDDE0',
+    label: 'Skills',
+  },
+  {
+    description: 'Public AI-generated videos from Genfeed creators',
+    href: '/videos',
+    icon: '\uD83C\uDFA5',
+    label: 'Videos',
+  },
+  {
+    description: 'Public AI-generated images from Genfeed creators',
+    href: '/images',
+    icon: '\uD83D\uDDBC\uFE0F',
+    label: 'Images',
+  },
+  {
+    description: 'Public AI-composed music from Genfeed creators',
+    href: '/music',
+    icon: '\uD83C\uDFB5',
+    label: 'Music',
+  },
+  {
+    description: 'Public content published by the Genfeed community',
+    href: '/posts',
+    icon: '\uD83D\uDCDD',
+    label: 'Posts',
+  },
+  {
+    description: 'The most-viewed public posts on Genfeed',
+    href: '/leaderboard',
+    icon: '\uD83C\uDFC6',
+    label: 'Leaderboard',
   },
 ];
 
@@ -65,25 +60,22 @@ export default function HomePage(): ReactNode {
           Marketplace
         </h1>
         <p className="text-lg text-white/70">
-          Explore our collection of AI-generated content
+          Discover creator products and public content from Genfeed
         </p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-        {MARKETPLACE_ITEMS.map((item, index) => (
+        {MARKETPLACE_ITEMS.map((item) => (
           <Link key={item.href} href={item.href} className="group">
-            <div className="h-48 sm:h-60 md:h-72 relative overflow-hidden transform transition-all duration-300 hover:shadow-2xl card-glow rounded-lg">
-              <figure className="absolute inset-0">
-                <Image
-                  src={item.bgImage}
-                  alt={item.label}
-                  fill
-                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                  className="object-cover transition-transform duration-500"
-                  priority={index < 3}
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent" />
-              </figure>
+            <div className="h-48 sm:h-60 md:h-72 relative overflow-hidden transform rounded-lg border border-white/10 bg-white/5 transition-all duration-300 hover:border-white/25 hover:bg-white/10 hover:shadow-2xl card-glow">
+              <div
+                aria-hidden="true"
+                className="absolute inset-0 bg-gradient-to-br from-white/10 via-white/5 to-transparent transition-transform duration-500 group-hover:scale-105"
+              />
+              <div
+                aria-hidden="true"
+                className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent"
+              />
 
               <div className="relative z-10 flex flex-col justify-end text-white p-6 h-full">
                 <div className="transform transition-transform duration-300 group-hover:translate-y-0 translate-y-2">

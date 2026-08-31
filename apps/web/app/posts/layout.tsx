@@ -4,6 +4,10 @@ import { createIndexableMetadata } from '@/lib/seo';
 
 export const metadata: Metadata = createIndexableMetadata('/posts');
 
-export default function PostsLayout({ children }: { children: ReactNode }) {
+export default function PostsLayout({
+  children,
+}: {
+  children: ReactNode;
+}): ReactNode {
   return children;
 }

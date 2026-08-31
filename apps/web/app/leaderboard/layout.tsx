@@ -8,6 +8,6 @@ export default function LeaderboardLayout({
   children,
 }: {
   children: ReactNode;
-}) {
+}): ReactNode {
   return children;
 }

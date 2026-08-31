@@ -9,6 +9,7 @@ dist/
 .DS_Store
 coverage/
 .vercel
+.worktrees/
 
 # Agent session logs are local-only. Both spellings on purpose: canonical is
 # lowercase, but a case-sensitive filesystem would not ignore a stray uppercase

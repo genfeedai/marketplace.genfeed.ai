@@ -4,6 +4,10 @@ import { createIndexableMetadata } from '@/lib/seo';
 
 export const metadata: Metadata = createIndexableMetadata('/images');
 
-export default function ImagesLayout({ children }: { children: ReactNode }) {
+export default function ImagesLayout({
+  children,
+}: {
+  children: ReactNode;
+}): ReactNode {
   return children;
 }

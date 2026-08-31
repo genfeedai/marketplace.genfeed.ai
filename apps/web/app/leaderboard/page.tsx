@@ -1,123 +1,63 @@
-'use client';
-
 import EmptyState from '@components/empty-state';
-import Loading from '@components/loading';
 import PageHeader from '@components/page-header';
-import { useSearchParams } from 'next/navigation';
-import {
-  type ReactNode,
-  Suspense,
-  useCallback,
-  useEffect,
-  useState,
-} from 'react';
-import { fetchLeaderboard, type GalleryItem } from '@/lib/api';
+import type { ReactNode } from 'react';
+import { fetchPublicContent } from '@/lib/public-content';
 
-function LeaderboardContent(): ReactNode {
-  const searchParams = useSearchParams();
-  const page = Number.parseInt(searchParams?.get('page') ?? '1', 10);
-
-  const [posts, setPosts] = useState<GalleryItem[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  const loadPosts = useCallback(
-    async (signal?: AbortSignal) => {
-      try {
-        setIsLoading(true);
-        const data = await fetchLeaderboard({ page }, signal);
-
-        if (signal?.aborted) return;
-
-        setPosts(data);
-      } catch (error) {
-        if (signal?.aborted) return;
-        // Silently handle - empty state will show
-      } finally {
-        if (!signal?.aborted) {
-          setIsLoading(false);
-        }
-      }
-    },
-    [page],
-  );
-
-  useEffect(() => {
-    const controller = new AbortController();
-    loadPosts(controller.signal);
-
-    return () => {
-      controller.abort();
-    };
-  }, [loadPosts]);
-
-  if (isLoading) {
-    return <Loading />;
-  }
-
-  if (posts.length === 0) {
-    return (
-      <EmptyState
-        icon={'\uD83C\uDFC6'}
-        label="No Top Videos Yet"
-        description="Share your AI-generated videos to appear on the leaderboard."
-      />
-    );
-  }
+export default async function LeaderboardPage(): Promise<ReactNode> {
+  const result = await fetchPublicContent('posts', { limit: 100 });
+  const rankedPosts = [...result.items]
+    .sort((left, right) => (right.totalViews ?? 0) - (left.totalViews ?? 0))
+    .slice(0, 20);
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-      {posts.map((post) => {
-        const ingredient = post.ingredients?.[0];
-
-        return (
-          <div
-            key={post.id}
-            className="rounded-lg border border-white/10 bg-white/5 p-4 card-glow"
-          >
-            <div className="flex flex-col space-y-4">
-              <div className="aspect-video w-full overflow-hidden rounded bg-black">
-                {ingredient?.ingredientUrl ? (
-                  <video
-                    src={ingredient.ingredientUrl}
-                    poster={ingredient.thumbnailUrl ?? undefined}
-                    controls
-                    preload="metadata"
-                    playsInline
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  <div className="flex h-full w-full items-center justify-center text-3xl text-white/20">
-                    {'\uD83C\uDFA5'}
-                  </div>
-                )}
-              </div>
-              <div className="flex-1">
-                <h3 className="truncate font-semibold text-white">
-                  {post.label ?? 'Untitled'}
-                </h3>
-                <p className="mt-2 text-sm text-white/70">
-                  {post.totalViews ?? 0} views
-                </p>
-              </div>
-            </div>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-export default function LeaderboardPage(): ReactNode {
-  return (
-    <main className="mx-auto max-w-7xl px-4 py-8">
+    <main className="mx-auto max-w-5xl px-4 py-8">
       <PageHeader
         icon={'\uD83C\uDFC6'}
         title="Leaderboard"
-        description="Most viewed video posts this week"
+        description="The most-viewed public posts from the Genfeed community"
       />
-      <Suspense fallback={<Loading />}>
-        <LeaderboardContent />
-      </Suspense>
+
+      {result.status === 'unavailable' && (
+        <EmptyState
+          icon={'\u26A0\uFE0F'}
+          label="Leaderboard Unavailable"
+          description="Genfeed could not load public post rankings right now. Please try again shortly."
+        />
+      )}
+
+      {result.status === 'success' && rankedPosts.length === 0 && (
+        <EmptyState
+          icon={'\uD83C\uDFC6'}
+          label="No Public Rankings Yet"
+          description="Popular posts will appear here when creators publish content publicly on Genfeed."
+        />
+      )}
+
+      {result.status === 'success' && rankedPosts.length > 0 && (
+        <ol className="space-y-3">
+          {rankedPosts.map((post, index) => (
+            <li
+              key={post.id}
+              className="grid grid-cols-[3rem_1fr_auto] items-center gap-4 rounded-lg border border-white/10 bg-white/5 p-4 card-glow"
+            >
+              <span className="text-center text-xl font-bold text-white/40">
+                {index + 1}
+              </span>
+              <div className="min-w-0">
+                <h2 className="truncate font-semibold text-white">
+                  {post.label ?? 'Untitled post'}
+                </h2>
+                <p className="text-sm text-white/50">
+                  {post.platform ?? 'Genfeed'}
+                </p>
+              </div>
+              <span className="whitespace-nowrap text-sm text-white/70">
+                {post.totalViews ?? 0} views
+              </span>
+            </li>
+          ))}
+        </ol>
+      )}
     </main>
   );
 }

@@ -7,10 +7,16 @@ import {
   createIndexableMetadata,
   createNoIndexMetadata,
   INDEXABLE_ROUTES,
+  isRetiredSellerSlug,
   MARKETPLACE_ORIGIN,
+  RETIRED_SELLER_SLUGS,
 } from './seo';
 
 describe('marketplace SEO contract', () => {
+  test('serves pre-optimized CDN images without Vercel transformations', () => {
+    expect(nextConfig.images?.unoptimized).toBe(true);
+  });
+
   test('keeps the complete public route inventory in the index', () => {
     expect(INDEXABLE_ROUTES.map((route) => route.path)).toEqual([
       '/',
@@ -81,19 +87,14 @@ describe('marketplace SEO contract', () => {
     });
   });
 
-  test('redirects retired legacy identities to their real destinations', async () => {
-    const redirects = nextConfig.redirects ? await nextConfig.redirects() : [];
-    const destinations = new Map(
-      redirects.map((redirect) => [redirect.source, redirect.destination]),
-    );
+  test('keeps retired marketplace identities as hard cuts', () => {
+    expect(nextConfig.redirects).toBeUndefined();
+    expect(RETIRED_SELLER_SLUGS).toEqual(['blog', 'featured', 'free']);
 
-    expect(destinations.get('/free')).toBe('/browse');
-    expect(destinations.get('/free/:path*')).toBe('/browse');
-    expect(destinations.get('/featured')).toBe('/browse');
-    expect(destinations.get('/featured/:path*')).toBe('/browse');
-    expect(destinations.get('/blog')).toBe('https://genfeed.ai/articles');
-    expect(destinations.get('/blog/:path*')).toBe(
-      'https://genfeed.ai/articles',
-    );
+    for (const sellerSlug of RETIRED_SELLER_SLUGS) {
+      expect(isRetiredSellerSlug(sellerSlug)).toBe(true);
+    }
+
+    expect(isRetiredSellerSlug('creator')).toBe(false);
   });
 });

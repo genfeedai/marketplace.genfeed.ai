@@ -1,6 +1,13 @@
 import type { Metadata } from 'next';
+import { notFound } from 'next/navigation';
 import type { ReactNode } from 'react';
-import { createNoIndexMetadata } from '@/lib/seo';
+import { createNoIndexMetadata, isRetiredSellerSlug } from '@/lib/seo';
+
+function assertActiveSellerSlug(sellerSlug: string): void {
+  if (isRetiredSellerSlug(sellerSlug)) {
+    notFound();
+  }
+}
 
 interface ListingPageProps {
   params: Promise<{
@@ -13,6 +20,7 @@ export async function generateMetadata({
   params,
 }: ListingPageProps): Promise<Metadata> {
   const { sellerSlug, listingSlug } = await params;
+  assertActiveSellerSlug(sellerSlug);
   const title = listingSlug.replaceAll('-', ' ');
 
   return createNoIndexMetadata({
@@ -26,6 +34,7 @@ export default async function ListingPage({
   params,
 }: ListingPageProps): Promise<ReactNode> {
   const { sellerSlug, listingSlug } = await params;
+  assertActiveSellerSlug(sellerSlug);
 
   return (
     <main className="mx-auto max-w-4xl px-4 py-8">

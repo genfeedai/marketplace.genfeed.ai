@@ -1,6 +1,7 @@
 import type { Metadata, MetadataRoute } from 'next';
 
 const MARKETPLACE_ORIGIN = 'https://marketplace.genfeed.ai';
+const RETIRED_SELLER_SLUGS = ['blog', 'featured', 'free'] as const;
 
 interface IndexableRoute {
   path: string;
@@ -15,7 +16,7 @@ const INDEXABLE_ROUTES = [
     path: '/',
     title: 'Creator Marketplace',
     description:
-      'Discover curated workflows, prompts, skills, and AI-generated media from the Genfeed.ai creator community.',
+      'Discover creator products and public content from the Genfeed.ai community.',
     changeFrequency: 'daily',
     priority: 1,
   },
@@ -23,7 +24,7 @@ const INDEXABLE_ROUTES = [
     path: '/browse',
     title: 'Browse',
     description:
-      'Browse every category on the Genfeed.ai marketplace, including workflows, prompts, skills, videos, images, music, and posts.',
+      'Browse creator products and public content from the Genfeed.ai community.',
     changeFrequency: 'daily',
     priority: 0.9,
   },
@@ -53,41 +54,41 @@ const INDEXABLE_ROUTES = [
   },
   {
     path: '/videos',
-    title: 'Videos',
+    title: 'Public Videos',
     description:
-      'Browse AI-generated videos shared by the Genfeed.ai creator community.',
+      'Watch public AI-generated videos shared by the Genfeed.ai creator community.',
     changeFrequency: 'daily',
     priority: 0.8,
   },
   {
     path: '/images',
-    title: 'Images',
+    title: 'Public Images',
     description:
-      'Explore AI-generated images shared by the Genfeed.ai creator community.',
+      'Explore public AI-generated images shared by the Genfeed.ai creator community.',
     changeFrequency: 'daily',
     priority: 0.8,
   },
   {
     path: '/music',
-    title: 'Music',
+    title: 'Public Music',
     description:
-      'Listen to AI-composed music shared by the Genfeed.ai creator community.',
+      'Listen to public AI-composed music shared by the Genfeed.ai creator community.',
     changeFrequency: 'daily',
-    priority: 0.7,
+    priority: 0.8,
   },
   {
     path: '/posts',
-    title: 'Posts',
+    title: 'Public Posts',
     description:
-      'Read AI-generated articles and creative content from the Genfeed.ai community.',
+      'Read public content published by the Genfeed.ai creator community.',
     changeFrequency: 'daily',
-    priority: 0.7,
+    priority: 0.8,
   },
   {
     path: '/leaderboard',
-    title: 'Leaderboard',
+    title: 'Public Content Leaderboard',
     description:
-      'See the most-viewed AI-generated video posts from the Genfeed.ai community.',
+      'See the most-viewed public posts from the Genfeed.ai creator community.',
     changeFrequency: 'daily',
     priority: 0.7,
   },
@@ -216,11 +217,17 @@ function absoluteMarketplaceUrl(path: string): string {
   return new URL(path, MARKETPLACE_ORIGIN).toString();
 }
 
+function isRetiredSellerSlug(sellerSlug: string): boolean {
+  return RETIRED_SELLER_SLUGS.some((retired) => retired === sellerSlug);
+}
+
 export type { IndexablePath, IndexableRoute };
 export {
   absoluteMarketplaceUrl,
   createIndexableMetadata,
   createNoIndexMetadata,
   INDEXABLE_ROUTES,
+  isRetiredSellerSlug,
   MARKETPLACE_ORIGIN,
+  RETIRED_SELLER_SLUGS,
 };
