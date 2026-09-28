@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { describe, expect, test } from 'vitest';
 import robots from '../app/robots';
 import sitemap from '../app/sitemap';
@@ -66,11 +67,23 @@ describe('marketplace SEO contract', () => {
   });
 
   test('gives every indexable route unique metadata within search snippet limits', () => {
+    const layout = readFileSync(
+      new URL('../app/layout.tsx', import.meta.url),
+      'utf8',
+    );
+    const defaultTitle = layout.match(/default: '([^']+)'/)?.[1] ?? '';
+    const titleTemplate = layout.match(/template: '([^']+)'/)?.[1] ?? '';
     const descriptions = new Set<string>();
+
+    expect(defaultTitle).not.toBe('');
+    expect(titleTemplate).toContain('%s');
 
     for (const route of INDEXABLE_ROUTES) {
       const metadata = createIndexableMetadata(route.path);
-      const title = `${metadata.title} | Genfeed Marketplace`;
+      const title =
+        route.path === '/'
+          ? defaultTitle
+          : titleTemplate.replace('%s', String(metadata.title));
       const description = metadata.description ?? '';
 
       expect(Array.from(title).length).toBeGreaterThanOrEqual(30);

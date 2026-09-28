@@ -16,7 +16,7 @@ const INDEXABLE_ROUTES = [
     path: '/',
     title: 'Creator Marketplace',
     description:
-      'Discover creator workflows, prompts, and agent skills, plus public videos, images, music, and posts from the Genfeed.ai community.',
+      'Explore public videos, images, music, and posts from Genfeed.ai creators, alongside upcoming marketplace categories for workflows, prompts, and skills.',
     changeFrequency: 'daily',
     priority: 1,
   },
@@ -24,7 +24,7 @@ const INDEXABLE_ROUTES = [
     path: '/browse',
     title: 'Browse Creator Products',
     description:
-      'Browse creator workflows, prompts, and agent skills alongside public videos, images, music, and posts shared by the Genfeed.ai community.',
+      'Find public videos, images, music, and posts from Genfeed.ai creators, plus the upcoming marketplace categories for workflows, prompts, and skills.',
     changeFrequency: 'daily',
     priority: 0.9,
   },
@@ -32,7 +32,7 @@ const INDEXABLE_ROUTES = [
     path: '/workflows',
     title: 'Workflows',
     description:
-      'Explore content workflows built by Genfeed.ai creators. Review each listing for previews, required tools, and setup details before you buy.',
+      'Community-built content workflows are coming soon to the Genfeed.ai marketplace. This category will hold workflows for content creation.',
     changeFrequency: 'weekly',
     priority: 0.8,
   },
@@ -40,7 +40,7 @@ const INDEXABLE_ROUTES = [
     path: '/prompts',
     title: 'AI Prompt Collections',
     description:
-      'Explore AI prompt collections from Genfeed.ai creators. Review examples, supported models, and included instructions before choosing a listing.',
+      'AI prompt collections are coming soon to the Genfeed.ai marketplace. This category is reserved for prompts shared by the creator community.',
     changeFrequency: 'weekly',
     priority: 0.8,
   },
@@ -48,7 +48,7 @@ const INDEXABLE_ROUTES = [
     path: '/skills',
     title: 'AI Agent Skills',
     description:
-      'Discover packaged AI agent skills from Genfeed.ai creators. Review each listing for capabilities, dependencies, and setup instructions.',
+      'Packaged AI agent skills are coming soon to the Genfeed.ai marketplace. This category is reserved for skills from the creator community.',
     changeFrequency: 'weekly',
     priority: 0.8,
   },
@@ -56,7 +56,7 @@ const INDEXABLE_ROUTES = [
     path: '/videos',
     title: 'Public Videos',
     description:
-      'Watch public AI-generated videos shared by Genfeed.ai creators. Explore community video posts and open individual posts for more details.',
+      'Watch public AI-generated videos shared by Genfeed.ai creators, with playback controls and titles in a gallery of community video content.',
     changeFrequency: 'daily',
     priority: 0.8,
   },
@@ -64,7 +64,7 @@ const INDEXABLE_ROUTES = [
     path: '/images',
     title: 'Public Images',
     description:
-      'Explore public AI-generated images shared by Genfeed.ai creators. Browse community image posts and open individual posts for more details.',
+      'Browse a gallery of public AI-generated images shared by Genfeed.ai creators, with image previews and titles from the community.',
     changeFrequency: 'daily',
     priority: 0.8,
   },
@@ -72,7 +72,7 @@ const INDEXABLE_ROUTES = [
     path: '/music',
     title: 'Public Music',
     description:
-      'Listen to public AI-composed music shared by Genfeed.ai creators. Browse community audio posts and open individual posts for more details.',
+      'Listen to public AI-composed music shared by Genfeed.ai creators, with audio playback controls and track titles from the community.',
     changeFrequency: 'daily',
     priority: 0.8,
   },
@@ -88,7 +88,7 @@ const INDEXABLE_ROUTES = [
     path: '/leaderboard',
     title: 'Public Content Leaderboard',
     description:
-      'Explore the most-viewed public posts from the Genfeed.ai community, and open individual entries to discover the content creators are sharing.',
+      'See public Genfeed community posts ranked by their view counts, with post titles and publishing platforms in the content leaderboard.',
     changeFrequency: 'daily',
     priority: 0.7,
   },
@@ -136,7 +136,7 @@ const INDEXABLE_ROUTES = [
     path: '/terms',
     title: 'Terms of Service',
     description:
-      'Read the terms for buying and selling on the Genfeed.ai marketplace, including listing responsibilities, purchases, licences, and disputes.',
+      'Read the terms for buying and selling on the Genfeed.ai marketplace, including listing responsibilities, purchases, licences, and refunds.',
     changeFrequency: 'yearly',
     priority: 0.3,
   },
