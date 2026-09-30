@@ -8,9 +8,15 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule, { rawBody: true });
   app.enableShutdownHooks();
 
+  const marketplaceConfig = app.get(MarketplaceConfigService);
+  const origins = [new URL(marketplaceConfig.marketplaceUrl).origin];
+  if (marketplaceConfig.nodeEnv === 'development') {
+    origins.push('http://localhost:3205', 'http://127.0.0.1:3205');
+  }
+
   app.enableCors({
     credentials: true,
-    origin: [new URL(app.get(MarketplaceConfigService).marketplaceUrl).origin],
+    origin: origins,
   });
 
   app.useGlobalPipes(

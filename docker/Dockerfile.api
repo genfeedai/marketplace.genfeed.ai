@@ -6,7 +6,7 @@ WORKDIR /usr/src/app
 COPY . .
 RUN --mount=type=secret,id=build_ca \
     if [ -f /run/secrets/build_ca ]; then export NODE_EXTRA_CA_CERTS=/run/secrets/build_ca; fi; \
-    bun install --frozen-lockfile --ignore-scripts \
+    bun install --filter '@marketplace/api' --frozen-lockfile --ignore-scripts \
     && bun run --cwd apps/api prisma:generate \
     && bun run --cwd apps/api build
 
@@ -16,7 +16,8 @@ RUN --mount=type=secret,id=build_ca --mount=type=secret,id=rds_ca \
     && rm -rf /var/lib/apt/lists/* \
     && if [ -f /run/secrets/build_ca ]; then export CURL_CA_BUNDLE=/run/secrets/build_ca; fi \
     && if [ -f /run/secrets/rds_ca ]; then cp /run/secrets/rds_ca /usr/local/share/rds-ca.pem; \
-       else curl --connect-timeout 15 --max-time 120 -fsS https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem -o /usr/local/share/rds-ca.pem; fi
+       else curl --connect-timeout 15 --max-time 120 -fsS https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem -o /usr/local/share/rds-ca.pem; fi \
+    && chmod 0644 /usr/local/share/rds-ca.pem
 COPY --from=bun /usr/local/bin/bun /usr/local/bin/bun
 COPY --from=build --chown=node:node /usr/src/app /usr/src/app
 WORKDIR /usr/src/app/apps/api

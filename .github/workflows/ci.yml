@@ -126,6 +126,8 @@ jobs:
           persist-credentials: false
       - name: Build production API image
         run: docker build -f docker/Dockerfile.api -t marketplace-api:ci .
+      - name: Verify database trust is readable by the runtime user
+        run: docker run --rm marketplace-api:ci node -e "if (!require('node:tls').getCACertificates('extra').length) process.exit(1)"
       - name: Apply fixture schema and verify production startup
         env:
           DATABASE_URL: postgresql://postgres@127.0.0.1:5432/postgres
