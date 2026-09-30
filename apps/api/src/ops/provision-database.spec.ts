@@ -7,6 +7,9 @@ import { Client } from 'pg';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 const adminUrl = process.env.MARKETPLACE_DB_TEST_ADMIN_URL;
+if (process.env.CI === 'true' && !adminUrl) {
+  throw new Error('CI requires the PostgreSQL integration fixture');
+}
 const suffix = randomBytes(6).toString('hex');
 const database = `marketplace_test_${suffix}`;
 const runtimeRole = `mp_runtime_${suffix}`;
