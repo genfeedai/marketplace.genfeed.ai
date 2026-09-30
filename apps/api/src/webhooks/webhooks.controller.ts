@@ -6,7 +6,6 @@ import {
   HttpCode,
   HttpStatus,
   Inject,
-  Logger,
   Post,
   RawBody,
 } from '@nestjs/common';
@@ -15,8 +14,6 @@ import { ApiExcludeController } from '@nestjs/swagger';
 @ApiExcludeController()
 @Controller('webhooks')
 export class WebhooksController {
-  private readonly logger = new Logger(WebhooksController.name);
-
   constructor(
     @Inject(StripeWebhookService)
     private readonly stripeWebhookService: StripeWebhookService,
@@ -29,15 +26,7 @@ export class WebhooksController {
     @RawBody() rawBody: Buffer,
     @Headers('stripe-signature') signature: string,
   ): Promise<{ received: boolean }> {
-    try {
-      await this.stripeWebhookService.handleWebhook(rawBody, signature);
-    } catch (error: unknown) {
-      this.logger.error('Stripe webhook processing failed', {
-        error: (error as Error).message,
-      });
-      // Still return 200 to prevent Stripe retries on non-transient errors
-    }
-
+    await this.stripeWebhookService.handleWebhook(rawBody, signature);
     return { received: true };
   }
 }

@@ -9,6 +9,7 @@ describe('Marketplace local startup', () => {
   let app: INestApplication;
   let url: string;
   const prisma = {
+    $queryRaw: vi.fn().mockResolvedValue([{ result: 1 }]),
     $transaction: (queries: Promise<unknown>[]) => Promise.all(queries),
     listing: {
       findMany: vi.fn().mockResolvedValue([]),
@@ -19,7 +20,6 @@ describe('Marketplace local startup', () => {
   beforeAll(async () => {
     vi.stubEnv('NODE_ENV', 'development');
     vi.stubEnv('STRIPE_SECRET_KEY', '');
-    vi.stubEnv('CLERK_SECRET_KEY', '');
     const module = await Test.createTestingModule({ imports: [AppModule] })
       .overrideProvider(PrismaService)
       .useValue(prisma)
@@ -38,16 +38,33 @@ describe('Marketplace local startup', () => {
     const health = await fetch(`${url}/health`);
     expect(health.status).toBe(200);
     expect(await health.json()).toMatchObject({ status: 'ok' });
+    expect((await fetch(`${url}/health/ready`)).status).toBe(200);
     const listings = await fetch(`${url}/marketplace/listings`);
     expect(listings.status).toBe(200);
     expect(await listings.json()).toMatchObject({ data: [] });
     expect(prisma.listing.findMany).toHaveBeenCalled();
   });
 
+  it('rejects invalid public catalog filters before hitting the database', async () => {
+    expect(
+      (await fetch(`${url}/marketplace/listings?minPrice=invalid`)).status,
+    ).toBe(400);
+  });
+
   it('requires authentication for seller and administrator routes', async () => {
-    for (const path of ['/seller/profile', '/admin/marketplace/listings']) {
+    for (const path of [
+      '/seller/profile',
+      '/admin/marketplace/listings',
+      '/marketplace/listings/library',
+      '/marketplace/listings/example/owned',
+    ]) {
       expect((await fetch(`${url}${path}`)).status).toBe(401);
     }
+  });
+
+  it('reports database readiness failures', async () => {
+    prisma.$queryRaw.mockRejectedValueOnce(new Error('database offline'));
+    expect((await fetch(`${url}/health/ready`)).status).toBe(503);
   });
 
   it('refuses payment operations without a Stripe key', () => {

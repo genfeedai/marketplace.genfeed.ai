@@ -3,6 +3,8 @@ import type { IJsonApiSerializer } from '@api/common/utils/response.util';
 class ListingSerializerClass implements IJsonApiSerializer {
   opts: Record<string, unknown> = {};
 
+  constructor(private readonly publicOnly = false) {}
+
   serialize(data: unknown): unknown {
     if (Array.isArray(data)) {
       return {
@@ -22,6 +24,12 @@ class ListingSerializerClass implements IJsonApiSerializer {
     const id = item._id?.toString?.() ?? item.id ?? '';
     const { _id, __v, ...attributes } = item;
 
+    if (this.publicOnly) {
+      delete attributes.downloadData;
+      delete attributes.comfyuiTemplate;
+      delete attributes.rejectionReason;
+    }
+
     // Flatten sellerData if present from $lookup
     if (attributes.sellerData && typeof attributes.sellerData === 'object') {
       const seller = attributes.sellerData as Record<string, unknown>;
@@ -39,3 +47,5 @@ class ListingSerializerClass implements IJsonApiSerializer {
 }
 
 export const ListingSerializer = new ListingSerializerClass();
+
+export const PublicListingSerializer = new ListingSerializerClass(true);

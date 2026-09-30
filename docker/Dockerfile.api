@@ -1,0 +1,27 @@
+FROM oven/bun:1.3.14 AS bun
+FROM node:24-bookworm-slim AS build
+RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates && rm -rf /var/lib/apt/lists/*
+COPY --from=bun /usr/local/bin/bun /usr/local/bin/bun
+WORKDIR /usr/src/app
+COPY . .
+RUN --mount=type=secret,id=build_ca \
+    if [ -f /run/secrets/build_ca ]; then export NODE_EXTRA_CA_CERTS=/run/secrets/build_ca; fi; \
+    bun install --frozen-lockfile --ignore-scripts \
+    && bun run --cwd apps/api prisma:generate \
+    && bun run --cwd apps/api build
+
+FROM node:24-bookworm-slim AS runtime
+RUN --mount=type=secret,id=build_ca --mount=type=secret,id=rds_ca \
+    apt-get update && apt-get install -y --no-install-recommends curl ca-certificates openssl \
+    && rm -rf /var/lib/apt/lists/* \
+    && if [ -f /run/secrets/build_ca ]; then export CURL_CA_BUNDLE=/run/secrets/build_ca; fi \
+    && if [ -f /run/secrets/rds_ca ]; then cp /run/secrets/rds_ca /usr/local/share/rds-ca.pem; \
+       else curl --connect-timeout 15 --max-time 120 -fsS https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem -o /usr/local/share/rds-ca.pem; fi
+COPY --from=bun /usr/local/bin/bun /usr/local/bin/bun
+COPY --from=build --chown=node:node /usr/src/app /usr/src/app
+WORKDIR /usr/src/app/apps/api
+ENV NODE_ENV=production PORT=3200 NODE_EXTRA_CA_CERTS=/usr/local/share/rds-ca.pem
+USER node
+EXPOSE 3200
+HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 CMD curl -fsS http://127.0.0.1:3200/health/ready || exit 1
+CMD ["node", "dist/main.js"]
