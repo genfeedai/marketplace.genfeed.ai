@@ -64,14 +64,44 @@ function formatCurrency(amount: number): string {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Temp auth token — replace with real auth when Clerk is wired in    */
+/*  Genfeed session JWT, retained only in this page's memory           */
 /* ------------------------------------------------------------------ */
 
 function useAuthToken(): string {
-  // TODO: Replace with Clerk useAuth() or cookie-based token
-  return typeof window !== 'undefined'
-    ? (localStorage.getItem('marketplace_admin_token') ?? '')
-    : '';
+  const [token, setToken] = useState('');
+  useEffect(() => {
+    let active = true;
+    async function refresh() {
+      try {
+        const origin =
+          process.env.NEXT_PUBLIC_GENFEED_APP_URL || 'https://app.genfeed.ai';
+        const response = await fetch(
+          `${origin.replace(/\/+$/, '')}/v1/auth/token`,
+          { credentials: 'include', cache: 'no-store' },
+        );
+        if (!response.ok) throw new Error('Sign in required');
+        const payload: unknown = await response.json();
+        if (active)
+          setToken(
+            typeof payload === 'object' &&
+              payload !== null &&
+              'token' in payload &&
+              typeof payload.token === 'string'
+              ? payload.token
+              : '',
+          );
+      } catch {
+        if (active) setToken('');
+      }
+    }
+    void refresh();
+    const interval = setInterval(refresh, 4 * 60 * 1000);
+    return () => {
+      active = false;
+      clearInterval(interval);
+    };
+  }, []);
+  return token;
 }
 
 function getService(token: string): AdminMarketplaceService {
@@ -551,6 +581,19 @@ export default function MarketplacePage() {
       <div className="admin-header">
         <h1>Marketplace</h1>
         <p>Admin marketplace management and moderation.</p>
+        {!token && (
+          <p>
+            Sign in to{' '}
+            <a
+              href={`${process.env.NEXT_PUBLIC_GENFEED_APP_URL || 'https://app.genfeed.ai'}/login`}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Genfeed
+            </a>{' '}
+            with an operator account, then refresh this page.
+          </p>
+        )}
       </div>
 
       <div className="flex flex-col gap-4">

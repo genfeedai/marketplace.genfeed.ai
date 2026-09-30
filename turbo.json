@@ -6,6 +6,10 @@
     "dev": { "cache": false, "persistent": true },
     "lint": { "dependsOn": ["^build"] },
     "typecheck": { "dependsOn": ["^build"] },
-    "test": { "dependsOn": ["^build"] }
+    "test": { "dependsOn": ["^build"] },
+    "@marketplace/api#test": {
+      "dependsOn": ["^build"],
+      "env": ["MARKETPLACE_DB_TEST_ADMIN_URL"]
+    }
   }
 }

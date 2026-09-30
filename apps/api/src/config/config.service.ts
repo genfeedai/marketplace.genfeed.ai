@@ -1,9 +1,11 @@
-import { Injectable } from '@nestjs/common';
-import type { ConfigService } from '@nestjs/config';
+import { Inject, Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class MarketplaceConfigService {
-  constructor(private readonly configService: ConfigService) {}
+  constructor(
+    @Inject(ConfigService) private readonly configService: ConfigService,
+  ) {}
 
   get port(): number {
     return this.configService.get<number>('PORT', 3200);
@@ -21,12 +23,25 @@ export class MarketplaceConfigService {
     return this.configService.getOrThrow<string>('STRIPE_WEBHOOK_SECRET');
   }
 
-  get clerkSecretKey(): string {
-    return this.configService.getOrThrow<string>('CLERK_SECRET_KEY');
+  get authIssuer(): string {
+    return this.configService.get<string>(
+      'BETTER_AUTH_ISSUER',
+      new URL(this.genfeedApiUrl).origin,
+    );
   }
 
-  get clerkPublishableKey(): string {
-    return this.configService.getOrThrow<string>('CLERK_PUBLISHABLE_KEY');
+  get authAudience(): string {
+    return this.configService.get<string>(
+      'BETTER_AUTH_AUDIENCE',
+      this.authIssuer,
+    );
+  }
+
+  get authJwksUrl(): string {
+    return this.configService.get<string>(
+      'BETTER_AUTH_JWKS_URL',
+      `${this.authIssuer}/v1/auth/jwks`,
+    );
   }
 
   get genfeedApiUrl(): string {

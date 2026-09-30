@@ -1,12 +1,28 @@
 import { Public } from '@api/common/decorators/public.decorator';
-import type { MarketplaceConfigService } from '@api/config/config.service';
-import { Controller, Get } from '@nestjs/common';
+import { PrismaService } from '@api/common/prisma/prisma.service';
+import {
+  Controller,
+  Get,
+  Inject,
+  ServiceUnavailableException,
+} from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 
 @ApiTags('health')
 @Controller('health')
 export class HealthController {
-  constructor(private readonly configService: MarketplaceConfigService) {}
+  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
+
+  @Get('ready')
+  @Public()
+  async ready() {
+    try {
+      await this.prisma.$queryRaw`SELECT 1`;
+      return { status: 'ready', service: 'marketplace-api' };
+    } catch {
+      throw new ServiceUnavailableException('Marketplace database unavailable');
+    }
+  }
 
   @Get()
   @Public()

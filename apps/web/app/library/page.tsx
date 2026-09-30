@@ -1,5 +1,5 @@
-import EmptyState from '@components/empty-state';
 import PageHeader from '@components/page-header';
+import PurchaseLibrary from '@components/purchase-library';
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
 import { createNoIndexMetadata } from '@/lib/seo';
@@ -18,11 +18,7 @@ export default function LibraryPage(): ReactNode {
         title="My Library"
         description="Your purchased content and downloads"
       />
-      <EmptyState
-        icon={'\uD83D\uDCDA'}
-        label="No Purchases Yet"
-        description="Content you purchase from the marketplace will appear here."
-      />
+      <PurchaseLibrary />
     </main>
   );
 }

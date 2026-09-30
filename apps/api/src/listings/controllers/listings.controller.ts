@@ -1,37 +1,44 @@
+import type { MarketplacePrincipal } from '@api/common/auth/marketplace-principal';
+import { getIdentity } from '@api/common/auth/marketplace-principal';
 import { AutoSwagger } from '@api/common/decorators/auto-swagger.decorator';
 import { CurrentUser } from '@api/common/decorators/current-user.decorator';
 import { LogMethod } from '@api/common/decorators/log-method.decorator';
 import { Public } from '@api/common/decorators/public.decorator';
 import { RolesDecorator } from '@api/common/decorators/roles.decorator';
+import {
+  ValidatedBody,
+  ValidatedQuery,
+} from '@api/common/decorators/validated-parameter.decorator';
 import { RolesGuard } from '@api/common/guards/roles.guard';
 import type {
   JsonApiCollectionResponse,
   JsonApiSingleResponse,
 } from '@api/common/interfaces/json-api.interface';
-import { ListingSerializer, PurchaseSerializer } from '@api/common/serializers';
-import { getPublicMetadata } from '@api/common/utils/clerk.util';
+import {
+  ListingSerializer,
+  PublicListingSerializer,
+  PurchaseSerializer,
+} from '@api/common/serializers';
 import {
   returnNotFound,
   serializeCollection,
   serializeSingle,
 } from '@api/common/utils/response.util';
-import type { CreateListingDto } from '@api/listings/dto/create-listing.dto';
-import type { ListingQueryDto } from '@api/listings/dto/listing-query.dto';
-import type { ReviewListingDto } from '@api/listings/dto/review-listing.dto';
-import type { UpdateListingDto } from '@api/listings/dto/update-listing.dto';
-import type { ListingsService } from '@api/listings/services/listings.service';
-import type { PurchasesService } from '@api/purchases/services/purchases.service';
-import type { SellersService } from '@api/sellers/services/sellers.service';
-import type { User } from '@clerk/backend';
+import { CreateListingDto } from '@api/listings/dto/create-listing.dto';
+import { ListingQueryDto } from '@api/listings/dto/listing-query.dto';
+import { ReviewListingDto } from '@api/listings/dto/review-listing.dto';
+import { UpdateListingDto } from '@api/listings/dto/update-listing.dto';
+import { ListingsService } from '@api/listings/services/listings.service';
+import { PurchasesService } from '@api/purchases/services/purchases.service';
+import { SellersService } from '@api/sellers/services/sellers.service';
 import {
-  Body,
   Controller,
   Delete,
   Get,
+  Inject,
   Param,
   Post,
   Put,
-  Query,
   Req,
   UseGuards,
 } from '@nestjs/common';
@@ -40,30 +47,31 @@ import type { Request } from 'express';
 
 @AutoSwagger()
 @ApiTags('Marketplace Listings')
-@Public()
 @Controller('marketplace/listings')
 export class ListingsController {
   private readonly constructorName: string = String(this.constructor.name);
 
   constructor(
-    private readonly listingsService: ListingsService,
+    @Inject(ListingsService) private readonly listingsService: ListingsService,
+    @Inject(PurchasesService)
     private readonly purchasesService: PurchasesService,
-    readonly _sellersService: SellersService,
+    @Inject(SellersService) readonly _sellersService: SellersService,
   ) {}
 
   /**
    * Browse public published listings
    */
+  @Public()
   @Get()
   @LogMethod({ logEnd: false, logError: true, logStart: true })
   async browseListings(
     @Req() request: Request,
-    @Query() query: ListingQueryDto,
+    @ValidatedQuery(ListingQueryDto) query: ListingQueryDto,
   ): Promise<JsonApiCollectionResponse> {
     const data = await this.listingsService.getPublicListings(query);
     return serializeCollection(
       request,
-      ListingSerializer,
+      PublicListingSerializer,
       data,
     ) as JsonApiCollectionResponse;
   }
@@ -82,9 +90,9 @@ export class ListingsController {
   @LogMethod({ logEnd: false, logError: true, logStart: true })
   async checkOwnership(
     @Param('listingId') listingId: string,
-    @CurrentUser() user: User,
+    @CurrentUser() user: MarketplacePrincipal,
   ): Promise<JsonApiSingleResponse> {
-    const publicMetadata = getPublicMetadata(user);
+    const publicMetadata = getIdentity(user);
 
     const { owned, purchase } =
       await this.purchasesService.checkListingOwnership(
@@ -110,6 +118,7 @@ export class ListingsController {
   /**
    * Get public listing by seller slug and listing slug
    */
+  @Public()
   @Get(':sellerSlug/:listingSlug')
   @LogMethod({ logEnd: false, logError: true, logStart: true })
   async getListingBySlug(
@@ -129,7 +138,7 @@ export class ListingsController {
 
     return serializeSingle(
       request,
-      ListingSerializer,
+      PublicListingSerializer,
       listing,
     ) as JsonApiSingleResponse;
   }
@@ -137,6 +146,7 @@ export class ListingsController {
   /**
    * Get preview data for a listing (public)
    */
+  @Public()
   @Get(':sellerSlug/:listingSlug/preview')
   @LogMethod({ logEnd: false, logError: true, logStart: true })
   async getListingPreview(
@@ -166,6 +176,7 @@ export class ListingsController {
   /**
    * Get featured listings (official, highest rated)
    */
+  @Public()
   @Get('featured')
   @LogMethod({ logEnd: false, logError: true, logStart: true })
   async getFeatured(
@@ -174,7 +185,7 @@ export class ListingsController {
     const data = await this.listingsService.getFeaturedListings(12);
     return serializeCollection(
       request,
-      ListingSerializer,
+      PublicListingSerializer,
       data,
     ) as JsonApiCollectionResponse;
   }
@@ -182,6 +193,7 @@ export class ListingsController {
   /**
    * Get category counts for published listings
    */
+  @Public()
   @Get('categories')
   @LogMethod({ logEnd: false, logError: true, logStart: true })
   async getCategories(): Promise<JsonApiSingleResponse> {
@@ -204,10 +216,10 @@ export class ListingsController {
   @LogMethod({ logEnd: false, logError: true, logStart: true })
   async getLibrary(
     @Req() request: Request,
-    @Query() query: ListingQueryDto,
-    @CurrentUser() user: User,
+    @ValidatedQuery(ListingQueryDto) query: ListingQueryDto,
+    @CurrentUser() user: MarketplacePrincipal,
   ): Promise<JsonApiCollectionResponse> {
-    const publicMetadata = getPublicMetadata(user);
+    const publicMetadata = getIdentity(user);
 
     const data = await this.purchasesService.getBuyerPurchases(
       publicMetadata.user,
@@ -232,9 +244,9 @@ export class ListingsController {
   async addToLibrary(
     @Req() request: Request,
     @Param('listingId') listingId: string,
-    @CurrentUser() user: User,
+    @CurrentUser() user: MarketplacePrincipal,
   ): Promise<JsonApiSingleResponse> {
-    const publicMetadata = getPublicMetadata(user);
+    const publicMetadata = getIdentity(user);
 
     const purchase = await this.purchasesService.claimFreeItem(
       listingId,
@@ -246,6 +258,20 @@ export class ListingsController {
       request,
       PurchaseSerializer,
       purchase,
+    ) as JsonApiSingleResponse;
+  }
+  @Public()
+  @Get(':listingId')
+  async getPublishedListingById(
+    @Req() request: Request,
+    @Param('listingId') listingId: string,
+  ): Promise<JsonApiSingleResponse> {
+    const listing = await this.listingsService.getPublishedListing(listingId);
+    if (!listing) return returnNotFound(this.constructorName, listingId);
+    return serializeSingle(
+      request,
+      PublicListingSerializer,
+      listing,
     ) as JsonApiSingleResponse;
   }
 }
@@ -261,8 +287,8 @@ export class SellerListingsController {
   private readonly constructorName: string = String(this.constructor.name);
 
   constructor(
-    private readonly listingsService: ListingsService,
-    private readonly sellersService: SellersService,
+    @Inject(ListingsService) private readonly listingsService: ListingsService,
+    @Inject(SellersService) private readonly sellersService: SellersService,
   ) {}
 
   /**
@@ -272,10 +298,10 @@ export class SellerListingsController {
   @LogMethod({ logEnd: false, logError: true, logStart: true })
   async getMyListings(
     @Req() request: Request,
-    @Query() query: ListingQueryDto,
-    @CurrentUser() user: User,
+    @ValidatedQuery(ListingQueryDto) query: ListingQueryDto,
+    @CurrentUser() user: MarketplacePrincipal,
   ): Promise<JsonApiCollectionResponse> {
-    const publicMetadata = getPublicMetadata(user);
+    const publicMetadata = getIdentity(user);
 
     const seller = await this.sellersService.findByUserId(publicMetadata.user);
 
@@ -312,10 +338,10 @@ export class SellerListingsController {
   @LogMethod({ logEnd: false, logError: true, logStart: true })
   async createListing(
     @Req() request: Request,
-    @Body() createListingDto: CreateListingDto,
-    @CurrentUser() user: User,
+    @ValidatedBody(CreateListingDto) createListingDto: CreateListingDto,
+    @CurrentUser() user: MarketplacePrincipal,
   ): Promise<JsonApiSingleResponse> {
-    const publicMetadata = getPublicMetadata(user);
+    const publicMetadata = getIdentity(user);
 
     const seller = await this.sellersService.findByUserId(publicMetadata.user);
 
@@ -344,9 +370,9 @@ export class SellerListingsController {
   async getListing(
     @Req() request: Request,
     @Param('listingId') listingId: string,
-    @CurrentUser() user: User,
+    @CurrentUser() user: MarketplacePrincipal,
   ): Promise<JsonApiSingleResponse> {
-    const publicMetadata = getPublicMetadata(user);
+    const publicMetadata = getIdentity(user);
 
     const seller = await this.sellersService.findByUserId(publicMetadata.user);
 
@@ -379,10 +405,10 @@ export class SellerListingsController {
   async updateListing(
     @Req() request: Request,
     @Param('listingId') listingId: string,
-    @Body() updateListingDto: UpdateListingDto,
-    @CurrentUser() user: User,
+    @ValidatedBody(UpdateListingDto) updateListingDto: UpdateListingDto,
+    @CurrentUser() user: MarketplacePrincipal,
   ): Promise<JsonApiSingleResponse> {
-    const publicMetadata = getPublicMetadata(user);
+    const publicMetadata = getIdentity(user);
 
     const seller = await this.sellersService.findByUserId(publicMetadata.user);
 
@@ -419,9 +445,9 @@ export class SellerListingsController {
   @LogMethod({ logEnd: false, logError: true, logStart: true })
   async archiveListing(
     @Param('listingId') listingId: string,
-    @CurrentUser() user: User,
+    @CurrentUser() user: MarketplacePrincipal,
   ): Promise<JsonApiSingleResponse<{ message: string }>> {
-    const publicMetadata = getPublicMetadata(user);
+    const publicMetadata = getIdentity(user);
 
     const seller = await this.sellersService.findByUserId(publicMetadata.user);
 
@@ -450,9 +476,9 @@ export class SellerListingsController {
   async submitForReview(
     @Req() request: Request,
     @Param('listingId') listingId: string,
-    @CurrentUser() user: User,
+    @CurrentUser() user: MarketplacePrincipal,
   ): Promise<JsonApiSingleResponse> {
-    const publicMetadata = getPublicMetadata(user);
+    const publicMetadata = getIdentity(user);
 
     const seller = await this.sellersService.findByUserId(publicMetadata.user);
 
@@ -479,17 +505,19 @@ export class SellerListingsController {
 @UseGuards(RolesGuard)
 @ApiBearerAuth()
 export class AdminListingsController {
-  constructor(private readonly listingsService: ListingsService) {}
+  constructor(
+    @Inject(ListingsService) private readonly listingsService: ListingsService,
+  ) {}
 
   @Get()
   @RolesDecorator('superadmin')
   @LogMethod({ logEnd: false, logError: true, logStart: true })
   async getListings(
     @Req() request: Request,
-    @Query() query: ListingQueryDto,
-    @CurrentUser() user: User,
+    @ValidatedQuery(ListingQueryDto) query: ListingQueryDto,
+    @CurrentUser() user: MarketplacePrincipal,
   ): Promise<JsonApiCollectionResponse> {
-    const publicMetadata = getPublicMetadata(user);
+    const publicMetadata = getIdentity(user);
     const data = await this.listingsService.getAdminListings(
       publicMetadata.organization,
       query,
@@ -508,9 +536,9 @@ export class AdminListingsController {
   async getListing(
     @Req() request: Request,
     @Param('listingId') listingId: string,
-    @CurrentUser() user: User,
+    @CurrentUser() user: MarketplacePrincipal,
   ): Promise<JsonApiSingleResponse> {
-    const publicMetadata = getPublicMetadata(user);
+    const publicMetadata = getIdentity(user);
     const listing = await this.listingsService.getAdminListingById(
       publicMetadata.organization,
       listingId,
@@ -533,7 +561,7 @@ export class AdminListingsController {
   async approveListing(
     @Req() request: Request,
     @Param('listingId') listingId: string,
-    @Body() body: ReviewListingDto,
+    @ValidatedBody(ReviewListingDto) body: ReviewListingDto,
   ): Promise<JsonApiSingleResponse> {
     const listing = await this.listingsService.reviewListing(
       listingId,
@@ -554,7 +582,7 @@ export class AdminListingsController {
   async rejectListing(
     @Req() request: Request,
     @Param('listingId') listingId: string,
-    @Body() body: ReviewListingDto,
+    @ValidatedBody(ReviewListingDto) body: ReviewListingDto,
   ): Promise<JsonApiSingleResponse> {
     const listing = await this.listingsService.reviewListing(
       listingId,

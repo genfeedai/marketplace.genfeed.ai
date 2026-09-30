@@ -2,13 +2,21 @@ import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
+import { MarketplaceConfigService } from './config/config.service';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, { rawBody: true });
+  app.enableShutdownHooks();
+
+  const marketplaceConfig = app.get(MarketplaceConfigService);
+  const origins = [new URL(marketplaceConfig.marketplaceUrl).origin];
+  if (marketplaceConfig.nodeEnv === 'development') {
+    origins.push('http://localhost:3205', 'http://127.0.0.1:3205');
+  }
 
   app.enableCors({
     credentials: true,
-    origin: [/\.genfeed\.ai$/, /localhost:\d+$/],
+    origin: origins,
   });
 
   app.useGlobalPipes(

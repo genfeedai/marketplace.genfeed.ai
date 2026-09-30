@@ -4,18 +4,19 @@ import type {
   ListingRecord,
   PurchaseRecord,
 } from '@api/common/prisma/marketplace.types';
-import type {
+import {
   MarketplaceStripeService,
-  StripeCheckoutSession,
-  StripeCheckoutSessionCreateParams,
+  type StripeCheckoutSession,
+  type StripeCheckoutSessionCreateParams,
 } from '@api/common/services/stripe.service';
-import type { MarketplaceConfigService } from '@api/config/config.service';
-import type { ListingsService } from '@api/listings/services/listings.service';
-import type { PurchasesService } from '@api/purchases/services/purchases.service';
-import type { SellersService } from '@api/sellers/services/sellers.service';
+import { MarketplaceConfigService } from '@api/config/config.service';
+import { ListingsService } from '@api/listings/services/listings.service';
+import { PurchasesService } from '@api/purchases/services/purchases.service';
+import { SellersService } from '@api/sellers/services/sellers.service';
 import { PurchaseStatus } from '@genfeedai/enums';
 import {
   BadRequestException,
+  Inject,
   Injectable,
   Logger,
   NotFoundException,
@@ -28,11 +29,14 @@ export class CheckoutService {
   public readonly logger = new Logger(CheckoutService.name);
 
   constructor(
+    @Inject(MarketplaceConfigService)
     readonly _configService: MarketplaceConfigService,
+    @Inject(MarketplaceStripeService)
     private readonly stripeService: MarketplaceStripeService,
-    private readonly listingsService: ListingsService,
+    @Inject(ListingsService) private readonly listingsService: ListingsService,
+    @Inject(PurchasesService)
     private readonly purchasesService: PurchasesService,
-    private readonly sellersService: SellersService,
+    @Inject(SellersService) private readonly sellersService: SellersService,
   ) {}
 
   @HandleErrors('create checkout session', 'checkout')

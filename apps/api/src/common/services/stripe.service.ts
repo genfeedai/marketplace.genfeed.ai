@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, ServiceUnavailableException } from '@nestjs/common';
 
 export interface StripeCheckoutSession {
   id: string;
@@ -142,11 +142,14 @@ interface StripeConstructor {
 
 @Injectable()
 export class MarketplaceStripeService {
-  private readonly stripe: StripeLikeClient;
+  private readonly stripe?: StripeLikeClient;
 
   constructor() {
     const secretKey = process.env.STRIPE_SECRET_KEY;
     if (!secretKey) {
+      if (process.env.NODE_ENV === 'development') {
+        return;
+      }
       throw new Error('STRIPE_SECRET_KEY is required');
     }
 
@@ -155,6 +158,11 @@ export class MarketplaceStripeService {
   }
 
   get client(): StripeLikeClient {
+    if (!this.stripe) {
+      throw new ServiceUnavailableException(
+        'Payments are not configured. Set STRIPE_SECRET_KEY to enable them.',
+      );
+    }
     return this.stripe;
   }
 
@@ -163,6 +171,6 @@ export class MarketplaceStripeService {
     signature: string,
     endpointSecret: string,
   ): StripeWebhookEvent {
-    return this.stripe.webhooks.constructEvent(body, signature, endpointSecret);
+    return this.client.webhooks.constructEvent(body, signature, endpointSecret);
   }
 }

@@ -1,20 +1,27 @@
-import type {
+import {
   MarketplaceStripeService,
-  StripeCheckoutSession,
-  StripeWebhookEvent,
+  type StripeCheckoutSession,
+  type StripeWebhookEvent,
 } from '@api/common/services/stripe.service';
-import type { MarketplaceConfigService } from '@api/config/config.service';
-import type { CheckoutService } from '@api/purchases/services/checkout.service';
-import { Injectable, Logger } from '@nestjs/common';
+import { MarketplaceConfigService } from '@api/config/config.service';
+import { CheckoutService } from '@api/purchases/services/checkout.service';
+import {
+  BadRequestException,
+  Inject,
+  Injectable,
+  Logger,
+} from '@nestjs/common';
 
 @Injectable()
 export class StripeWebhookService {
   private readonly logger = new Logger(StripeWebhookService.name);
 
   constructor(
+    @Inject(MarketplaceStripeService)
     private readonly stripeService: MarketplaceStripeService,
+    @Inject(MarketplaceConfigService)
     private readonly configService: MarketplaceConfigService,
-    private readonly checkoutService: CheckoutService,
+    @Inject(CheckoutService) private readonly checkoutService: CheckoutService,
   ) {}
 
   /**
@@ -22,18 +29,16 @@ export class StripeWebhookService {
    */
   async handleWebhook(rawBody: Buffer, signature: string): Promise<void> {
     let event: StripeWebhookEvent;
+    const webhookSecret = this.configService.stripeWebhookSecret;
+    const client = this.stripeService.client;
 
     try {
-      event = this.stripeService.constructEvent(
-        rawBody,
-        signature,
-        this.configService.stripeWebhookSecret,
-      );
+      event = client.webhooks.constructEvent(rawBody, signature, webhookSecret);
     } catch (err: unknown) {
       this.logger.error('Webhook signature verification failed', {
         error: (err as Error).message,
       });
-      throw err;
+      throw new BadRequestException('Invalid Stripe webhook signature');
     }
 
     this.logger.log(`Stripe webhook received: ${event.type}`, {
