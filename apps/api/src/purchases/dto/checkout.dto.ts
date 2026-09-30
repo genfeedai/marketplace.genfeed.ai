@@ -5,8 +5,9 @@ export class CheckoutDto {
   @ApiProperty({
     description: 'ID of the listing to purchase',
   })
+  @IsOptional()
   @IsMongoId()
-  listingId!: string;
+  listingId?: string;
 
   @ApiProperty({
     description: 'URL to redirect to after successful payment',

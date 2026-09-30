@@ -123,6 +123,24 @@ export class PurchasesService {
     return mapPurchaseRecord(purchase);
   }
 
+  async ownsCheckoutSession(
+    sessionId: string,
+    buyer: string,
+    organization: string,
+  ): Promise<boolean> {
+    return Boolean(
+      await this.prisma.purchase.findFirst({
+        where: {
+          stripeSessionId: sessionId,
+          buyer,
+          organization,
+          isDeleted: false,
+        },
+        select: { id: true },
+      }),
+    );
+  }
+
   async patch(
     id: string,
     updateDto: Partial<{

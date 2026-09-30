@@ -5,7 +5,12 @@ import {
 } from '@api/common/services/stripe.service';
 import { MarketplaceConfigService } from '@api/config/config.service';
 import { CheckoutService } from '@api/purchases/services/checkout.service';
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import {
+  BadRequestException,
+  Inject,
+  Injectable,
+  Logger,
+} from '@nestjs/common';
 
 @Injectable()
 export class StripeWebhookService {
@@ -24,18 +29,16 @@ export class StripeWebhookService {
    */
   async handleWebhook(rawBody: Buffer, signature: string): Promise<void> {
     let event: StripeWebhookEvent;
+    const webhookSecret = this.configService.stripeWebhookSecret;
+    const client = this.stripeService.client;
 
     try {
-      event = this.stripeService.constructEvent(
-        rawBody,
-        signature,
-        this.configService.stripeWebhookSecret,
-      );
+      event = client.webhooks.constructEvent(rawBody, signature, webhookSecret);
     } catch (err: unknown) {
       this.logger.error('Webhook signature verification failed', {
         error: (err as Error).message,
       });
-      throw err;
+      throw new BadRequestException('Invalid Stripe webhook signature');
     }
 
     this.logger.log(`Stripe webhook received: ${event.type}`, {

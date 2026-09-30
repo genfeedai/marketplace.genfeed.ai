@@ -1,5 +1,5 @@
-import EmptyState from '@components/empty-state';
 import PageHeader from '@components/page-header';
+import SellerDashboard from '@components/seller-dashboard';
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
 import { createNoIndexMetadata } from '@/lib/seo';
@@ -18,11 +18,7 @@ export default function DashboardPage(): ReactNode {
         title="Seller Dashboard"
         description="Manage your listings, track sales, and view analytics"
       />
-      <EmptyState
-        icon={'\uD83D\uDCCA'}
-        label="Dashboard Coming Soon"
-        description="Seller analytics and listing management will be available here."
-      />
+      <SellerDashboard />
     </main>
   );
 }
