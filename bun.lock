@@ -33,8 +33,6 @@
       "dependencies": {
         "@clerk/backend": "3.2.7",
         "@genfeedai/enums": "2.3.2",
-        "@genfeedai/prompts": "0.2.2",
-        "@genfeedai/workflows": "0.3.2",
         "@nestjs/common": "11.1.18",
         "@nestjs/config": "4.0.3",
         "@nestjs/core": "11.1.18",
@@ -183,12 +181,6 @@
     "@genfeedai/constants": ["@genfeedai/constants@2.2.9", "", { "dependencies": { "@genfeedai/enums": "2.3.2" } }, "sha512-cWHHNplRGhAZmg7ioMwGA5gGuQFX6aYEcgN11q/d9w3wac4yyz2uGajk1v/aNqlbZ46Ny4JFdps7vc6FNUpmgA=="],
 
     "@genfeedai/enums": ["@genfeedai/enums@2.3.2", "", {}, "sha512-4isNND8HaJo8TaI8A7jZOO/Cy1r3HBsFKnGYi1hYRAuzecNatzrxpcODmOxUNVznSV/H2MpJW9l1r7oG5mpeoA=="],
-
-    "@genfeedai/prompts": ["@genfeedai/prompts@0.2.2", "", {}, "sha512-W99j4VKJ5pV1Z2yJqwxfo6gT6ZCoPEXEU7TQUBgB28VpcLaU6q2vdLxRTSeYBnVyiU/sToD0vANfw07jioFcAA=="],
-
-    "@genfeedai/types": ["@genfeedai/types@0.2.2", "", {}, "sha512-Aj3CFhSvjujNAtgukr3hThTR3mApmj9Easszm1x3S3jYAQOFaxl1PizvVT56Gj25/9fVvaPdKYON1Upg36I+Xw=="],
-
-    "@genfeedai/workflows": ["@genfeedai/workflows@0.3.2", "", { "dependencies": { "@genfeedai/types": "0.2.2" } }, "sha512-vFtr2z+piYEVj4pxRlZ/9CSmaOdcfPqJu1vRF4cxeY0Tm73tbDBuWiaJa1kBFp05NAxcx3lWi4+DWzi9vjjUyQ=="],
 
     "@img/colour": ["@img/colour@1.1.0", "", {}, "sha512-Td76q7j57o/tLVdgS746cYARfSyxk8iEfRxewL9h4OMzYhbW4TAcppl0mT4eyqXddh6L/jwoM75mo7ixa/pCeQ=="],
 

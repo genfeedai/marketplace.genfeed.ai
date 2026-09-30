@@ -1,9 +1,11 @@
-import { Injectable } from '@nestjs/common';
-import type { ConfigService } from '@nestjs/config';
+import { Inject, Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class MarketplaceConfigService {
-  constructor(private readonly configService: ConfigService) {}
+  constructor(
+    @Inject(ConfigService) private readonly configService: ConfigService,
+  ) {}
 
   get port(): number {
     return this.configService.get<number>('PORT', 3200);

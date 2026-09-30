@@ -3,10 +3,11 @@ import { createClerkClient, verifyToken } from '@clerk/backend';
 import {
   type CanActivate,
   type ExecutionContext,
+  Inject,
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
-import type { Reflector } from '@nestjs/core';
+import { Reflector } from '@nestjs/core';
 import type { Request } from 'express';
 
 @Injectable()
@@ -15,7 +16,7 @@ export class ClerkGuard implements CanActivate {
     secretKey: process.env.CLERK_SECRET_KEY,
   });
 
-  constructor(private readonly reflector: Reflector) {}
+  constructor(@Inject(Reflector) private readonly reflector: Reflector) {}
 
   private isPublicRoute(context: ExecutionContext): boolean {
     return (

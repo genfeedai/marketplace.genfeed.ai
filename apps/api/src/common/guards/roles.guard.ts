@@ -8,14 +8,15 @@ import {
   type ExecutionContext,
   HttpException,
   HttpStatus,
+  Inject,
   Injectable,
 } from '@nestjs/common';
-import type { Reflector } from '@nestjs/core';
+import { Reflector } from '@nestjs/core';
 import type { Request } from 'express';
 
 @Injectable()
 export class RolesGuard implements CanActivate {
-  constructor(private readonly reflector: Reflector) {}
+  constructor(@Inject(Reflector) private readonly reflector: Reflector) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const requiredRoles = this.reflector.get<string[]>(

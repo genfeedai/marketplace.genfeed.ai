@@ -18,19 +18,20 @@ import {
   serializeCollection,
   serializeSingle,
 } from '@api/common/utils/response.util';
-import type { ListingsService } from '@api/listings/services/listings.service';
+import { ListingsService } from '@api/listings/services/listings.service';
 import type { AdminPurchaseQueryDto } from '@api/purchases/dto/admin-purchase-query.dto';
 import type { CheckoutDto } from '@api/purchases/dto/checkout.dto';
 import type { PurchaseQueryDto } from '@api/purchases/dto/purchase-query.dto';
-import type { CheckoutService } from '@api/purchases/services/checkout.service';
-import type { PurchasesService } from '@api/purchases/services/purchases.service';
+import { CheckoutService } from '@api/purchases/services/checkout.service';
+import { PurchasesService } from '@api/purchases/services/purchases.service';
 import type { AdminSellerQueryDto } from '@api/sellers/dto/admin-seller-query.dto';
-import type { SellersService } from '@api/sellers/services/sellers.service';
+import { SellersService } from '@api/sellers/services/sellers.service';
 import type { User } from '@clerk/backend';
 import {
   Body,
   Controller,
   Get,
+  Inject,
   NotFoundException,
   Param,
   Post,
@@ -49,10 +50,11 @@ export class PurchasesController {
   private readonly constructorName: string = String(this.constructor.name);
 
   constructor(
+    @Inject(PurchasesService)
     private readonly purchasesService: PurchasesService,
-    private readonly checkoutService: CheckoutService,
-    private readonly listingsService: ListingsService,
-    private readonly sellersService: SellersService,
+    @Inject(CheckoutService) private readonly checkoutService: CheckoutService,
+    @Inject(ListingsService) private readonly listingsService: ListingsService,
+    @Inject(SellersService) private readonly sellersService: SellersService,
   ) {}
 
   /**
@@ -419,7 +421,10 @@ export class PurchasesController {
 @UseGuards(RolesGuard)
 @ApiBearerAuth()
 export class AdminMarketplacePurchasesController {
-  constructor(private readonly purchasesService: PurchasesService) {}
+  constructor(
+    @Inject(PurchasesService)
+    private readonly purchasesService: PurchasesService,
+  ) {}
 
   @Get()
   @RolesDecorator('superadmin')
@@ -476,8 +481,9 @@ export class AdminMarketplacePurchasesController {
 @ApiBearerAuth()
 export class AdminMarketplaceController {
   constructor(
+    @Inject(PurchasesService)
     private readonly purchasesService: PurchasesService,
-    private readonly sellersService: SellersService,
+    @Inject(SellersService) private readonly sellersService: SellersService,
   ) {}
 
   @Get('analytics/overview')

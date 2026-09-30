@@ -19,15 +19,16 @@ import type { CreateListingDto } from '@api/listings/dto/create-listing.dto';
 import type { ListingQueryDto } from '@api/listings/dto/listing-query.dto';
 import type { ReviewListingDto } from '@api/listings/dto/review-listing.dto';
 import type { UpdateListingDto } from '@api/listings/dto/update-listing.dto';
-import type { ListingsService } from '@api/listings/services/listings.service';
-import type { PurchasesService } from '@api/purchases/services/purchases.service';
-import type { SellersService } from '@api/sellers/services/sellers.service';
+import { ListingsService } from '@api/listings/services/listings.service';
+import { PurchasesService } from '@api/purchases/services/purchases.service';
+import { SellersService } from '@api/sellers/services/sellers.service';
 import type { User } from '@clerk/backend';
 import {
   Body,
   Controller,
   Delete,
   Get,
+  Inject,
   Param,
   Post,
   Put,
@@ -46,9 +47,10 @@ export class ListingsController {
   private readonly constructorName: string = String(this.constructor.name);
 
   constructor(
-    private readonly listingsService: ListingsService,
+    @Inject(ListingsService) private readonly listingsService: ListingsService,
+    @Inject(PurchasesService)
     private readonly purchasesService: PurchasesService,
-    readonly _sellersService: SellersService,
+    @Inject(SellersService) readonly _sellersService: SellersService,
   ) {}
 
   /**
@@ -261,8 +263,8 @@ export class SellerListingsController {
   private readonly constructorName: string = String(this.constructor.name);
 
   constructor(
-    private readonly listingsService: ListingsService,
-    private readonly sellersService: SellersService,
+    @Inject(ListingsService) private readonly listingsService: ListingsService,
+    @Inject(SellersService) private readonly sellersService: SellersService,
   ) {}
 
   /**
@@ -479,7 +481,9 @@ export class SellerListingsController {
 @UseGuards(RolesGuard)
 @ApiBearerAuth()
 export class AdminListingsController {
-  constructor(private readonly listingsService: ListingsService) {}
+  constructor(
+    @Inject(ListingsService) private readonly listingsService: ListingsService,
+  ) {}
 
   @Get()
   @RolesDecorator('superadmin')

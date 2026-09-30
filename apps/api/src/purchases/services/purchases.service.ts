@@ -7,15 +7,16 @@ import {
   type PaginatedResult,
   paginateDocs,
 } from '@api/common/prisma/pagination.util';
-import type { PrismaService } from '@api/common/prisma/prisma.service';
+import { PrismaService } from '@api/common/prisma/prisma.service';
 import { QueryDefaultsUtil } from '@api/common/utils/query-defaults.util';
-import type { ListingsService } from '@api/listings/services/listings.service';
+import { ListingsService } from '@api/listings/services/listings.service';
 import type { CreatePurchaseDto } from '@api/purchases/dto/create-purchase.dto';
 import type { PurchaseQueryDto } from '@api/purchases/dto/purchase-query.dto';
-import type { SellersService } from '@api/sellers/services/sellers.service';
+import { SellersService } from '@api/sellers/services/sellers.service';
 import { PurchaseStatus } from '@genfeedai/enums';
 import {
   BadRequestException,
+  Inject,
   Injectable,
   Logger,
   NotFoundException,
@@ -39,9 +40,9 @@ export class PurchasesService {
   ] as const;
 
   constructor(
-    private readonly prisma: PrismaService,
-    private readonly listingsService: ListingsService,
-    private readonly sellersService: SellersService,
+    @Inject(PrismaService) private readonly prisma: PrismaService,
+    @Inject(ListingsService) private readonly listingsService: ListingsService,
+    @Inject(SellersService) private readonly sellersService: SellersService,
   ) {}
 
   private async updatePurchase(

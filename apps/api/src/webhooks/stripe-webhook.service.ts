@@ -1,20 +1,22 @@
-import type {
+import {
   MarketplaceStripeService,
-  StripeCheckoutSession,
-  StripeWebhookEvent,
+  type StripeCheckoutSession,
+  type StripeWebhookEvent,
 } from '@api/common/services/stripe.service';
-import type { MarketplaceConfigService } from '@api/config/config.service';
-import type { CheckoutService } from '@api/purchases/services/checkout.service';
-import { Injectable, Logger } from '@nestjs/common';
+import { MarketplaceConfigService } from '@api/config/config.service';
+import { CheckoutService } from '@api/purchases/services/checkout.service';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 
 @Injectable()
 export class StripeWebhookService {
   private readonly logger = new Logger(StripeWebhookService.name);
 
   constructor(
+    @Inject(MarketplaceStripeService)
     private readonly stripeService: MarketplaceStripeService,
+    @Inject(MarketplaceConfigService)
     private readonly configService: MarketplaceConfigService,
-    private readonly checkoutService: CheckoutService,
+    @Inject(CheckoutService) private readonly checkoutService: CheckoutService,
   ) {}
 
   /**

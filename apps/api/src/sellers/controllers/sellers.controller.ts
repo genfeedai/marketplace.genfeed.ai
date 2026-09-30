@@ -18,19 +18,20 @@ import {
   serializeCollection,
   serializeSingle,
 } from '@api/common/utils/response.util';
-import type { MarketplaceConfigService } from '@api/config/config.service';
+import { MarketplaceConfigService } from '@api/config/config.service';
 import type { AdminSellerQueryDto } from '@api/sellers/dto/admin-seller-query.dto';
 import type { CreateSellerDto } from '@api/sellers/dto/create-seller.dto';
 import type { UpdateSellerDto } from '@api/sellers/dto/update-seller.dto';
 import type { UpdateSellerStatusDto } from '@api/sellers/dto/update-seller-status.dto';
-import type { SellersService } from '@api/sellers/services/sellers.service';
-import type { StripeConnectService } from '@api/sellers/services/stripe-connect.service';
+import { SellersService } from '@api/sellers/services/sellers.service';
+import { StripeConnectService } from '@api/sellers/services/stripe-connect.service';
 import type { User } from '@clerk/backend';
 import {
   Body,
   Controller,
   ForbiddenException,
   Get,
+  Inject,
   NotFoundException,
   Param,
   Patch,
@@ -51,8 +52,10 @@ export class SellersController {
   private static readonly officialSellerSlug = 'genfeed-official';
 
   constructor(
-    private readonly sellersService: SellersService,
+    @Inject(SellersService) private readonly sellersService: SellersService,
+    @Inject(StripeConnectService)
     private readonly stripeConnectService: StripeConnectService,
+    @Inject(MarketplaceConfigService)
     private readonly configService: MarketplaceConfigService,
   ) {}
 
@@ -405,7 +408,9 @@ export class SellersController {
 @UseGuards(RolesGuard)
 @ApiBearerAuth()
 export class AdminSellersController {
-  constructor(private readonly sellersService: SellersService) {}
+  constructor(
+    @Inject(SellersService) private readonly sellersService: SellersService,
+  ) {}
 
   @Get()
   @RolesDecorator('superadmin')
