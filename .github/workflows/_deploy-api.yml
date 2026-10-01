@@ -136,7 +136,7 @@ jobs:
         working-directory: infra/production
         run: |
           set -euo pipefail
-          count=$(aws elbv2 describe-target-health --target-group-arn "$(tofu output -raw target_group_arn)" --query 'length(TargetHealthDescriptions[?TargetHealth.State==`healthy`])' --output text)
+          count=$(aws elbv2 describe-target-health --target-group-arn "$(tofu output -raw target_group_arn)" --query "length(TargetHealthDescriptions[?TargetHealth.State=='healthy'])" --output text)
           test "$count" -ge 1
       - name: Cut over only the Marketplace API domain and verify readiness
         working-directory: infra/production
