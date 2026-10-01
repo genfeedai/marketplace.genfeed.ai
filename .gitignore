@@ -16,3 +16,11 @@ coverage/
 # one, and `git add -A` would then commit it.
 .agents/sessions/
 .agents/SESSIONS/
+
+# Deployment working files and state never belong in source control.
+**/.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+*.tfvars
+*.tfvars.json

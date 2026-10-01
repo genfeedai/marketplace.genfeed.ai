@@ -1,0 +1,102 @@
+name: Release
+run-name: Marketplace ${{ inputs.version }} | ${{ inputs.source_sha }}
+
+# Manual cut-release entry point. Never deploy on push, merge, or a tag event.
+on:
+  workflow_dispatch:
+    inputs:
+      source_sha:
+        description: Reviewed exact master commit to release
+        required: true
+        type: string
+      version:
+        description: Approved stable release tag (vX.Y.Z); reuse it for recovery
+        required: true
+        type: string
+      approval:
+        description: Type deploy-production to confirm approval of this SHA and version
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: marketplace-production-release
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      source_sha: ${{ steps.validate.outputs.source_sha }}
+      version: ${{ steps.validate.outputs.version }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Validate approved release identity
+        id: validate
+        env:
+          SOURCE_SHA: ${{ inputs.source_sha }}
+          VERSION: ${{ inputs.version }}
+          APPROVAL: ${{ inputs.approval }}
+          WORKFLOW_SHA: ${{ github.sha }}
+        run: bash scripts/deploy/validate-release.sh
+
+  quality:
+    needs: validate
+    uses: ./.github/workflows/ci.yml
+    with:
+      source_sha: ${{ needs.validate.outputs.source_sha }}
+
+  deploy-api:
+    needs: [validate, quality]
+    permissions:
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/_deploy-api.yml
+    with:
+      source_sha: ${{ needs.validate.outputs.source_sha }}
+
+  deploy-web:
+    needs: [validate, deploy-api]
+    uses: ./.github/workflows/_deploy-web.yml
+    with:
+      source_sha: ${{ needs.validate.outputs.source_sha }}
+    secrets:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+
+  publish:
+    needs: [validate, deploy-api, deploy-web]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ needs.validate.outputs.source_sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Publish stable release only after production verification
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_SHA: ${{ needs.validate.outputs.source_sha }}
+          VERSION: ${{ needs.validate.outputs.version }}
+        run: |
+          set -euo pipefail
+          if git show-ref --verify --quiet "refs/tags/$VERSION"; then
+            test "$(git rev-list -n 1 "$VERSION")" = "$SOURCE_SHA"
+          else
+            gh api "repos/$GITHUB_REPOSITORY/git/refs" -f "ref=refs/tags/$VERSION" -f "sha=$SOURCE_SHA"
+          fi
+          if gh release view "$VERSION" --json isDraft --jq .isDraft > /tmp/marketplace-release-draft; then
+            if [ "$(cat /tmp/marketplace-release-draft)" = true ]; then
+              gh release edit "$VERSION" --draft=false
+            fi
+          else
+            gh release create "$VERSION" --verify-tag --title "Marketplace $VERSION" --generate-notes
+          fi
