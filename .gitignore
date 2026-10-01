@@ -24,3 +24,7 @@ coverage/
 *.tfplan
 *.tfvars
 *.tfvars.json
+
+# Python test caches
+__pycache__/
+*.py[cod]
