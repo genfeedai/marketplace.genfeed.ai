@@ -42,7 +42,7 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import type { Request } from 'express';
 
 @AutoSwagger()
@@ -74,45 +74,6 @@ export class ListingsController {
       PublicListingSerializer,
       data,
     ) as JsonApiCollectionResponse;
-  }
-
-  /**
-   * Check if user owns a listing (requires auth)
-   * @deprecated Use `GET /marketplace/listings/:listingId/ownership` on PurchasesController instead.
-   */
-  @Get(':listingId/owned')
-  @ApiBearerAuth()
-  @ApiOperation({
-    deprecated: true,
-    summary:
-      'Deprecated: Use GET /marketplace/listings/:listingId/ownership instead',
-  })
-  @LogMethod({ logEnd: false, logError: true, logStart: true })
-  async checkOwnership(
-    @Param('listingId') listingId: string,
-    @CurrentUser() user: MarketplacePrincipal,
-  ): Promise<JsonApiSingleResponse> {
-    const publicMetadata = getIdentity(user);
-
-    const { owned, purchase } =
-      await this.purchasesService.checkListingOwnership(
-        listingId,
-        publicMetadata.user,
-        publicMetadata.organization,
-      );
-
-    return {
-      data: {
-        attributes: {
-          listingId,
-          owned,
-          purchaseId: purchase?._id?.toString(),
-          userId: publicMetadata.user,
-        },
-        id: listingId,
-        type: 'listing-ownership',
-      },
-    };
   }
 
   /**
