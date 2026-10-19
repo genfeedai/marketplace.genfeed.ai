@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { describe, expect, test } from 'vitest';
 import robots from '../app/robots';
 import sitemap from '../app/sitemap';
@@ -65,6 +66,35 @@ describe('marketplace SEO contract', () => {
     }
   });
 
+  test('gives every indexable route unique metadata within search snippet limits', () => {
+    const layout = readFileSync(
+      new URL('../app/layout.tsx', import.meta.url),
+      'utf8',
+    );
+    const defaultTitle = layout.match(/default: '([^']+)'/)?.[1] ?? '';
+    const titleTemplate = layout.match(/template: '([^']+)'/)?.[1] ?? '';
+    const descriptions = new Set<string>();
+
+    expect(defaultTitle).not.toBe('');
+    expect(titleTemplate).toContain('%s');
+
+    for (const route of INDEXABLE_ROUTES) {
+      const metadata = createIndexableMetadata(route.path);
+      const title =
+        route.path === '/'
+          ? defaultTitle
+          : titleTemplate.replace('%s', String(metadata.title));
+      const description = metadata.description ?? '';
+
+      expect(Array.from(title).length).toBeGreaterThanOrEqual(30);
+      expect(Array.from(title).length).toBeLessThanOrEqual(60);
+      expect(Array.from(description).length).toBeGreaterThanOrEqual(110);
+      expect(Array.from(description).length).toBeLessThanOrEqual(160);
+      expect(descriptions.has(description)).toBe(false);
+      descriptions.add(description);
+    }
+  });
+
   test('advertises the marketplace sitemap from robots.txt', () => {
     const value = robots();
 
@@ -73,18 +103,20 @@ describe('marketplace SEO contract', () => {
   });
 
   test('keeps account and transient identities out of the index', () => {
-    const metadata = createNoIndexMetadata({
-      title: 'Private route',
-      description: 'Private marketplace route.',
-      path: '/library',
-    });
+    for (const path of ['/dashboard', '/library']) {
+      const metadata = createNoIndexMetadata({
+        title: 'Private route',
+        description: 'Private marketplace route.',
+        path,
+      });
 
-    expect(metadata.alternates?.canonical).toBe('/library');
-    expect(metadata.robots).toMatchObject({
-      index: false,
-      follow: false,
-      noarchive: true,
-    });
+      expect(metadata.alternates?.canonical).toBe(path);
+      expect(metadata.robots).toMatchObject({
+        index: false,
+        follow: false,
+        noarchive: true,
+      });
+    }
   });
 
   test('keeps retired marketplace identities as hard cuts', () => {
