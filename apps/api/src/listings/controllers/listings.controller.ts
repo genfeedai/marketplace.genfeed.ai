@@ -77,45 +77,6 @@ export class ListingsController {
   }
 
   /**
-   * Check if user owns a listing (requires auth)
-   * @deprecated Use `GET /marketplace/listings/:listingId/ownership` on PurchasesController instead.
-   */
-  @Get(':listingId/owned')
-  @ApiBearerAuth()
-  @ApiOperation({
-    deprecated: true,
-    summary:
-      'Deprecated: Use GET /marketplace/listings/:listingId/ownership instead',
-  })
-  @LogMethod({ logEnd: false, logError: true, logStart: true })
-  async checkOwnership(
-    @Param('listingId') listingId: string,
-    @CurrentUser() user: MarketplacePrincipal,
-  ): Promise<JsonApiSingleResponse> {
-    const publicMetadata = getIdentity(user);
-
-    const { owned, purchase } =
-      await this.purchasesService.checkListingOwnership(
-        listingId,
-        publicMetadata.user,
-        publicMetadata.organization,
-      );
-
-    return {
-      data: {
-        attributes: {
-          listingId,
-          owned,
-          purchaseId: purchase?._id?.toString(),
-          userId: publicMetadata.user,
-        },
-        id: listingId,
-        type: 'listing-ownership',
-      },
-    };
-  }
-
-  /**
    * Get public listing by seller slug and listing slug
    */
   @Public()

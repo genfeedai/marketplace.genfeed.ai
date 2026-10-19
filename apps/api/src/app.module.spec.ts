@@ -56,7 +56,6 @@ describe('Marketplace local startup', () => {
       '/seller/profile',
       '/admin/marketplace/listings',
       '/marketplace/listings/library',
-      '/marketplace/listings/example/owned',
     ]) {
       expect((await fetch(`${url}${path}`)).status).toBe(401);
     }
