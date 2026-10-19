@@ -1,9 +1,6 @@
 {
   "dependencies": {
-    "@clerk/backend": "3.2.7",
     "@genfeedai/enums": "2.3.2",
-    "@genfeedai/prompts": "0.2.2",
-    "@genfeedai/workflows": "0.3.2",
     "@nestjs/common": "11.1.18",
     "@nestjs/config": "4.0.3",
     "@nestjs/core": "11.1.18",
@@ -16,7 +13,10 @@
     "reflect-metadata": "0.2.2",
     "rxjs": "7.8.2",
     "slugify": "1.6.9",
-    "stripe": "22.4.0"
+    "stripe": "22.4.0",
+    "jose": "6.2.2",
+    "@aws-sdk/client-ssm": "3.1107.0",
+    "pg": "8.16.3"
   },
   "devDependencies": {
     "@nestjs/cli": "11.0.18",
@@ -28,7 +28,8 @@
     "tsc-alias": "1.8.16",
     "tsconfig-paths": "4.2.0",
     "typescript": "5.9.3",
-    "vitest": "4.1.3"
+    "vitest": "4.1.3",
+    "@types/pg": "8.16.0"
   },
   "name": "@marketplace/api",
   "private": true,
@@ -38,16 +39,13 @@
     "lint": "biome check src/",
     "prisma:generate": "prisma generate --schema prisma/schema.prisma",
     "prisma:validate": "prisma validate --schema prisma/schema.prisma",
-    "seed:genfeed-core-workflows": "bun run apps/api/scripts/seeds/genfeed-core-workflows.seed.ts",
-    "seed:genfeed-core-workflows:live": "bun run apps/api/scripts/seeds/genfeed-core-workflows.seed.ts --live",
-    "seed:packages": "bun run scripts/seeds/marketplace-packages.seed.ts",
-    "seed:packages:live": "bun run scripts/seeds/marketplace-packages.seed.ts --live",
     "start": "node -r tsconfig-paths/register dist/main",
     "start:prod": "node -r tsconfig-paths/register dist/main",
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.scripts.json",
-    "typecheck:scripts": "tsc --noEmit -p tsconfig.scripts.json"
+    "typecheck:scripts": "tsc --noEmit -p tsconfig.scripts.json",
+    "prisma:migrate": "prisma migrate deploy --schema prisma/schema.prisma"
   },
   "version": "0.1.0"
 }

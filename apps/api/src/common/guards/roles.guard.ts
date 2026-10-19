@@ -1,33 +1,36 @@
+import type { MarketplacePrincipal } from '@api/common/auth/marketplace-principal';
 import {
+  getIdentity,
   getIsSuperAdmin,
-  getPublicMetadata,
-} from '@api/common/utils/clerk.util';
-import type { User } from '@clerk/backend';
+} from '@api/common/auth/marketplace-principal';
 import {
   type CanActivate,
   type ExecutionContext,
   HttpException,
   HttpStatus,
+  Inject,
   Injectable,
 } from '@nestjs/common';
-import type { Reflector } from '@nestjs/core';
+import { Reflector } from '@nestjs/core';
 import type { Request } from 'express';
 
 @Injectable()
 export class RolesGuard implements CanActivate {
-  constructor(private readonly reflector: Reflector) {}
+  constructor(@Inject(Reflector) private readonly reflector: Reflector) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const requiredRoles = this.reflector.get<string[]>(
-      'roles',
+    const requiredRoles = this.reflector.getAllAndOverride<string[]>('roles', [
       context.getHandler(),
-    );
+      context.getClass(),
+    ]);
 
     if (!requiredRoles || requiredRoles.length === 0) {
       return true;
     }
 
-    const req = context.switchToHttp().getRequest<Request & { user?: User }>();
+    const req = context
+      .switchToHttp()
+      .getRequest<Request & { user?: MarketplacePrincipal }>();
     const user = req.user;
 
     if (!user) {
@@ -41,19 +44,12 @@ export class RolesGuard implements CanActivate {
       return true;
     }
 
-    const isSuperAdminOnly =
-      requiredRoles.length === 1 && requiredRoles.includes('superadmin');
-
-    if (isSuperAdminOnly) {
-      throw new HttpException(
-        {
-          detail: 'Only platform superadmins can access this resource',
-          title: 'Roles - Forbidden',
-        },
-        HttpStatus.FORBIDDEN,
-      );
-    }
-
-    return true;
+    throw new HttpException(
+      {
+        detail: 'Only platform superadmins can access this resource',
+        title: 'Roles - Forbidden',
+      },
+      HttpStatus.FORBIDDEN,
+    );
   }
 }

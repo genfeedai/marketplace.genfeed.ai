@@ -1,13 +1,15 @@
 # Marketplace Docker Compose
 services:
-  mongodb:
-    image: mongo:7
+  postgres:
+    image: postgres:17
     ports:
-      - "27018:27017"
+      - "5433:5432"
     volumes:
-      - marketplace-mongo-data:/data/db
+      - marketplace-postgres-data:/var/lib/postgresql/data
     environment:
-      MONGO_INITDB_DATABASE: marketplace
+      POSTGRES_DB: marketplace
+      POSTGRES_USER: marketplace
+      POSTGRES_PASSWORD: marketplace_local
 
 volumes:
-  marketplace-mongo-data:
+  marketplace-postgres-data:

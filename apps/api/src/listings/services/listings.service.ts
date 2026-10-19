@@ -7,15 +7,16 @@ import {
   type PaginatedResult,
   paginateDocs,
 } from '@api/common/prisma/pagination.util';
-import type { PrismaService } from '@api/common/prisma/prisma.service';
+import { PrismaService } from '@api/common/prisma/prisma.service';
 import { QueryDefaultsUtil } from '@api/common/utils/query-defaults.util';
 import type { CreateListingDto } from '@api/listings/dto/create-listing.dto';
 import type { ListingQueryDto } from '@api/listings/dto/listing-query.dto';
 import type { UpdateListingDto } from '@api/listings/dto/update-listing.dto';
-import type { SellersService } from '@api/sellers/services/sellers.service';
+import { SellersService } from '@api/sellers/services/sellers.service';
 import { ListingStatus, SellerStatus } from '@genfeedai/enums';
 import {
   BadRequestException,
+  Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -50,8 +51,8 @@ export class ListingsService {
   ] as const;
 
   constructor(
-    private readonly prisma: PrismaService,
-    private readonly sellersService: SellersService,
+    @Inject(PrismaService) private readonly prisma: PrismaService,
+    @Inject(SellersService) private readonly sellersService: SellersService,
   ) {}
 
   private buildWhere(

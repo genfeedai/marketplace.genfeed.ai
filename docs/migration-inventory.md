@@ -26,7 +26,7 @@ Tracks every marketplace-related path in `genfeed.ai` and its disposition.
 | `apps/server/api/src/marketplace/sellers/**` | move | `apps/api/src/sellers/` | pending |
 | `apps/server/api/src/marketplace/purchases/**` | move | `apps/api/src/purchases/` (exclude InstallService) | pending |
 | `apps/server/api/scripts/seeds/marketplace.seed.ts` | move | `apps/api/scripts/seeds/marketplace.seed.ts` | pending |
-| `apps/server/api/scripts/seeds/marketplace-packages.seed.ts` | move | `apps/api/scripts/seeds/marketplace-packages.seed.ts` | pending |
+| `apps/server/api/scripts/seeds/marketplace-packages.seed.ts` | delete | Retired published-package seed importer; listings are managed through the API | retired |
 
 ## InstallService (stays in genfeed.ai)
 

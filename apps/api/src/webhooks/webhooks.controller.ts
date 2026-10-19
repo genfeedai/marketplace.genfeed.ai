@@ -1,11 +1,11 @@
 import { Public } from '@api/common/decorators/public.decorator';
-import type { StripeWebhookService } from '@api/webhooks/stripe-webhook.service';
+import { StripeWebhookService } from '@api/webhooks/stripe-webhook.service';
 import {
   Controller,
   Headers,
   HttpCode,
   HttpStatus,
-  Logger,
+  Inject,
   Post,
   RawBody,
 } from '@nestjs/common';
@@ -14,9 +14,10 @@ import { ApiExcludeController } from '@nestjs/swagger';
 @ApiExcludeController()
 @Controller('webhooks')
 export class WebhooksController {
-  private readonly logger = new Logger(WebhooksController.name);
-
-  constructor(private readonly stripeWebhookService: StripeWebhookService) {}
+  constructor(
+    @Inject(StripeWebhookService)
+    private readonly stripeWebhookService: StripeWebhookService,
+  ) {}
 
   @Post('stripe')
   @Public()
@@ -25,15 +26,7 @@ export class WebhooksController {
     @RawBody() rawBody: Buffer,
     @Headers('stripe-signature') signature: string,
   ): Promise<{ received: boolean }> {
-    try {
-      await this.stripeWebhookService.handleWebhook(rawBody, signature);
-    } catch (error: unknown) {
-      this.logger.error('Stripe webhook processing failed', {
-        error: (error as Error).message,
-      });
-      // Still return 200 to prevent Stripe retries on non-transient errors
-    }
-
+    await this.stripeWebhookService.handleWebhook(rawBody, signature);
     return { received: true };
   }
 }

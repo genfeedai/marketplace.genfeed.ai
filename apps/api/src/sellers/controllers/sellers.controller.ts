@@ -1,7 +1,16 @@
+import type { MarketplacePrincipal } from '@api/common/auth/marketplace-principal';
+import {
+  getIdentity,
+  getIsSuperAdmin,
+} from '@api/common/auth/marketplace-principal';
 import { AutoSwagger } from '@api/common/decorators/auto-swagger.decorator';
 import { CurrentUser } from '@api/common/decorators/current-user.decorator';
 import { LogMethod } from '@api/common/decorators/log-method.decorator';
 import { RolesDecorator } from '@api/common/decorators/roles.decorator';
+import {
+  ValidatedBody,
+  ValidatedQuery,
+} from '@api/common/decorators/validated-parameter.decorator';
 import { RolesGuard } from '@api/common/guards/roles.guard';
 import type {
   JsonApiCollectionResponse,
@@ -10,33 +19,27 @@ import type {
 import { SellerSerializer } from '@api/common/serializers';
 import type { StripePayout } from '@api/common/services/stripe.service';
 import {
-  getIsSuperAdmin,
-  getPublicMetadata,
-} from '@api/common/utils/clerk.util';
-import {
   returnNotFound,
   serializeCollection,
   serializeSingle,
 } from '@api/common/utils/response.util';
-import type { MarketplaceConfigService } from '@api/config/config.service';
-import type { AdminSellerQueryDto } from '@api/sellers/dto/admin-seller-query.dto';
-import type { CreateSellerDto } from '@api/sellers/dto/create-seller.dto';
-import type { UpdateSellerDto } from '@api/sellers/dto/update-seller.dto';
-import type { UpdateSellerStatusDto } from '@api/sellers/dto/update-seller-status.dto';
-import type { SellersService } from '@api/sellers/services/sellers.service';
-import type { StripeConnectService } from '@api/sellers/services/stripe-connect.service';
-import type { User } from '@clerk/backend';
+import { MarketplaceConfigService } from '@api/config/config.service';
+import { AdminSellerQueryDto } from '@api/sellers/dto/admin-seller-query.dto';
+import { CreateSellerDto } from '@api/sellers/dto/create-seller.dto';
+import { UpdateSellerDto } from '@api/sellers/dto/update-seller.dto';
+import { UpdateSellerStatusDto } from '@api/sellers/dto/update-seller-status.dto';
+import { SellersService } from '@api/sellers/services/sellers.service';
+import { StripeConnectService } from '@api/sellers/services/stripe-connect.service';
 import {
-  Body,
   Controller,
   ForbiddenException,
   Get,
+  Inject,
   NotFoundException,
   Param,
   Patch,
   Post,
   Put,
-  Query,
   Req,
   UseGuards,
 } from '@nestjs/common';
@@ -51,8 +54,10 @@ export class SellersController {
   private static readonly officialSellerSlug = 'genfeed-official';
 
   constructor(
-    private readonly sellersService: SellersService,
+    @Inject(SellersService) private readonly sellersService: SellersService,
+    @Inject(StripeConnectService)
     private readonly stripeConnectService: StripeConnectService,
+    @Inject(MarketplaceConfigService)
     private readonly configService: MarketplaceConfigService,
   ) {}
 
@@ -62,9 +67,9 @@ export class SellersController {
   @Get('eligibility')
   @LogMethod({ logEnd: false, logError: true, logStart: true })
   async checkEligibility(
-    @CurrentUser() user: User,
+    @CurrentUser() user: MarketplacePrincipal,
   ): Promise<JsonApiSingleResponse> {
-    const publicMetadata = getPublicMetadata(user);
+    const publicMetadata = getIdentity(user);
 
     const eligibility = await this.sellersService.checkSellerEligibility(
       publicMetadata.user,
@@ -87,9 +92,9 @@ export class SellersController {
   @LogMethod({ logEnd: false, logError: true, logStart: true })
   async getProfile(
     @Req() request: Request,
-    @CurrentUser() user: User,
+    @CurrentUser() user: MarketplacePrincipal,
   ): Promise<JsonApiSingleResponse> {
-    const publicMetadata = getPublicMetadata(user);
+    const publicMetadata = getIdentity(user);
 
     const seller = await this.sellersService.findByUserId(publicMetadata.user);
 
@@ -111,7 +116,7 @@ export class SellersController {
   @LogMethod({ logEnd: false, logError: true, logStart: true })
   async getOfficialProfile(
     @Req() request: Request,
-    @CurrentUser() user: User,
+    @CurrentUser() user: MarketplacePrincipal,
   ): Promise<JsonApiSingleResponse> {
     if (!getIsSuperAdmin(user)) {
       throw new ForbiddenException('Superadmin access required');
@@ -142,10 +147,10 @@ export class SellersController {
   @LogMethod({ logEnd: false, logError: true, logStart: true })
   async createProfile(
     @Req() request: Request,
-    @Body() createSellerDto: CreateSellerDto,
-    @CurrentUser() user: User,
+    @ValidatedBody(CreateSellerDto) createSellerDto: CreateSellerDto,
+    @CurrentUser() user: MarketplacePrincipal,
   ): Promise<JsonApiSingleResponse> {
-    const publicMetadata = getPublicMetadata(user);
+    const publicMetadata = getIdentity(user);
 
     const seller = await this.sellersService.createSellerProfile(
       publicMetadata.user,
@@ -167,10 +172,10 @@ export class SellersController {
   @LogMethod({ logEnd: false, logError: true, logStart: true })
   async updateProfile(
     @Req() request: Request,
-    @Body() updateSellerDto: UpdateSellerDto,
-    @CurrentUser() user: User,
+    @ValidatedBody(UpdateSellerDto) updateSellerDto: UpdateSellerDto,
+    @CurrentUser() user: MarketplacePrincipal,
   ): Promise<JsonApiSingleResponse> {
-    const publicMetadata = getPublicMetadata(user);
+    const publicMetadata = getIdentity(user);
 
     const seller = await this.sellersService.findByUserId(publicMetadata.user);
 
@@ -196,9 +201,9 @@ export class SellersController {
   @Post('stripe/connect')
   @LogMethod({ logEnd: false, logError: true, logStart: true })
   async initiateStripeConnect(
-    @CurrentUser() user: User,
+    @CurrentUser() user: MarketplacePrincipal,
   ): Promise<JsonApiSingleResponse> {
-    const publicMetadata = getPublicMetadata(user);
+    const publicMetadata = getIdentity(user);
 
     const seller = await this.sellersService.findByUserId(publicMetadata.user);
     if (!seller) {
@@ -211,7 +216,7 @@ export class SellersController {
     if (!stripeAccountId) {
       const account = await this.stripeConnectService.createConnectAccount({
         displayName: seller.displayName,
-        email: user.emailAddresses[0]?.emailAddress || '',
+        email: user.email || '',
         sellerId: seller._id.toString(),
       });
 
@@ -251,9 +256,9 @@ export class SellersController {
   @Get('stripe/status')
   @LogMethod({ logEnd: false, logError: true, logStart: true })
   async getStripeStatus(
-    @CurrentUser() user: User,
+    @CurrentUser() user: MarketplacePrincipal,
   ): Promise<JsonApiSingleResponse> {
-    const publicMetadata = getPublicMetadata(user);
+    const publicMetadata = getIdentity(user);
 
     const seller = await this.sellersService.findByUserId(publicMetadata.user);
     if (!seller) {
@@ -309,9 +314,9 @@ export class SellersController {
   @Get('stripe/dashboard')
   @LogMethod({ logEnd: false, logError: true, logStart: true })
   async getStripeDashboard(
-    @CurrentUser() user: User,
+    @CurrentUser() user: MarketplacePrincipal,
   ): Promise<JsonApiSingleResponse> {
-    const publicMetadata = getPublicMetadata(user);
+    const publicMetadata = getIdentity(user);
 
     const seller = await this.sellersService.findByUserId(publicMetadata.user);
     if (!seller?.stripeAccountId) {
@@ -339,9 +344,9 @@ export class SellersController {
   @Get('stripe/balance')
   @LogMethod({ logEnd: false, logError: true, logStart: true })
   async getStripeBalance(
-    @CurrentUser() user: User,
+    @CurrentUser() user: MarketplacePrincipal,
   ): Promise<JsonApiSingleResponse> {
-    const publicMetadata = getPublicMetadata(user);
+    const publicMetadata = getIdentity(user);
 
     const seller = await this.sellersService.findByUserId(publicMetadata.user);
     if (!seller?.stripeAccountId) {
@@ -367,9 +372,9 @@ export class SellersController {
   @Get('stripe/payouts')
   @LogMethod({ logEnd: false, logError: true, logStart: true })
   async getStripePayouts(
-    @CurrentUser() user: User,
+    @CurrentUser() user: MarketplacePrincipal,
   ): Promise<JsonApiSingleResponse> {
-    const publicMetadata = getPublicMetadata(user);
+    const publicMetadata = getIdentity(user);
 
     const seller = await this.sellersService.findByUserId(publicMetadata.user);
     if (!seller?.stripeAccountId) {
@@ -405,17 +410,19 @@ export class SellersController {
 @UseGuards(RolesGuard)
 @ApiBearerAuth()
 export class AdminSellersController {
-  constructor(private readonly sellersService: SellersService) {}
+  constructor(
+    @Inject(SellersService) private readonly sellersService: SellersService,
+  ) {}
 
   @Get()
   @RolesDecorator('superadmin')
   @LogMethod({ logEnd: false, logError: true, logStart: true })
   async getSellers(
     @Req() request: Request,
-    @Query() query: AdminSellerQueryDto,
-    @CurrentUser() user: User,
+    @ValidatedQuery(AdminSellerQueryDto) query: AdminSellerQueryDto,
+    @CurrentUser() user: MarketplacePrincipal,
   ): Promise<JsonApiCollectionResponse> {
-    const publicMetadata = getPublicMetadata(user);
+    const publicMetadata = getIdentity(user);
     const data = await this.sellersService.getAdminSellers(
       publicMetadata.organization,
       query,
@@ -434,9 +441,9 @@ export class AdminSellersController {
   async getSeller(
     @Req() request: Request,
     @Param('sellerId') sellerId: string,
-    @CurrentUser() user: User,
+    @CurrentUser() user: MarketplacePrincipal,
   ): Promise<JsonApiSingleResponse> {
-    const publicMetadata = getPublicMetadata(user);
+    const publicMetadata = getIdentity(user);
     const seller = await this.sellersService.getAdminSellerById(
       publicMetadata.organization,
       sellerId,
@@ -459,10 +466,10 @@ export class AdminSellersController {
   async updateSellerStatus(
     @Req() request: Request,
     @Param('sellerId') sellerId: string,
-    @Body() body: UpdateSellerStatusDto,
-    @CurrentUser() user: User,
+    @ValidatedBody(UpdateSellerStatusDto) body: UpdateSellerStatusDto,
+    @CurrentUser() user: MarketplacePrincipal,
   ): Promise<JsonApiSingleResponse> {
-    const publicMetadata = getPublicMetadata(user);
+    const publicMetadata = getIdentity(user);
     const updated = await this.sellersService.setSellerStatus(
       publicMetadata.organization,
       sellerId,

@@ -1,15 +1,20 @@
 import { HandleErrors } from '@api/common/decorators/error-handler.decorator';
-import type {
+import {
   MarketplaceStripeService,
-  StripeAccount,
-  StripePaymentIntent,
-  StripePayout,
-  StripePayoutList,
-  StripeRefund,
-  StripeRefundReason,
+  type StripeAccount,
+  type StripePaymentIntent,
+  type StripePayout,
+  type StripePayoutList,
+  type StripeRefund,
+  type StripeRefundReason,
 } from '@api/common/services/stripe.service';
-import type { MarketplaceConfigService } from '@api/config/config.service';
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import { MarketplaceConfigService } from '@api/config/config.service';
+import {
+  BadRequestException,
+  Inject,
+  Injectable,
+  Logger,
+} from '@nestjs/common';
 
 @Injectable()
 export class StripeConnectService {
@@ -17,7 +22,9 @@ export class StripeConnectService {
   public readonly logger = new Logger(StripeConnectService.name);
 
   constructor(
+    @Inject(MarketplaceConfigService)
     readonly _configService: MarketplaceConfigService,
+    @Inject(MarketplaceStripeService)
     private readonly stripeService: MarketplaceStripeService,
   ) {}
 

@@ -7,13 +7,18 @@ import {
   type PaginatedResult,
   paginateDocs,
 } from '@api/common/prisma/pagination.util';
-import type { PrismaService } from '@api/common/prisma/prisma.service';
+import { PrismaService } from '@api/common/prisma/prisma.service';
 import { QueryDefaultsUtil } from '@api/common/utils/query-defaults.util';
 import type { AdminSellerQueryDto } from '@api/sellers/dto/admin-seller-query.dto';
 import type { CreateSellerDto } from '@api/sellers/dto/create-seller.dto';
 import type { UpdateSellerDto } from '@api/sellers/dto/update-seller.dto';
 import { SellerBadgeTier, SellerStatus } from '@genfeedai/enums';
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import {
+  BadRequestException,
+  Inject,
+  Injectable,
+  Logger,
+} from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import slugify from 'slugify';
 
@@ -41,7 +46,7 @@ export class SellersService {
     'updatedAt',
   ] as const;
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
 
   private buildWhere(params: Record<string, unknown>): Prisma.SellerWhereInput {
     const where: Prisma.SellerWhereInput = {};
