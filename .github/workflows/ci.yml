@@ -1,6 +1,11 @@
 name: CI
 
 on:
+  workflow_call:
+    inputs:
+      source_sha:
+        required: true
+        type: string
   push:
     branches: [master]
   pull_request:
@@ -30,6 +35,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
         with:
+          ref: ${{ inputs.source_sha || github.sha }}
           persist-credentials: false
       - name: Setup Bun environment
         uses: ./.github/actions/setup-bun-env
@@ -51,6 +57,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
         with:
+          ref: ${{ inputs.source_sha || github.sha }}
           persist-credentials: false
       - name: Setup Bun environment
         uses: ./.github/actions/setup-bun-env
@@ -69,6 +76,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
         with:
+          ref: ${{ inputs.source_sha || github.sha }}
           persist-credentials: false
       - name: Setup Bun environment
         uses: ./.github/actions/setup-bun-env
@@ -98,6 +106,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
         with:
+          ref: ${{ inputs.source_sha || github.sha }}
           persist-credentials: false
       - name: Setup Bun environment
         uses: ./.github/actions/setup-bun-env
@@ -123,6 +132,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
         with:
+          ref: ${{ inputs.source_sha || github.sha }}
           persist-credentials: false
       - name: Build production API image
         run: docker build -f docker/Dockerfile.api -t marketplace-api:ci .
@@ -140,17 +150,58 @@ jobs:
           curl --fail --retry 12 --retry-all-errors --retry-delay 2 http://127.0.0.1:3200/health/ready
           curl --fail http://127.0.0.1:3200/marketplace/listings
 
+      - name: Save the image verified by the production smoke test
+        if: ${{ inputs.source_sha != '' }}
+        run: |
+          set -euo pipefail
+          docker save marketplace-api:ci | zstd -T0 -3 -o /tmp/marketplace-api.tar.zst
+      - uses: actions/upload-artifact@v4
+        if: ${{ inputs.source_sha != '' }}
+        with:
+          name: marketplace-api-${{ inputs.source_sha }}
+          path: /tmp/marketplace-api.tar.zst
+          compression-level: 0
+          retention-days: 3
+          overwrite: true
+
+  deployment-checks:
+    name: Deployment checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ inputs.source_sha || github.sha }}
+          persist-credentials: false
+      - name: Verify deployment task state handling
+        run: python3 -m unittest discover -s scripts/deploy -p 'test_*.py' -v
+      - name: Validate shell scripts
+        run: shellcheck scripts/deploy/*.sh
+      - name: Validate GitHub workflows
+        run: |
+          go install github.com/rhysd/actionlint/cmd/actionlint@v1.7.12
+          "$(go env GOPATH)/bin/actionlint"
+      - uses: opentofu/setup-opentofu@a1320f892987e89d278cc92dc5adc984fb93aca4
+        with:
+          tofu_version: '1.12.2'
+      - name: Validate isolated Marketplace infrastructure
+        working-directory: infra/production
+        run: |
+          tofu fmt -check
+          tofu init -backend=false -input=false
+          tofu validate
+
   ci:
     name: CI
     runs-on: ubuntu-latest
     timeout-minutes: 5
     # Tests include real database isolation and gate release readiness.
-    needs: [lint, typecheck, build, test, api-image]
+    needs: [lint, typecheck, build, test, api-image, deployment-checks]
     if: always()
     steps:
       - name: Verify gating jobs succeeded
         run: |
-          RESULTS="${{ needs.lint.result }} ${{ needs.typecheck.result }} ${{ needs.build.result }} ${{ needs.test.result }} ${{ needs.api-image.result }}"
+          RESULTS="${{ needs.lint.result }} ${{ needs.typecheck.result }} ${{ needs.build.result }} ${{ needs.test.result }} ${{ needs.api-image.result }} ${{ needs.deployment-checks.result }}"
           echo "lint=${{ needs.lint.result }} typecheck=${{ needs.typecheck.result }} build=${{ needs.build.result }} ${{ needs.test.result }}"
           for result in $RESULTS; do
             if [ "$result" != "success" ]; then
