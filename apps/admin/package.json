@@ -2,7 +2,7 @@
   "dependencies": {
     "@genfeedai/constants": "2.2.9",
     "@genfeedai/enums": "2.3.2",
-    "next": "16.2.2",
+    "next": "16.4.2",
     "react": "19.2.4",
     "react-dom": "19.2.4"
   },
