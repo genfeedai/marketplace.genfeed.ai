@@ -1,0 +1,4 @@
+[install]
+# Require npm package versions to be at least 3 hours old before Bun will resolve
+# them, so a freshly published malicious release cannot land in a lockfile update.
+minimumReleaseAge = 10800
