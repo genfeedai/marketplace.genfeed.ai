@@ -1,6 +1,6 @@
 # Marketplace Documentation
 
-Run the API, web app, and admin app in parallel with Bun 1.3.14 and Node 24:
+Run the API, web app, and admin app in parallel with Bun 1.3.14 and Node 26:
 
 ```bash
 bun install --frozen-lockfile
