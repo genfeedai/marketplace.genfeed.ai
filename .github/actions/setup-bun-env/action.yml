@@ -4,13 +4,11 @@ description: Standardize Node, Bun, dependency install and cache setup for CI jo
 inputs:
   node-version:
     description: |
-      Node.js version to install. Tracks Active LTS: 24.x entered LTS on
-      2025-10-28 and stays there until 2026-10-20, whereas 22.x dropped to
-      maintenance on 2025-10-21 and now receives security fixes only. Nothing
-      here compiles against a Node 23+ API — the bump is about staying on a
-      line that still gets bug fixes.
+      Node.js version to install. 26.x is the Active LTS line (LTS since
+      2026-10-28, maintenance from 2027-10-20). Keep this in step with the
+      root `.node-version` and `engines.node`.
     required: false
-    default: '24.x'
+    default: '26.x'
   install-command:
     description: Dependency install command to run after toolchain setup
     required: false
