@@ -36,6 +36,7 @@
   },
   "name": "@marketplace/api",
   "private": true,
+  "license": "AGPL-3.0-or-later",
   "scripts": {
     "build": "tsc -p tsconfig.json && tsc-alias -p tsconfig.json",
     "dev": "nest start --watch",
