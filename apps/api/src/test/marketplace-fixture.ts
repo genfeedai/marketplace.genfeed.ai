@@ -87,10 +87,17 @@ export interface MarketplaceFixture {
     object: unknown,
     id?: string,
   ): Promise<Response>;
+  /** POST a raw body with an arbitrary signature header, signed or not. */
+  sendRawStripeBody(body: string, signature: string): Promise<Response>;
   /** A signed `checkout.session.completed` for a purchase's session. */
   postCheckoutCompleted(input: StripeSessionInput): Promise<Response>;
   /** Checkout sessions the API asked Stripe to create, oldest first. */
   createdStripeSessions(): StripeCheckoutSession[];
+  /** Start checkout for a listing and return the pending purchase's ids. */
+  startCheckout(
+    buyerToken: string,
+    listingId: string,
+  ): Promise<{ purchaseId: string; sessionId: string }>;
   /**
    * Create, submit and approve a listing as the platform operator, who is the
    * only seller of a Genfeed-only store. Returns the public listing id.
@@ -177,15 +184,30 @@ export async function startMarketplaceFixture(): Promise<MarketplaceFixture> {
     webhooks: stripe.webhooks,
     checkout: {
       sessions: {
-        create: async (): Promise<StripeCheckoutSession> => {
+        create: async (params: {
+          metadata?: Record<string, string>;
+        }): Promise<StripeCheckoutSession> => {
           const id = `cs_test_${sessions.length + 1}_${suffix}`;
           const session = {
             id,
             url: `https://checkout.stripe.test/c/pay/${id}`,
+            metadata: params.metadata ?? null,
           };
           sessions.push(session);
           return session;
         },
+        // A session's payment intent is `pi_<session id>`, the same default
+        // `postCheckoutCompleted` puts on the completed event.
+        list: async (params: {
+          payment_intent: string;
+          limit?: number;
+        }): Promise<{ data: StripeCheckoutSession[] }> => ({
+          data: sessions
+            .filter(
+              (candidate) => `pi_${candidate.id}` === params.payment_intent,
+            )
+            .slice(0, params.limit),
+        }),
         retrieve: async (id: string): Promise<StripeCheckoutSession> => {
           const session = sessions.find((candidate) => candidate.id === id);
           if (!session) throw new Error(`No such checkout session: ${id}`);
@@ -255,20 +277,26 @@ export async function startMarketplaceFixture(): Promise<MarketplaceFixture> {
       body: body !== undefined ? JSON.stringify(body) : undefined,
     });
 
+  const sendRawStripeBody: MarketplaceFixture['sendRawStripeBody'] = (
+    body,
+    signature,
+  ) =>
+    fetch(`${url}/webhooks/stripe`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'stripe-signature': signature,
+      },
+      body,
+    });
+
   const postStripeEvent: MarketplaceFixture['postStripeEvent'] = (
     type,
     object,
     id,
   ) => {
     const event = signedStripeEvent(type, object, id);
-    return fetch(`${url}/webhooks/stripe`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'stripe-signature': event.signature,
-      },
-      body: event.body,
-    });
+    return sendRawStripeBody(event.body, event.signature);
   };
 
   let isOperatorSeller = false;
@@ -309,14 +337,32 @@ export async function startMarketplaceFixture(): Promise<MarketplaceFixture> {
     return { id };
   }
 
+  async function startCheckout(
+    buyerToken: string,
+    listingId: string,
+  ): Promise<{ purchaseId: string; sessionId: string }> {
+    const response = await request(
+      `/marketplace/listings/${listingId}/checkout`,
+      buyerToken,
+      {},
+    );
+    if (response.status !== 201) {
+      throw new Error(`Checkout failed: ${response.status}`);
+    }
+    const { purchaseId, sessionId } = (await response.json()).data.attributes;
+    return { purchaseId, sessionId };
+  }
+
   return {
     request,
     token,
     publishListing,
+    startCheckout,
     sql: async (text, values) =>
       (await migration.query(text, values)).rows as never,
     signedStripeEvent,
     postStripeEvent,
+    sendRawStripeBody,
     postCheckoutCompleted: (input) =>
       postStripeEvent(
         'checkout.session.completed',
