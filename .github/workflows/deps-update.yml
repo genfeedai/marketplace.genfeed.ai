@@ -28,9 +28,14 @@ jobs:
       contents: write
       pull-requests: write
     steps:
+      # GITHUB_TOKEN can never push a change under `.github/workflows`, and a
+      # pull request it opens does not start CI. DEPS_UPDATE_TOKEN is a
+      # fine-grained token with Contents, Pull requests and Workflows write
+      # access. Without it the PR carries package bumps only.
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
         with:
           fetch-depth: 0
+          token: ${{ secrets.DEPS_UPDATE_TOKEN || secrets.GITHUB_TOKEN }}
 
       - name: Setup Bun environment
         uses: ./.github/actions/setup-bun-env
@@ -44,9 +49,14 @@ jobs:
 
       - name: Open or refresh the weekly PR
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DEPS_UPDATE_TOKEN: ${{ secrets.DEPS_UPDATE_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.DEPS_UPDATE_TOKEN || secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
+          if [[ -z "${DEPS_UPDATE_TOKEN:-}" ]] && ! git diff --quiet -- .github; then
+            echo "::warning::Action pin updates are left out: add the DEPS_UPDATE_TOKEN secret (a fine-grained token with Workflows write access) so they ship in this PR."
+            git checkout -- .github
+          fi
           if git diff --quiet && git diff --cached --quiet; then
             echo "No dependency updates."
             exit 0
