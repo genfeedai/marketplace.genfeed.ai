@@ -39,17 +39,17 @@ describe.skipIf(!adminUrl)(
       await fixture?.stop();
     });
 
-    it('creates a seller and listing without allowing client-supplied identity', async () => {
-      const invalid = await request('/seller/profile', sellerToken, {
+    it('creates a seller and listing as the platform operator without allowing client-supplied identity', async () => {
+      const invalid = await request('/seller/profile', operatorToken, {
         displayName: 'Seller',
         organization: 'unrelated-org',
       });
       expect(invalid.status).toBe(400);
-      const profile = await request('/seller/profile', sellerToken, {
+      const profile = await request('/seller/profile', operatorToken, {
         displayName: `Contract Seller ${suffix}`,
       });
       expect(profile.status).toBe(201);
-      const response = await request('/seller/listings', sellerToken, {
+      const response = await request('/seller/listings', operatorToken, {
         title: 'Test Workflow',
         type: 'workflow',
         shortDescription: 'A free workflow',
@@ -62,7 +62,7 @@ describe.skipIf(!adminUrl)(
       expect(listingId).toMatch(UUID_PATTERN);
       const created = await request(
         `/seller/listings/${listingId}`,
-        sellerToken,
+        operatorToken,
       );
       const createdBody = await created.json();
       expect(createdBody.data.attributes.organization).toBe('seller-org');
@@ -73,7 +73,7 @@ describe.skipIf(!adminUrl)(
     it('requires operator authority to approve a listing and hides download payloads publicly', async () => {
       const submitted = await request(
         `/seller/listings/${listingId}/submit`,
-        sellerToken,
+        operatorToken,
         {},
       );
       expect(submitted.status).toBe(201);
