@@ -34,12 +34,12 @@ if (process.env.CI === 'true' && !adminUrl) {
   throw new Error('CI requires the PostgreSQL integration fixture');
 }
 
-export interface SignedStripeEvent {
+interface SignedStripeEvent {
   body: string;
   signature: string;
 }
 
-export interface StripeSessionInput {
+interface StripeSessionInput {
   /** Defaults to a fresh `evt_` id. Reuse an id to replay the same delivery. */
   eventId?: string;
   sessionId: string;
@@ -50,7 +50,7 @@ export interface StripeSessionInput {
   paymentIntent?: string;
 }
 
-export interface PublishListingInput {
+interface PublishListingInput {
   title: string;
   /** Price in cents; 0 makes the listing free to claim. */
   price: number;

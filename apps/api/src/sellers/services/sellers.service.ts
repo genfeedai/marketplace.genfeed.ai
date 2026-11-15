@@ -2,10 +2,7 @@ import { HandleErrors } from '@api/common/decorators/error-handler.decorator';
 import { mapSellerRecord } from '@api/common/prisma/marketplace.mapper';
 import type { SellerRecord } from '@api/common/prisma/marketplace.types';
 import { buildOrderBy } from '@api/common/prisma/order-by.util';
-import {
-  type PaginatedResult,
-  paginateDocs,
-} from '@api/common/prisma/pagination.util';
+import type { Page } from '@api/common/prisma/page';
 import { PrismaService } from '@api/common/prisma/prisma.service';
 import { QueryDefaultsUtil } from '@api/common/utils/query-defaults.util';
 import type { AdminSellerQueryDto } from '@api/sellers/dto/admin-seller-query.dto';
@@ -363,7 +360,7 @@ export class SellersService {
   @HandleErrors('get admin sellers', 'sellers')
   async getAdminSellers(
     query: AdminSellerQueryDto,
-  ): Promise<PaginatedResult<SellerRecord>> {
+  ): Promise<Page<SellerRecord>> {
     this.logOperation('getAdminSellers', 'started', {
       query,
     });
@@ -402,15 +399,15 @@ export class SellersService {
       }),
     ]);
 
-    const result = paginateDocs({
-      docs: docs.map(mapSellerRecord),
+    const result = {
+      items: docs.map(mapSellerRecord),
       limit,
       page,
       total,
-    });
+    };
 
     this.logOperation('getAdminSellers', 'completed', {
-      count: result.docs.length,
+      count: result.items.length,
     });
 
     return result;
@@ -454,18 +451,18 @@ export class SellersService {
   @HandleErrors('get admin payouts', 'sellers')
   async getAdminPayouts(
     query: AdminSellerQueryDto,
-  ): Promise<PaginatedResult<SellerRecord>> {
+  ): Promise<Page<SellerRecord>> {
     this.logOperation('getAdminPayouts', 'started', {
       query,
     });
 
     const result = await this.getAdminSellers({
       ...query,
-      sort: query.sort || 'totalEarnings: -1',
+      sort: query.sort || '-totalEarnings',
     });
 
     this.logOperation('getAdminPayouts', 'completed', {
-      count: result.docs.length,
+      count: result.items.length,
     });
 
     return result;

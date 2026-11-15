@@ -55,7 +55,6 @@ export class ListingsController {
     @Inject(ListingsService) private readonly listingsService: ListingsService,
     @Inject(PurchasesService)
     private readonly purchasesService: PurchasesService,
-    @Inject(SellersService) readonly _sellersService: SellersService,
   ) {}
 
   /**

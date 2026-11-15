@@ -20,14 +20,12 @@
     "apps/web": {
       "ignoreDependencies": [
         "@typescript/native",
-        "postcss-load-config",
-        "@genfeedai/enums"
+        "postcss-load-config"
       ]
     },
     "apps/admin": {
       "ignoreDependencies": [
-        "@typescript/native",
-        "@genfeedai/constants"
+        "@typescript/native"
       ]
     },
     "apps/e2e": {
@@ -35,41 +33,5 @@
         "@typescript/native"
       ]
     }
-  },
-  "ignore": [
-    "apps/api/scripts/db/connection.ts",
-    "apps/api/scripts/db/seed-utils.ts",
-    "apps/api/src/common/decorators/index.ts",
-    "apps/api/src/common/utils/pagination.util.ts"
-  ],
-  "ignoreIssues": {
-    "apps/api/src/common/dto/base-query.dto.ts": [
-      "exports"
-    ],
-    "apps/api/src/common/utils/response.util.ts": [
-      "exports"
-    ],
-    "apps/api/src/rate-limit.ts": [
-      "exports"
-    ],
-    "apps/api/src/common/prisma/order-by.util.ts": [
-      "types"
-    ],
-    "apps/api/src/common/services/stripe.service.ts": [
-      "types"
-    ],
-    "apps/api/src/test/marketplace-fixture.ts": [
-      "types"
-    ],
-    "apps/web/lib/marketplace-api.ts": [
-      "exports"
-    ],
-    "apps/web/lib/public-content.ts": [
-      "exports",
-      "types"
-    ],
-    "apps/web/lib/seo.ts": [
-      "types"
-    ]
   }
 }

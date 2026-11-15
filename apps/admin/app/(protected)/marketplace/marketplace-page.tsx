@@ -209,7 +209,7 @@ export default function MarketplacePage() {
         limit: 50,
         page: 1,
         search: search || undefined,
-        sort: 'createdAt: -1',
+        sort: '-createdAt',
         status: listingStatus ? (listingStatus as ListingStatus) : undefined,
         type: listingType ? (listingType as ListingType) : undefined,
       });
@@ -228,7 +228,7 @@ export default function MarketplacePage() {
         limit: 50,
         page: 1,
         search: search || undefined,
-        sort: 'createdAt: -1',
+        sort: '-createdAt',
         status: ListingStatus.PENDING_REVIEW,
       });
     },
@@ -246,7 +246,7 @@ export default function MarketplacePage() {
         limit: 50,
         page: 1,
         search: search || undefined,
-        sort: 'totalSales: -1',
+        sort: '-totalSales',
         status: sellerStatus ? (sellerStatus as SellerStatus) : undefined,
       });
     },
@@ -264,7 +264,7 @@ export default function MarketplacePage() {
         limit: 50,
         page: 1,
         search: search || undefined,
-        sort: 'createdAt: -1',
+        sort: '-createdAt',
       });
     },
     {
@@ -281,7 +281,7 @@ export default function MarketplacePage() {
         limit: 50,
         page: 1,
         search: search || undefined,
-        sort: 'totalEarnings: -1',
+        sort: '-totalEarnings',
       });
     },
     {

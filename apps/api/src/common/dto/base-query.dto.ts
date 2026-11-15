@@ -2,8 +2,8 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Transform, Type } from 'class-transformer';
 import { IsNumber, IsOptional, IsString, Max, Min } from 'class-validator';
 
-export const MAX_PAGE_SIZE = 100;
-export const MAX_PAGE_NUMBER = 10_000;
+const MAX_PAGE_SIZE = 100;
+const MAX_PAGE_NUMBER = 10_000;
 
 export class BaseQueryDto {
   @ApiProperty({
@@ -41,14 +41,15 @@ export class BaseQueryDto {
   limit = 10;
 
   @ApiProperty({
-    default: 'createdAt: -1',
-    description: 'Sort field(s) and order',
+    default: '-createdAt',
+    description:
+      'Comma-separated sort fields; prefix a field with - for descending order',
     required: false,
   })
   @IsOptional()
   @IsString()
   @Transform(({ value }) =>
-    value !== undefined && value !== null ? value : 'createdAt: -1',
+    value !== undefined && value !== null ? value : '-createdAt',
   )
-  sort = 'createdAt: -1';
+  sort = '-createdAt';
 }

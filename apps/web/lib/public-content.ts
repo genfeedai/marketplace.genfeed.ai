@@ -161,17 +161,9 @@ function getPublicMediaUrl(
   return `${getApiBaseUrl()}/public/${resource}/${encodeURIComponent(id)}/${filenameByResource[resource]}`;
 }
 
-export type {
-  PublicContentItem,
-  PublicContentQuery,
-  PublicContentResource,
-  PublicContentResult,
-};
 export {
-  DEFAULT_PAGE_SIZE,
   fetchPublicContent,
   getApiBaseUrl,
   getPublicMediaUrl,
-  PUBLIC_CONTENT_REVALIDATE_SECONDS,
   parseCollection,
 };

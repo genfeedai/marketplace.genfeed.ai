@@ -1,3 +1,4 @@
+import type { Page } from '@api/common/prisma/page';
 import { HttpException, HttpStatus } from '@nestjs/common';
 import type { Request } from 'express';
 
@@ -11,49 +12,32 @@ export const returnNotFound = (type: string, id: string): never => {
   );
 };
 
-export const returnBadRequest = (
-  response: string | Record<string, unknown>,
-): never => {
-  throw new HttpException(response, HttpStatus.BAD_REQUEST);
-};
-
-export const returnUnauthorized = (message = 'Unauthorized'): never => {
-  throw new HttpException(
-    { detail: message, title: 'Unauthorized' },
-    HttpStatus.UNAUTHORIZED,
-  );
-};
-
 export interface IJsonApiSerializer {
   opts: Record<string, unknown>;
   serialize(data: unknown): unknown;
 }
 
-export const setTopLinks = (
+const setTopLinks = (
   req: Request,
   serializerOptions: Record<string, unknown>,
-  data: Record<string, unknown>,
+  page?: Page<unknown>,
 ) => {
-  const isPaginated =
-    data &&
-    typeof data === 'object' &&
-    'total' in data &&
-    'page' in data &&
-    Array.isArray(data.docs);
+  if (!page) {
+    return { ...serializerOptions, topLevelLinks: { self: req.originalUrl } };
+  }
 
-  const topLevelLinks = isPaginated
-    ? {
-        pagination: {
-          limit: data.limit,
-          page: data.page,
-          pages: data.pages,
-          total: data.total,
-        },
-        self: req.originalUrl,
-      }
-    : { self: req.originalUrl };
-
-  return { ...serializerOptions, topLevelLinks };
+  return {
+    ...serializerOptions,
+    topLevelLinks: {
+      pagination: {
+        limit: page.limit,
+        page: page.page,
+        pages: page.total === 0 ? 0 : Math.ceil(page.total / page.limit),
+        total: page.total,
+      },
+      self: req.originalUrl,
+    },
+  };
 };
 
 export const serializeSingle = (
@@ -64,26 +48,18 @@ export const serializeSingle = (
   if (!serializer) {
     return data;
   }
-  serializer.opts = setTopLinks(
-    request,
-    { ...serializer.opts },
-    data as Record<string, unknown>,
-  );
+  serializer.opts = setTopLinks(request, { ...serializer.opts });
   return serializer.serialize(data);
 };
 
 export const serializeCollection = (
   request: Request,
   serializer: IJsonApiSerializer | null,
-  data: { docs: unknown[]; [key: string]: unknown },
+  page: Page<unknown>,
 ): unknown => {
   if (!serializer) {
-    return data.docs;
+    return page.items;
   }
-  serializer.opts = setTopLinks(
-    request,
-    { ...serializer.opts },
-    data as Record<string, unknown>,
-  );
-  return serializer.serialize(data.docs);
+  serializer.opts = setTopLinks(request, { ...serializer.opts }, page);
+  return serializer.serialize(page.items);
 };

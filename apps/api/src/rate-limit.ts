@@ -6,7 +6,7 @@
  * public pages on the server, so these requests share its address: keep the
  * default well above one page view per second.
  */
-export const RATE_LIMIT_WINDOW_MS = 60_000;
+const RATE_LIMIT_WINDOW_MS = 60_000;
 
 export const DEFAULT_RATE_LIMIT = {
   limit: 300,

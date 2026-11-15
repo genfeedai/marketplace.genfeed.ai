@@ -221,7 +221,6 @@ function isRetiredSellerSlug(sellerSlug: string): boolean {
   return RETIRED_SELLER_SLUGS.some((retired) => retired === sellerSlug);
 }
 
-export type { IndexablePath, IndexableRoute };
 export {
   absoluteMarketplaceUrl,
   createIndexableMetadata,

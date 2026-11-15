@@ -2,10 +2,7 @@ import { HandleErrors } from '@api/common/decorators/error-handler.decorator';
 import { mapPurchaseRecord } from '@api/common/prisma/marketplace.mapper';
 import type { PurchaseRecord } from '@api/common/prisma/marketplace.types';
 import { buildOrderBy } from '@api/common/prisma/order-by.util';
-import {
-  type PaginatedResult,
-  paginateDocs,
-} from '@api/common/prisma/pagination.util';
+import type { Page } from '@api/common/prisma/page';
 import { PrismaService } from '@api/common/prisma/prisma.service';
 import { QueryDefaultsUtil } from '@api/common/utils/query-defaults.util';
 import { ListingsService } from '@api/listings/services/listings.service';
@@ -98,18 +95,18 @@ export class PurchasesService {
   }
 
   private paginateMappedDocs<T>(
-    docs: T[],
+    items: T[],
     page: number,
     limit: number,
-  ): PaginatedResult<T> {
+  ): Page<T> {
     const start = (page - 1) * limit;
 
-    return paginateDocs({
-      docs: docs.slice(start, start + limit),
+    return {
+      items: items.slice(start, start + limit),
       limit,
       page,
-      total: docs.length,
-    });
+      total: items.length,
+    };
   }
 
   async create(
@@ -519,7 +516,7 @@ export class PurchasesService {
     buyerId: string,
     organizationId: string,
     query: PurchaseQueryDto,
-  ): Promise<PaginatedResult<PurchaseRecord>> {
+  ): Promise<Page<PurchaseRecord>> {
     const { limit, page } = QueryDefaultsUtil.getPaginationDefaults(query);
 
     const where: Prisma.PurchaseWhereInput = {
@@ -553,12 +550,12 @@ export class PurchasesService {
       }),
     ]);
 
-    return paginateDocs({
-      docs: docs.map(mapPurchaseRecord),
+    return {
+      items: docs.map(mapPurchaseRecord),
       limit,
       page,
       total,
-    });
+    };
   }
 
   @HandleErrors('verify ownership', 'purchases')
@@ -619,7 +616,7 @@ export class PurchasesService {
   async getSellerSales(
     sellerId: string,
     query: PurchaseQueryDto,
-  ): Promise<PaginatedResult<PurchaseRecord>> {
+  ): Promise<Page<PurchaseRecord>> {
     const { limit, page } = QueryDefaultsUtil.getPaginationDefaults(query);
 
     const where: Prisma.PurchaseWhereInput = {
@@ -651,12 +648,12 @@ export class PurchasesService {
       }),
     ]);
 
-    return paginateDocs({
-      docs: docs.map(mapPurchaseRecord),
+    return {
+      items: docs.map(mapPurchaseRecord),
       limit,
       page,
       total,
-    });
+    };
   }
 
   @HandleErrors('get seller analytics', 'purchases')
@@ -742,7 +739,7 @@ export class PurchasesService {
   @HandleErrors('get admin purchases', 'purchases')
   async getAdminPurchases(
     query: PurchaseQueryDto & { search?: string },
-  ): Promise<PaginatedResult<PurchaseRecord>> {
+  ): Promise<Page<PurchaseRecord>> {
     const { limit, page } = QueryDefaultsUtil.getPaginationDefaults(query);
 
     const where: Prisma.PurchaseWhereInput = {
