@@ -503,7 +503,6 @@ export class PurchasesService {
         sellerRecord: true,
       },
       where: {
-        buyer: userId,
         id: purchaseId,
         isDeleted: false,
         organization: organizationId,

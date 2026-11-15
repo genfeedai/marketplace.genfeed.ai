@@ -60,7 +60,7 @@ export default function PurchaseAction({ listing }: PurchaseActionProps) {
             : listing.pricingTier === 'premium'
               ? 'Available with Genfeed Premium'
               : listing.price === 0
-                ? 'Add to library'
+                ? 'Get it now'
                 : 'Buy with Stripe'}
         </button>
       )}
