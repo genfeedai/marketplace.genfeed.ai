@@ -35,6 +35,7 @@ import { SellersService } from '@api/sellers/services/sellers.service';
 import {
   BadRequestException,
   Controller,
+  ForbiddenException,
   Get,
   Inject,
   NotFoundException,
@@ -309,6 +310,52 @@ export class PurchasesController {
         },
         id: purchaseId,
         type: 'download-data',
+      },
+    };
+  }
+
+  /**
+   * Install payload of a listing the caller has bought. The Genfeed API relays
+   * the buyer's own token here; the payload is returned only for a completed,
+   * non-deleted purchase of this listing by this user in this organization.
+   */
+  @Get('purchases/by-listing/:listingId/install-data')
+  @LogMethod({ logEnd: false, logError: true, logStart: true })
+  async getInstallData(
+    @Param('listingId') listingId: string,
+    @CurrentUser() user: MarketplacePrincipal,
+  ): Promise<JsonApiSingleResponse> {
+    const publicMetadata = getIdentity(user);
+
+    const { owned, purchase } =
+      await this.purchasesService.checkListingOwnership(
+        listingId,
+        publicMetadata.user,
+        publicMetadata.organization,
+      );
+
+    if (!owned || !purchase) {
+      throw new ForbiddenException(
+        'This item is not in your marketplace library',
+      );
+    }
+
+    const listing = await this.listingsService.findOne({ id: listingId });
+
+    if (!listing) {
+      throw new NotFoundException('Listing not found');
+    }
+
+    return {
+      data: {
+        attributes: {
+          downloadData: listing.downloadData,
+          listingId,
+          title: listing.title,
+          type: listing.type,
+        },
+        id: purchase.id,
+        type: 'install-data',
       },
     };
   }
