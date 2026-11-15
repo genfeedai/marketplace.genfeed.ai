@@ -1,6 +1,5 @@
 {
   "dependencies": {
-    "@genfeedai/enums": "2.3.2",
     "next": "16.4.6",
     "posthog-js": "1.450.0",
     "react": "19.3.1",

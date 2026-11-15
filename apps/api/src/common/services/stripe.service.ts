@@ -35,7 +35,7 @@ export interface StripeAccount {
   payouts_enabled?: boolean;
 }
 
-export interface StripeAccountCreateParams {
+interface StripeAccountCreateParams {
   business_profile?: {
     name?: string;
   };
@@ -45,7 +45,7 @@ export interface StripeAccountCreateParams {
   type?: string;
 }
 
-export interface StripeAccountLinkCreateParams {
+interface StripeAccountLinkCreateParams {
   account: string;
   refresh_url: string;
   return_url: string;
@@ -87,7 +87,7 @@ export type StripeRefundReason =
   | 'fraudulent'
   | 'requested_by_customer';
 
-export interface StripeBalance {
+interface StripeBalance {
   available: Array<{ amount: number }>;
   pending: Array<{ amount: number }>;
 }

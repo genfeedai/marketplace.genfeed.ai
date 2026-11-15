@@ -2,10 +2,7 @@ import { HandleErrors } from '@api/common/decorators/error-handler.decorator';
 import { mapListingRecord } from '@api/common/prisma/marketplace.mapper';
 import type { ListingRecord } from '@api/common/prisma/marketplace.types';
 import { buildOrderBy } from '@api/common/prisma/order-by.util';
-import {
-  type PaginatedResult,
-  paginateDocs,
-} from '@api/common/prisma/pagination.util';
+import type { Page } from '@api/common/prisma/page';
 import { PrismaService } from '@api/common/prisma/prisma.service';
 import { QueryDefaultsUtil } from '@api/common/utils/query-defaults.util';
 import type { CreateListingDto } from '@api/listings/dto/create-listing.dto';
@@ -359,7 +356,7 @@ export class ListingsService {
   async getSellerListings(
     sellerId: string,
     query: ListingQueryDto,
-  ): Promise<PaginatedResult<ListingRecord>> {
+  ): Promise<Page<ListingRecord>> {
     const { limit, page } = QueryDefaultsUtil.getPaginationDefaults(query);
 
     const where: Prisma.ListingWhereInput = {
@@ -392,18 +389,18 @@ export class ListingsService {
       }),
     ]);
 
-    return paginateDocs({
-      docs: docs.map(mapListingRecord),
+    return {
+      items: docs.map(mapListingRecord),
       limit,
       page,
       total,
-    });
+    };
   }
 
   @HandleErrors('get public listings', 'listings')
   async getPublicListings(
     query: ListingQueryDto,
-  ): Promise<PaginatedResult<ListingRecord>> {
+  ): Promise<Page<ListingRecord>> {
     const { limit, page } = QueryDefaultsUtil.getPaginationDefaults(query);
 
     const where: Prisma.ListingWhereInput = {
@@ -472,18 +469,16 @@ export class ListingsService {
       }),
     ]);
 
-    return paginateDocs({
-      docs: docs.map(mapListingRecord),
+    return {
+      items: docs.map(mapListingRecord),
       limit,
       page,
       total,
-    });
+    };
   }
 
   @HandleErrors('get admin listings', 'listings')
-  async getAdminListings(
-    query: ListingQueryDto,
-  ): Promise<PaginatedResult<ListingRecord>> {
+  async getAdminListings(query: ListingQueryDto): Promise<Page<ListingRecord>> {
     const { limit, page } = QueryDefaultsUtil.getPaginationDefaults(query);
 
     const where: Prisma.ListingWhereInput = {
@@ -524,12 +519,12 @@ export class ListingsService {
       }),
     ]);
 
-    return paginateDocs({
-      docs: docs.map(mapListingRecord),
+    return {
+      items: docs.map(mapListingRecord),
       limit,
       page,
       total,
-    });
+    };
   }
 
   @HandleErrors('get admin listing', 'listings')
@@ -612,9 +607,7 @@ export class ListingsService {
   }
 
   @HandleErrors('get featured listings', 'listings')
-  async getFeaturedListings(
-    limit = 12,
-  ): Promise<PaginatedResult<ListingRecord>> {
+  async getFeaturedListings(limit = 12): Promise<Page<ListingRecord>> {
     const docs = await this.prisma.listing.findMany({
       include: { sellerRecord: true },
       orderBy: [{ purchases: 'desc' }, { rating: 'desc' }],
@@ -626,12 +619,12 @@ export class ListingsService {
       },
     });
 
-    return paginateDocs({
-      docs: docs.map(mapListingRecord),
+    return {
+      items: docs.map(mapListingRecord),
       limit,
       page: 1,
       total: docs.length,
-    });
+    };
   }
 
   @HandleErrors('get categories', 'listings')

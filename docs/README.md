@@ -67,10 +67,11 @@ returned by public catalog or listing endpoints.
 
 ## Production release
 
-Production runs through the public `genfeedai/genfeed.ai` hosted SaaS workflow,
-with exact Genfeed and Marketplace master SHAs. Keep Vercel Git auto-deploy
-disabled. See that repository's `infra/tofu/marketplace/README.md` for the
-dedicated AWS service, database roles, SSM parameters, and release settings.
+Production ships from this repository through the manual **Release** workflow,
+with an exact Marketplace master SHA. Keep Vercel Git auto-deploy disabled. See
+[deployment.md](deployment.md) for the release steps, the `production`
+environment settings, and the infrastructure in `infra/production`. The
+workflow never checks out or calls the Genfeed monorepo.
 There is no production deployment of the standalone admin app.
 
 `docker/Dockerfile.api` builds the production API and migration/provisioning
