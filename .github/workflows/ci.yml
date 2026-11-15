@@ -112,9 +112,63 @@ jobs:
         uses: ./.github/actions/setup-bun-env
         with:
           generate-prisma: 'true'
+      # The database suites in apps/api (paid checkout, buyer-only downloads,
+      # payment events) run here against the Postgres service above. They need
+      # no Stripe credentials: the Stripe client is replaced in-process.
       - name: Run tests
         id: tests
         run: bun run test
+      # Fails when apps/api/prisma/schema.prisma has a change no migration
+      # carries, so an incompatible schema stops here and not at deploy.
+      - name: Check migrations match the Prisma schema
+        working-directory: apps/api
+        run: |
+          psql postgresql://postgres@127.0.0.1:5432/postgres -c 'CREATE DATABASE prisma_shadow'
+          bunx prisma migrate diff \
+            --from-migrations prisma/migrations \
+            --to-schema-datamodel prisma/schema.prisma \
+            --shadow-database-url postgresql://postgres@127.0.0.1:5432/prisma_shadow \
+            --exit-code
+
+  e2e:
+    name: Browser flow
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports: ['127.0.0.1:5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      MARKETPLACE_DB_TEST_ADMIN_URL: postgresql://postgres@127.0.0.1:5432/postgres
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          ref: ${{ inputs.source_sha || github.sha }}
+          persist-credentials: false
+      - name: Setup Bun environment
+        uses: ./.github/actions/setup-bun-env
+        with:
+          generate-prisma: 'true'
+      - name: Build the API
+        run: bunx turbo run build --filter=@marketplace/api
+      # NEXT_PUBLIC_* is inlined at build time, so the web app is built with the
+      # local API and the sign-in stand-in that apps/e2e starts.
+      - name: Build the web app against the local stack
+        env:
+          NEXT_PUBLIC_MARKETPLACE_API_URL: http://127.0.0.1:3200
+          NEXT_PUBLIC_GENFEED_APP_URL: http://127.0.0.1:3299
+        run: bun run --cwd apps/web build
+      - name: Install Chromium
+        working-directory: apps/e2e
+        run: bunx playwright install --with-deps chromium
+      - name: Run the browser flow
+        working-directory: apps/e2e
+        run: bun run e2e
 
   api-image:
     name: API image smoke test
@@ -196,13 +250,13 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     # Tests include real database isolation and gate release readiness.
-    needs: [lint, typecheck, build, test, api-image, deployment-checks]
+    needs: [lint, typecheck, build, test, e2e, api-image, deployment-checks]
     if: always()
     steps:
       - name: Verify gating jobs succeeded
         run: |
-          RESULTS="${{ needs.lint.result }} ${{ needs.typecheck.result }} ${{ needs.build.result }} ${{ needs.test.result }} ${{ needs.api-image.result }} ${{ needs.deployment-checks.result }}"
-          echo "lint=${{ needs.lint.result }} typecheck=${{ needs.typecheck.result }} build=${{ needs.build.result }} ${{ needs.test.result }}"
+          RESULTS="${{ needs.lint.result }} ${{ needs.typecheck.result }} ${{ needs.build.result }} ${{ needs.test.result }} ${{ needs.e2e.result }} ${{ needs.api-image.result }} ${{ needs.deployment-checks.result }}"
+          echo "lint=${{ needs.lint.result }} typecheck=${{ needs.typecheck.result }} build=${{ needs.build.result }} test=${{ needs.test.result }} e2e=${{ needs.e2e.result }}"
           for result in $RESULTS; do
             if [ "$result" != "success" ]; then
               echo "::error::A required job did not succeed."
