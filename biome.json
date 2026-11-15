@@ -44,8 +44,6 @@
           "a11y": {
             "noSvgWithoutTitle": "off",
             "noStaticElementInteractions": "warn",
-            "useButtonType": "warn",
-            "useKeyWithClickEvents": "warn",
             "useMediaCaption": "warn"
           },
           "correctness": {

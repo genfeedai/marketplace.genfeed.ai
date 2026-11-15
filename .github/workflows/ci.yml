@@ -39,16 +39,66 @@ jobs:
           persist-credentials: false
       - name: Setup Bun environment
         uses: ./.github/actions/setup-bun-env
-      # Deliberately NOT `bun run lint`. The per-app lint scripts are scoped to
-      # `src/` (api) and `app/` (web, admin), so `turbo lint` never sees
-      # apps/api/scripts, apps/web/{components,hooks,lib,styles} or
-      # apps/admin/{hooks,lib,services,types}. Checking apps/ directly is the
-      # only way this gate covers the whole tree.
-      #
-      # `biome check` covers formatting, import organization and lint rules in
-      # one pass, so there is no separate format job to duplicate it.
+      # One command, same as local: each app's `lint` script checks its whole
+      # directory and the root script adds `scripts/`. `biome check` covers
+      # formatting, import organization and lint rules in one pass, so there is
+      # no separate format job to duplicate it.
       - name: Run lint
-        run: bunx biome check apps/
+        run: bun run lint
+      - name: Check GitHub Action pins
+        run: bun run check:action-versions
+
+  secrets:
+    name: Secret scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      # Full history: gitleaks reads the commits a pull request adds.
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          ref: ${{ inputs.source_sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Setup Bun environment
+        uses: ./.github/actions/setup-bun-env
+      - name: Scan the tree with secretlint
+        run: bun run secretlint
+      # The open-source gitleaks CLI, so no licence key is needed. Pull
+      # requests scan their own commits; every master commit arrived through a
+      # scanned pull request.
+      - name: Scan the pull request commits with gitleaks
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          GITLEAKS_VERSION: 8.30.0
+          GITLEAKS_LINUX_X64_SHA256: 79a3ab579b53f71efd634f3aaf7e04a0fa0cf206b7ed434638d1547a2470a66e
+        run: |
+          set -euo pipefail
+          archive="${RUNNER_TEMP}/gitleaks.tar.gz"
+          curl -fsSL --retry 3 -o "${archive}" \
+            "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          echo "${GITLEAKS_LINUX_X64_SHA256}  ${archive}" | sha256sum --check --strict -
+          tar -xzf "${archive}" -C "${RUNNER_TEMP}" gitleaks
+          "${RUNNER_TEMP}/gitleaks" git \
+            --config .gitleaks.toml \
+            --log-opts="${BASE_SHA}..HEAD" \
+            --redact --verbose --no-banner --exit-code 1
+
+  dead-code:
+    name: Dead code
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          ref: ${{ inputs.source_sha || github.sha }}
+          persist-credentials: false
+      - name: Setup Bun environment
+        uses: ./.github/actions/setup-bun-env
+        with:
+          generate-prisma: 'true'
+      - name: Check for unused files, exports and dependencies
+        run: bun run check:dead-code
 
   typecheck:
     name: Typecheck

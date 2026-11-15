@@ -19,7 +19,7 @@
   "scripts": {
     "build": "next build",
     "dev": "next dev -p 3205",
-    "lint": "biome check app/",
+    "lint": "biome check .",
     "start": "next start",
     "typecheck": "next typegen && tsc --noEmit"
   },
