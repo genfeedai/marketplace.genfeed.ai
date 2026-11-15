@@ -32,3 +32,6 @@ __pycache__/
 # Playwright output
 test-results/
 playwright-report/
+
+# Vitest 5 report and attachment output
+.vitest/
