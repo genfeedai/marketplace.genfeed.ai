@@ -329,10 +329,7 @@ export class PurchasesService {
       currency: listing.currency,
       discount: 0,
       discountCode: dto.discountCode,
-      giftMessage: dto.giftMessage,
-      giftRecipient: dto.giftRecipientId,
       isDeleted: false,
-      isGift: Boolean(dto.giftRecipientId),
       listing: dto.listingId,
       listingSnapshot: {
         price: listing.price,

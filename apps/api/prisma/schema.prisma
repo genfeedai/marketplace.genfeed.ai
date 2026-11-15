@@ -110,11 +110,6 @@ model Purchase {
   failureReason         String?
   downloadCount         Int       @default(0)
   lastDownloadedAt      DateTime?
-  hasReviewed           Boolean   @default(false)
-  review                Json?
-  isGift                Boolean   @default(false)
-  giftRecipient         String?
-  giftMessage           String?
   discountCode          String?
   isDeleted             Boolean   @default(false)
   createdAt             DateTime  @default(now())

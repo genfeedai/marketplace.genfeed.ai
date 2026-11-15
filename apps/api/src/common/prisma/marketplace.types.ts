@@ -95,11 +95,6 @@ export interface PurchaseRecord {
   failureReason?: string | null;
   downloadCount: number;
   lastDownloadedAt?: Date | null;
-  hasReviewed: boolean;
-  review?: Record<string, unknown>;
-  isGift: boolean;
-  giftRecipient?: string | null;
-  giftMessage?: string | null;
   discountCode?: string | null;
   isDeleted: boolean;
   createdAt: Date;
