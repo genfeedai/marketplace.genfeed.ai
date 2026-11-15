@@ -8,7 +8,7 @@ datasource db {
 }
 
 model Seller {
-  id                       String     @id @db.VarChar(24)
+  id                       String     @id @default(dbgenerated("(gen_random_uuid())::text")) @db.VarChar(36)
   user                     String     @unique
   organization             String
   displayName              String     @db.VarChar(100)
@@ -40,8 +40,8 @@ model Seller {
 }
 
 model Listing {
-  id                  String     @id @db.VarChar(24)
-  seller              String     @db.VarChar(24)
+  id                  String     @id @default(dbgenerated("(gen_random_uuid())::text")) @db.VarChar(36)
+  seller              String     @db.VarChar(36)
   organization        String
   type                String
   title               String     @db.VarChar(200)
@@ -81,46 +81,46 @@ model Listing {
   sellerRecord        Seller     @relation("listingSeller", fields: [seller], references: [id])
   purchaseRecords     Purchase[] @relation("purchaseListing")
 
+  @@unique([packageSource, packageSlug])
   @@index([seller, isDeleted])
   @@index([organization, isDeleted, status, type])
   @@index([publishedAt(sort: Desc), status])
   @@index([isOfficial, pricingTier, status])
   @@index([packageSource, packageSlug])
-  @@unique([packageSource, packageSlug])
   @@map("listings")
 }
 
 model Purchase {
-  id                    String   @id @db.VarChar(24)
+  id                    String    @id @default(dbgenerated("(gen_random_uuid())::text")) @db.VarChar(36)
   buyer                 String
-  seller                String   @db.VarChar(24)
-  listing               String   @db.VarChar(24)
+  seller                String    @db.VarChar(36)
+  listing               String    @db.VarChar(36)
   organization          String
   listingSnapshot       Json
-  subtotal              Int      @default(0)
-  discount              Int      @default(0)
-  total                 Int      @default(0)
-  currency              String   @default("usd") @db.VarChar(10)
-  platformFee           Int      @default(0)
-  sellerEarnings        Int      @default(0)
+  subtotal              Int       @default(0)
+  discount              Int       @default(0)
+  total                 Int       @default(0)
+  currency              String    @default("usd") @db.VarChar(10)
+  platformFee           Int       @default(0)
+  sellerEarnings        Int       @default(0)
   stripeSessionId       String?
   stripePaymentIntentId String?
   paymentMethod         String?
-  status                String   @default("pending")
+  status                String    @default("pending")
   failureReason         String?
-  downloadCount         Int      @default(0)
+  downloadCount         Int       @default(0)
   lastDownloadedAt      DateTime?
-  hasReviewed           Boolean  @default(false)
+  hasReviewed           Boolean   @default(false)
   review                Json?
-  isGift                Boolean  @default(false)
+  isGift                Boolean   @default(false)
   giftRecipient         String?
   giftMessage           String?
   discountCode          String?
-  isDeleted             Boolean  @default(false)
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime @updatedAt
-  sellerRecord          Seller   @relation("purchaseSeller", fields: [seller], references: [id])
-  listingRecord         Listing  @relation("purchaseListing", fields: [listing], references: [id])
+  isDeleted             Boolean   @default(false)
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  sellerRecord          Seller    @relation("purchaseSeller", fields: [seller], references: [id])
+  listingRecord         Listing   @relation("purchaseListing", fields: [listing], references: [id])
 
   @@index([buyer, isDeleted, organization])
   @@index([seller, status])
@@ -130,18 +130,18 @@ model Purchase {
 }
 
 model Payout {
-  id              String   @id @db.VarChar(24)
-  seller          String   @db.VarChar(24)
-  amount          Int
-  currency        String   @default("usd") @db.VarChar(10)
-  status          String   @default("pending")
-  stripePayoutId  String?
-  failureReason   String?
-  completedAt     DateTime?
-  isDeleted       Boolean  @default(false)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  sellerRecord    Seller   @relation("payoutSeller", fields: [seller], references: [id])
+  id             String    @id @default(dbgenerated("(gen_random_uuid())::text")) @db.VarChar(36)
+  seller         String    @db.VarChar(36)
+  amount         Int
+  currency       String    @default("usd") @db.VarChar(10)
+  status         String    @default("pending")
+  stripePayoutId String?
+  failureReason  String?
+  completedAt    DateTime?
+  isDeleted      Boolean   @default(false)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  sellerRecord   Seller    @relation("payoutSeller", fields: [seller], references: [id])
 
   @@map("payouts")
 }

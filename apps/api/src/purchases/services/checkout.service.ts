@@ -1,5 +1,4 @@
 import { HandleErrors } from '@api/common/decorators/error-handler.decorator';
-import { createLegacyId } from '@api/common/prisma/legacy-id.util';
 import type {
   ListingRecord,
   PurchaseRecord,
@@ -87,7 +86,6 @@ export class CheckoutService {
       buyer: buyerId,
       currency: listing.currency,
       discount: 0,
-      id: createLegacyId(),
       isDeleted: false,
       listing: listingId,
       listingSnapshot: {
@@ -110,18 +108,18 @@ export class CheckoutService {
       cancelUrl,
       listing,
       organizationId,
-      purchaseId: purchase._id,
+      purchaseId: purchase.id,
       successUrl,
     });
 
-    await this.purchasesService.patch(purchase._id, {
+    await this.purchasesService.patch(purchase.id, {
       stripeSessionId: session.id,
     });
 
     this.logger.log(`${this.constructorName} checkout session created`, {
       buyerId,
       listingId,
-      purchaseId: purchase._id,
+      purchaseId: purchase.id,
       sessionId: session.id,
     });
 
@@ -168,7 +166,7 @@ export class CheckoutService {
       ],
       metadata: {
         buyerId,
-        listingId: listing._id,
+        listingId: listing.id,
         organizationId,
         purchaseId,
         sellerId: listing.seller,
@@ -180,7 +178,7 @@ export class CheckoutService {
     };
 
     const seller = await this.sellersService.findOne({
-      _id: listing.seller,
+      id: listing.seller,
       isDeleted: false,
     });
 

@@ -95,7 +95,7 @@ export class ListingsController {
     }
 
     // Increment view count
-    await this.listingsService.incrementViews(listing._id.toString());
+    await this.listingsService.incrementViews(listing.id);
 
     return serializeSingle(
       request,
@@ -128,7 +128,7 @@ export class ListingsController {
           title: listing.title,
           type: listing.type,
         },
-        id: listing._id.toString(),
+        id: listing.id,
         type: 'listing-preview',
       },
     };
@@ -280,10 +280,7 @@ export class SellerListingsController {
       };
     }
 
-    const data = await this.listingsService.getSellerListings(
-      seller._id.toString(),
-      query,
-    );
+    const data = await this.listingsService.getSellerListings(seller.id, query);
 
     return serializeCollection(
       request,
@@ -311,7 +308,7 @@ export class SellerListingsController {
     }
 
     const listing = await this.listingsService.createListing(
-      seller._id.toString(),
+      seller.id,
       publicMetadata.organization,
       createListingDto,
     );
@@ -342,9 +339,9 @@ export class SellerListingsController {
     }
 
     const listing = await this.listingsService.findOne({
-      _id: listingId,
+      id: listingId,
       isDeleted: false,
-      seller: seller._id,
+      seller: seller.id,
     });
 
     if (!listing) {
@@ -378,9 +375,9 @@ export class SellerListingsController {
     }
 
     const listing = await this.listingsService.findOne({
-      _id: listingId,
+      id: listingId,
       isDeleted: false,
-      seller: seller._id,
+      seller: seller.id,
     });
 
     if (!listing) {
@@ -416,7 +413,7 @@ export class SellerListingsController {
       return returnNotFound('Seller', publicMetadata.user);
     }
 
-    await this.listingsService.archiveListing(listingId, seller._id.toString());
+    await this.listingsService.archiveListing(listingId, seller.id);
 
     return {
       data: {
@@ -449,7 +446,7 @@ export class SellerListingsController {
 
     const listing = await this.listingsService.submitForReview(
       listingId,
-      seller._id.toString(),
+      seller.id,
     );
 
     return serializeSingle(

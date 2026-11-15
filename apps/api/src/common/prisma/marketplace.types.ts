@@ -1,5 +1,4 @@
 export interface SellerRecord {
-  _id: string;
   id: string;
   user: string;
   organization: string;
@@ -30,7 +29,6 @@ export interface SellerRecord {
 }
 
 export interface ListingRecord {
-  _id: string;
   id: string;
   seller: string;
   organization: string;
@@ -73,7 +71,6 @@ export interface ListingRecord {
 }
 
 export interface PurchaseRecord {
-  _id: string;
   id: string;
   buyer: string;
   seller: string;

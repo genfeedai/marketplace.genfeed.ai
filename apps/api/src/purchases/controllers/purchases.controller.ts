@@ -104,7 +104,7 @@ export class PurchasesController {
     return {
       data: {
         attributes: {
-          purchaseId: result.purchase._id.toString(),
+          purchaseId: result.purchase.id,
           sessionId: result.sessionId,
           url: result.url,
         },
@@ -250,7 +250,7 @@ export class PurchasesController {
 
     // Get the listing to retrieve download data
     const listing = await this.listingsService.findOne({
-      _id: purchase.listing,
+      id: purchase.listing,
     });
 
     if (!listing) {
@@ -295,7 +295,7 @@ export class PurchasesController {
     }
 
     const listing = await this.listingsService.findOne({
-      _id: purchase.listing,
+      id: purchase.listing,
     });
 
     if (!listing) {
@@ -336,7 +336,7 @@ export class PurchasesController {
         attributes: {
           listingId,
           owned,
-          purchaseId: purchase?._id?.toString(),
+          purchaseId: purchase?.id,
         },
         id: listingId,
         type: 'listing-ownership',
@@ -359,9 +359,7 @@ export class PurchasesController {
       throw new NotFoundException('Seller profile not found');
     }
 
-    const analytics = await this.purchasesService.getSellerAnalytics(
-      seller._id.toString(),
-    );
+    const analytics = await this.purchasesService.getSellerAnalytics(seller.id);
 
     return {
       data: {
@@ -378,7 +376,7 @@ export class PurchasesController {
             totalSales: seller.totalSales,
           },
         },
-        id: seller._id.toString(),
+        id: seller.id,
         type: 'seller-overview',
       },
     };
@@ -401,10 +399,7 @@ export class PurchasesController {
       throw new NotFoundException('Seller profile not found');
     }
 
-    const data = await this.purchasesService.getSellerSales(
-      seller._id.toString(),
-      query,
-    );
+    const data = await this.purchasesService.getSellerSales(seller.id, query);
 
     return serializeCollection(
       request,
@@ -428,14 +423,12 @@ export class PurchasesController {
       throw new NotFoundException('Seller profile not found');
     }
 
-    const analytics = await this.purchasesService.getSellerAnalytics(
-      seller._id.toString(),
-    );
+    const analytics = await this.purchasesService.getSellerAnalytics(seller.id);
 
     return {
       data: {
         attributes: analytics,
-        id: seller._id.toString(),
+        id: seller.id,
         type: 'seller-analytics',
       },
     };
@@ -530,7 +523,7 @@ export class AdminMarketplaceController {
     );
 
     return serializeSingle(request, MarketplaceAnalyticsOverviewSerializer, {
-      _id: publicMetadata.organization,
+      id: publicMetadata.organization,
       ...analytics,
     }) as JsonApiSingleResponse;
   }

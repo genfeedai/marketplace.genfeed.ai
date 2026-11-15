@@ -183,10 +183,7 @@ export class SellersController {
       return returnNotFound(this.constructorName, publicMetadata.user);
     }
 
-    const updated = await this.sellersService.patch(
-      seller._id,
-      updateSellerDto,
-    );
+    const updated = await this.sellersService.patch(seller.id, updateSellerDto);
 
     return serializeSingle(
       request,
@@ -217,12 +214,12 @@ export class SellersController {
       const account = await this.stripeConnectService.createConnectAccount({
         displayName: seller.displayName,
         email: user.email || '',
-        sellerId: seller._id.toString(),
+        sellerId: seller.id,
       });
 
       stripeAccountId = account.id;
 
-      await this.sellersService.patch(seller._id, {
+      await this.sellersService.patch(seller.id, {
         stripeAccountId: account.id,
       });
     }
@@ -244,7 +241,7 @@ export class SellersController {
           stripeAccountId,
           url: onboardingUrl,
         },
-        id: seller._id.toString(),
+        id: seller.id,
         type: 'stripe-connect',
       },
     };
@@ -274,7 +271,7 @@ export class SellersController {
             payoutsEnabled: false,
             stripeAccountId: null,
           },
-          id: seller._id.toString(),
+          id: seller.id,
           type: 'stripe-connect-status',
         },
       };
@@ -290,7 +287,7 @@ export class SellersController {
       status.chargesEnabled &&
       !seller.stripeOnboardingComplete
     ) {
-      await this.sellersService.patch(seller._id, {
+      await this.sellersService.patch(seller.id, {
         payoutEnabled: status.payoutsEnabled,
         stripeOnboardingComplete: true,
       });
@@ -302,7 +299,7 @@ export class SellersController {
           ...status,
           stripeAccountId: seller.stripeAccountId,
         },
-        id: seller._id.toString(),
+        id: seller.id,
         type: 'stripe-connect-status',
       },
     };
@@ -332,7 +329,7 @@ export class SellersController {
         attributes: {
           url: dashboardUrl,
         },
-        id: seller._id.toString(),
+        id: seller.id,
         type: 'stripe-dashboard',
       },
     };
@@ -360,7 +357,7 @@ export class SellersController {
     return {
       data: {
         attributes: balance,
-        id: seller._id.toString(),
+        id: seller.id,
         type: 'stripe-balance',
       },
     };
@@ -397,7 +394,7 @@ export class SellersController {
             status: p.status,
           })),
         },
-        id: seller._id.toString(),
+        id: seller.id,
         type: 'stripe-payouts',
       },
     };

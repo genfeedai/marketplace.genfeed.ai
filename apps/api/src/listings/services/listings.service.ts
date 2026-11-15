@@ -1,5 +1,4 @@
 import { HandleErrors } from '@api/common/decorators/error-handler.decorator';
-import { createLegacyId } from '@api/common/prisma/legacy-id.util';
 import { mapListingRecord } from '@api/common/prisma/marketplace.mapper';
 import type { ListingRecord } from '@api/common/prisma/marketplace.types';
 import { buildOrderBy } from '@api/common/prisma/order-by.util';
@@ -60,8 +59,8 @@ export class ListingsService {
   ): Prisma.ListingWhereInput {
     const where: Prisma.ListingWhereInput = {};
 
-    if (typeof params._id === 'string') {
-      where.id = params._id;
+    if (typeof params.id === 'string') {
+      where.id = params.id;
     }
 
     if (typeof params.seller === 'string') {
@@ -220,7 +219,7 @@ export class ListingsService {
     }
 
     if (Object.keys(data).length === 0) {
-      return this.findOne({ _id: listingId });
+      return this.findOne({ id: listingId });
     }
 
     return this.updateListing(listingId, data);
@@ -261,7 +260,7 @@ export class ListingsService {
     dto: CreateListingDto,
   ): Promise<ListingRecord> {
     const seller = await this.sellersService.findOne({
-      _id: sellerId,
+      id: sellerId,
       isDeleted: false,
       status: SellerStatus.APPROVED,
     });
@@ -278,7 +277,6 @@ export class ListingsService {
       currency: dto.currency ?? 'usd',
       description: dto.description,
       downloadData: (dto.downloadData ?? {}) as Prisma.InputJsonValue,
-      id: createLegacyId(),
       isDeleted: false,
       organization: organizationId,
       previewData: (dto.previewData ?? {}) as Prisma.InputJsonValue,
