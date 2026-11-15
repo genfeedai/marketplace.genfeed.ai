@@ -5,7 +5,7 @@ skills. It launches with Genfeed's own listings only; outside sellers come
 later. The store is its own application: it shares sign-in with Genfeed
 through signed tokens and calls the main app only over HTTP.
 
-Licensed under [AGPL-3.0](LICENSE). The store is not in production yet.
+Licensed under [AGPL-3.0](LICENSE) (see also [NOTICE](NOTICE)). The store is not in production yet.
 
 ## What is in this repository
 
