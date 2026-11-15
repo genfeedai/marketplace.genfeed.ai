@@ -5,6 +5,7 @@ import { buildOrderBy } from '@api/common/prisma/order-by.util';
 import type { Page } from '@api/common/prisma/page';
 import { PrismaService } from '@api/common/prisma/prisma.service';
 import { QueryDefaultsUtil } from '@api/common/utils/query-defaults.util';
+import { Prisma } from '@api/generated/prisma/client';
 import type { AdminSellerQueryDto } from '@api/sellers/dto/admin-seller-query.dto';
 import type { CreateSellerDto } from '@api/sellers/dto/create-seller.dto';
 import type { UpdateSellerDto } from '@api/sellers/dto/update-seller.dto';
@@ -15,7 +16,6 @@ import {
   Injectable,
   Logger,
 } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
 import slugify from 'slugify';
 
 interface SellerPatchInput extends Partial<UpdateSellerDto> {
