@@ -12,6 +12,10 @@ export interface Listing {
   price: number;
   currency: string;
   pricingTier?: string;
+  /** Set when the listing is bought outside the store (the Skills Pro bundle). */
+  externalCheckout: 'skills-pro' | null;
+  /** Public listing data: what the bundle contains, for example. */
+  previewData: Record<string, unknown>;
 }
 
 export class MarketplaceError extends Error {
@@ -65,6 +69,7 @@ export function listingFromResource(resource: Resource): Listing {
   ) {
     throw new Error('Marketplace returned an invalid listing.');
   }
+  const previewData = record(a.previewData) ? a.previewData : {};
   return {
     id: resource.id,
     title: a.title,
@@ -74,6 +79,12 @@ export function listingFromResource(resource: Resource): Listing {
     shortDescription: text(a.shortDescription),
     description: text(a.description),
     pricingTier: text(a.pricingTier),
+    previewData,
+    externalCheckout:
+      record(previewData.externalCheckout) &&
+      previewData.externalCheckout.provider === 'skills-pro'
+        ? 'skills-pro'
+        : null,
   };
 }
 

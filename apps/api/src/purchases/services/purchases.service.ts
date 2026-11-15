@@ -9,6 +9,10 @@ import {
 import { PrismaService } from '@api/common/prisma/prisma.service';
 import { QueryDefaultsUtil } from '@api/common/utils/query-defaults.util';
 import { ListingsService } from '@api/listings/services/listings.service';
+import {
+  EXTERNAL_CHECKOUT_MESSAGE,
+  getExternalCheckoutProvider,
+} from '@api/listings/utils/external-checkout';
 import type { CreatePurchaseDto } from '@api/purchases/dto/create-purchase.dto';
 import type { PurchaseQueryDto } from '@api/purchases/dto/purchase-query.dto';
 import { SellersService } from '@api/sellers/services/sellers.service';
@@ -240,6 +244,10 @@ export class PurchasesService {
     const listing = await this.listingsService.getPublishedListing(listingId);
     if (!listing) {
       throw new NotFoundException('Listing not found');
+    }
+
+    if (getExternalCheckoutProvider(listing)) {
+      throw new BadRequestException(EXTERNAL_CHECKOUT_MESSAGE);
     }
 
     if (listing.pricingTier === 'premium') {
