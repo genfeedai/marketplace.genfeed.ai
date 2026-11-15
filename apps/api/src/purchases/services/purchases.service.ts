@@ -5,6 +5,7 @@ import { buildOrderBy } from '@api/common/prisma/order-by.util';
 import type { Page } from '@api/common/prisma/page';
 import { PrismaService } from '@api/common/prisma/prisma.service';
 import { QueryDefaultsUtil } from '@api/common/utils/query-defaults.util';
+import { Prisma } from '@api/generated/prisma/client';
 import { ListingsService } from '@api/listings/services/listings.service';
 import type { CreatePurchaseDto } from '@api/purchases/dto/create-purchase.dto';
 import type { PurchaseQueryDto } from '@api/purchases/dto/purchase-query.dto';
@@ -21,7 +22,6 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
 
 const PLATFORM_COMMISSION_RATE = 0.15;
 

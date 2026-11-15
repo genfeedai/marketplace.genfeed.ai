@@ -35,3 +35,6 @@ playwright-report/
 
 # Vitest 5 report and attachment output
 .vitest/
+
+# Prisma client, written by `prisma generate`
+apps/api/src/generated/

@@ -10,6 +10,7 @@ import {
   type StripeCheckoutSessionCreateParams,
 } from '@api/common/services/stripe.service';
 import { MarketplaceConfigService } from '@api/config/config.service';
+import type { Prisma } from '@api/generated/prisma/client';
 import { ListingsService } from '@api/listings/services/listings.service';
 import { PurchasesService } from '@api/purchases/services/purchases.service';
 import { SellersService } from '@api/sellers/services/sellers.service';
@@ -21,7 +22,6 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
-import type { Prisma } from '@prisma/client';
 
 @Injectable()
 export class CheckoutService {

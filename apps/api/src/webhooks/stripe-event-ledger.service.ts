@@ -1,6 +1,6 @@
 import { PrismaService } from '@api/common/prisma/prisma.service';
+import { Prisma } from '@api/generated/prisma/client';
 import { Inject, Injectable } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
 
 /**
  * Remembers every Stripe event id so a redelivered event is not applied

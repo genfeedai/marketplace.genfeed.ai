@@ -14,6 +14,7 @@
     },
     "apps/api": {
       "ignoreDependencies": [
+        "@prisma/client",
         "@typescript/native"
       ]
     },

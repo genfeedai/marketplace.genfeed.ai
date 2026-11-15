@@ -59,7 +59,8 @@
       "!**/node_modules",
       "!**/dist",
       "!**/.next",
-      "!**/.turbo"
+      "!**/.turbo",
+      "!**/apps/api/src/generated"
     ]
   }
 }

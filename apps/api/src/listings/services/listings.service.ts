@@ -5,6 +5,7 @@ import { buildOrderBy } from '@api/common/prisma/order-by.util';
 import type { Page } from '@api/common/prisma/page';
 import { PrismaService } from '@api/common/prisma/prisma.service';
 import { QueryDefaultsUtil } from '@api/common/utils/query-defaults.util';
+import { Prisma } from '@api/generated/prisma/client';
 import type { CreateListingDto } from '@api/listings/dto/create-listing.dto';
 import type { ListingQueryDto } from '@api/listings/dto/listing-query.dto';
 import type { UpdateListingDto } from '@api/listings/dto/update-listing.dto';
@@ -16,7 +17,6 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
 import slugify from 'slugify';
 
 interface ListingPatchInput extends Partial<UpdateListingDto> {

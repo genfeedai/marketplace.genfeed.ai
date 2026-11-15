@@ -11,7 +11,7 @@ import type {
   Listing as PrismaListing,
   Purchase as PrismaPurchase,
   Seller as PrismaSeller,
-} from '@prisma/client';
+} from '@api/generated/prisma/client';
 
 export function mapSellerRecord(seller: PrismaSeller): SellerRecord {
   return {
