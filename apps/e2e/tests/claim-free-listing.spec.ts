@@ -6,7 +6,7 @@ const TITLE = 'E2E Free Workflow';
 test('a visitor browses, claims a free workflow and finds it in the library', async ({
   page,
 }) => {
-  await page.goto('/browse');
+  await page.goto('/');
   await page
     .getByRole('main')
     .getByRole('link', { name: /Workflows/ })

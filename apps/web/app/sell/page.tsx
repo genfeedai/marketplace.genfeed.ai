@@ -3,14 +3,17 @@ import ContentSection from '@components/content-section';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
-import { createIndexableMetadata } from '@/lib/seo';
+import { createNoIndexMetadata } from '@/lib/seo';
 
-export const metadata: Metadata = createIndexableMetadata('/sell');
+export const metadata: Metadata = createNoIndexMetadata({
+  title: 'Sell on the Marketplace',
+  description: 'Seller information for the Genfeed store.',
+  path: '/sell',
+});
 
 export default function SellPage(): ReactNode {
   return (
     <ContentPage
-      icon={'\uD83C\uDFEA'}
       title="Sell on the Marketplace"
       description="Turn the systems you already use into products"
     >

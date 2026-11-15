@@ -5,14 +5,13 @@ import { createNoIndexMetadata } from '@/lib/seo';
 
 export const metadata: Metadata = createNoIndexMetadata({
   title: 'Checkout received',
-  description: 'Check your library for your marketplace purchase.',
+  description: 'Check your library for your store purchase.',
   path: '/checkout/success',
 });
 
 export default function CheckoutSuccessPage(): ReactNode {
   return (
     <main className="mx-auto max-w-2xl px-4 py-20 text-center">
-      <span className="text-6xl block mb-6">{'\u2705'}</span>
       <h1 className="text-3xl font-bold text-white mb-4">Checkout received</h1>
       <p className="text-white/60 mb-8">
         Your purchase will appear in your library once payment is confirmed.

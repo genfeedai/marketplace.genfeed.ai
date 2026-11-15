@@ -9,14 +9,12 @@ export default async function ImagesPage(): Promise<ReactNode> {
   return (
     <main className="mx-auto max-w-7xl px-4 py-8">
       <PageHeader
-        icon={'\uD83D\uDDBC\uFE0F'}
         title="Images"
         description="Public AI-generated images from the Genfeed community"
       />
 
       {result.status === 'unavailable' && (
         <EmptyState
-          icon={'\u26A0\uFE0F'}
           label="Images Unavailable"
           description="Genfeed could not load public images right now. Please try again shortly."
         />
@@ -24,7 +22,6 @@ export default async function ImagesPage(): Promise<ReactNode> {
 
       {result.status === 'success' && result.items.length === 0 && (
         <EmptyState
-          icon={'\uD83D\uDDBC\uFE0F'}
           label="No Public Images Yet"
           description="Images will appear here when creators publish them publicly on Genfeed."
         />

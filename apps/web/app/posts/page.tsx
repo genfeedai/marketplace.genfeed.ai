@@ -22,14 +22,12 @@ export default async function PostsPage(): Promise<ReactNode> {
   return (
     <main className="mx-auto max-w-7xl px-4 py-8">
       <PageHeader
-        icon={'\uD83D\uDCDD'}
         title="Posts"
         description="Public content published by the Genfeed community"
       />
 
       {result.status === 'unavailable' && (
         <EmptyState
-          icon={'\u26A0\uFE0F'}
           label="Posts Unavailable"
           description="Genfeed could not load public posts right now. Please try again shortly."
         />
@@ -37,7 +35,6 @@ export default async function PostsPage(): Promise<ReactNode> {
 
       {result.status === 'success' && result.items.length === 0 && (
         <EmptyState
-          icon={'\uD83D\uDCDD'}
           label="No Public Posts Yet"
           description="Posts will appear here when creators publish them publicly on Genfeed."
         />

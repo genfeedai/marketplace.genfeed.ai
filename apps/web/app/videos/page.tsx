@@ -9,14 +9,12 @@ export default async function VideosPage(): Promise<ReactNode> {
   return (
     <main className="mx-auto max-w-7xl px-4 py-8">
       <PageHeader
-        icon={'\uD83C\uDFA5'}
         title="Videos"
         description="Public AI-generated videos from the Genfeed community"
       />
 
       {result.status === 'unavailable' && (
         <EmptyState
-          icon={'\u26A0\uFE0F'}
           label="Videos Unavailable"
           description="Genfeed could not load public videos right now. Please try again shortly."
         />
@@ -24,7 +22,6 @@ export default async function VideosPage(): Promise<ReactNode> {
 
       {result.status === 'success' && result.items.length === 0 && (
         <EmptyState
-          icon={'\uD83C\uDFA5'}
           label="No Public Videos Yet"
           description="Videos will appear here when creators publish them publicly on Genfeed."
         />
