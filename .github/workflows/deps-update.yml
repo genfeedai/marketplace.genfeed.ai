@@ -31,11 +31,13 @@ jobs:
       # GITHUB_TOKEN can never push a change under `.github/workflows`, and a
       # pull request it opens does not start CI. DEPS_UPDATE_TOKEN is a
       # fine-grained token with Contents, Pull requests and Workflows write
-      # access. Without it the PR carries package bumps only.
+      # access. Without it the PR carries package bumps only. The token never
+      # reaches the checkout or the package install: credentials are not
+      # persisted, and the push step below passes the token to git itself.
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
         with:
           fetch-depth: 0
-          token: ${{ secrets.DEPS_UPDATE_TOKEN || secrets.GITHUB_TOKEN }}
+          persist-credentials: false
 
       - name: Setup Bun environment
         uses: ./.github/actions/setup-bun-env
@@ -53,6 +55,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.DEPS_UPDATE_TOKEN || secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
+          git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
           if [[ -z "${DEPS_UPDATE_TOKEN:-}" ]] && ! git diff --quiet -- .github; then
             echo "::warning::Action pin updates are left out: add the DEPS_UPDATE_TOKEN secret (a fine-grained token with Workflows write access) so they ship in this PR."
             git checkout -- .github
