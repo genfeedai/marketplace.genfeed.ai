@@ -24,7 +24,8 @@ Follow [Run it locally](README.md#run-it-locally).
   request.
 - Use conventional commits: `feat:`, `fix:`, `refactor:`, `docs:`, `chore:`.
 - Run `bun run lint`, `bun run typecheck` and `bun run test` before you push.
-  Biome formats the code: `bun run check`.
+  Biome formats the code: `bun run check`. `bun install` also installs a
+  pre-commit hook that runs Biome and a secret scan on the staged files.
 - A bug fix comes with a test that fails before the fix. A feature comes with
   evidence it works: a database test, or the flow walked in the browser.
 - Squash-merge once CI is green.

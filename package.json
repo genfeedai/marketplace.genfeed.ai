@@ -3,8 +3,7 @@
   "private": true,
   "license": "AGPL-3.0-or-later",
   "workspaces": [
-    "apps/*",
-    "packages/*"
+    "apps/*"
   ],
   "packageManager": "bun@1.4.4",
   "engines": {
@@ -13,12 +12,17 @@
   "scripts": {
     "dev": "turbo dev",
     "build": "turbo build",
-    "lint": "turbo lint",
+    "lint": "turbo lint && biome check scripts/",
     "typecheck": "turbo typecheck",
     "test": "turbo test",
-    "deps:update": "bunx npm-check-updates -u --deep --reject typescript,@typescript/native && bun install",
-    "format": "biome format --write apps/",
-    "check": "biome check --fix apps/"
+    "deps:update": "bunx npm-check-updates -u --deep --cooldown 3h --reject typescript,@typescript/native && bun install && bun run deps:update:actions",
+    "deps:update:actions": "bun scripts/deps/update-github-action-versions.ts",
+    "check": "biome check --fix apps/ scripts/",
+    "format": "biome format --write apps/ scripts/",
+    "check:action-versions": "bun scripts/deps/check-github-action-versions.ts",
+    "check:dead-code": "bunx knip@6.44.1 --reporter compact",
+    "secretlint": "secretlint '**/*'",
+    "prepare": "husky || true"
   },
   "overrides": {
     "@genfeedai/constants": "2.2.9",
@@ -26,7 +30,10 @@
   },
   "devDependencies": {
     "@biomejs/biome": "2.6.8",
+    "@secretlint/secretlint-rule-preset-recommend": "13.1.0",
     "@typescript/native": "npm:typescript@7.0.2",
+    "husky": "9.1.7",
+    "secretlint": "13.1.0",
     "turbo": "2.11.11",
     "typescript": "6.0.3"
   }

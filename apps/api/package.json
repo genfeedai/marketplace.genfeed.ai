@@ -40,7 +40,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.json && tsc-alias -p tsconfig.json",
     "dev": "nest start --watch",
-    "lint": "biome check src/",
+    "lint": "biome check .",
     "prisma:generate": "prisma generate --schema prisma/schema.prisma",
     "prisma:validate": "prisma validate --schema prisma/schema.prisma",
     "start": "node -r tsconfig-paths/register dist/main",

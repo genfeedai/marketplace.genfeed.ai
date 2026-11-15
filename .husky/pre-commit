@@ -1,0 +1,29 @@
+#!/usr/bin/env sh
+
+# Same checks CI runs, on the staged files only. A leaked secret on a public
+# repository is indexed before it can be rotated, so the secret scan runs
+# before the commit exists and CI repeats it.
+export PATH="$HOME/.bun/bin:$PATH"
+
+if ! command -v bun >/dev/null 2>&1; then
+  echo "Bun is required for pre-commit hooks. Install Bun or add it to PATH." >&2
+  exit 127
+fi
+
+staged="$(git diff --cached --name-only --diff-filter=ACMR)"
+if [ -z "$staged" ]; then
+  exit 0
+fi
+
+# Biome checks apps/ and scripts/, the same scope as `bun run lint`.
+code="$(git diff --cached --name-only --diff-filter=ACMR -- apps scripts)"
+if [ -n "$code" ]; then
+  printf '%s\n' "$code" | tr '\n' '\0' | xargs -0 bunx biome check --no-errors-on-unmatched
+fi
+
+printf '%s\n' "$staged" | tr '\n' '\0' | xargs -0 bunx secretlint --no-glob
+
+# gitleaks is optional locally (brew install gitleaks); CI always runs it.
+if command -v gitleaks >/dev/null 2>&1; then
+  gitleaks git --staged --config .gitleaks.toml --redact --no-banner
+fi

@@ -1,0 +1,75 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "workspaces": {
+    ".": {
+      "entry": [
+        "scripts/deps/*.ts"
+      ],
+      "ignoreDependencies": [
+        "@secretlint/secretlint-rule-preset-recommend",
+        "@typescript/native",
+        "husky",
+        "secretlint"
+      ]
+    },
+    "apps/api": {
+      "ignoreDependencies": [
+        "@typescript/native"
+      ]
+    },
+    "apps/web": {
+      "ignoreDependencies": [
+        "@typescript/native",
+        "postcss-load-config",
+        "@genfeedai/enums"
+      ]
+    },
+    "apps/admin": {
+      "ignoreDependencies": [
+        "@typescript/native",
+        "@genfeedai/constants"
+      ]
+    },
+    "apps/e2e": {
+      "ignoreDependencies": [
+        "@typescript/native"
+      ]
+    }
+  },
+  "ignore": [
+    "apps/api/scripts/db/connection.ts",
+    "apps/api/scripts/db/seed-utils.ts",
+    "apps/api/src/common/decorators/index.ts",
+    "apps/api/src/common/utils/pagination.util.ts"
+  ],
+  "ignoreIssues": {
+    "apps/api/src/common/dto/base-query.dto.ts": [
+      "exports"
+    ],
+    "apps/api/src/common/utils/response.util.ts": [
+      "exports"
+    ],
+    "apps/api/src/rate-limit.ts": [
+      "exports"
+    ],
+    "apps/api/src/common/prisma/order-by.util.ts": [
+      "types"
+    ],
+    "apps/api/src/common/services/stripe.service.ts": [
+      "types"
+    ],
+    "apps/api/src/test/marketplace-fixture.ts": [
+      "types"
+    ],
+    "apps/web/lib/marketplace-api.ts": [
+      "exports"
+    ],
+    "apps/web/lib/public-content.ts": [
+      "exports",
+      "types"
+    ],
+    "apps/web/lib/seo.ts": [
+      "types"
+    ]
+  }
+}
