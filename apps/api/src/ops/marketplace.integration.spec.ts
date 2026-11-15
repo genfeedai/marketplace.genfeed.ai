@@ -260,6 +260,47 @@ describe.skipIf(!adminUrl)(
         (await request(`/marketplace/purchases/${purchaseId}/download-data`))
           .status,
       ).toBe(401);
+      const install = await request(
+        `/marketplace/purchases/by-listing/${listingId}/install-data`,
+        buyerToken,
+      );
+      expect(install.status).toBe(200);
+      const installBody = await install.json();
+      expect(installBody.data).toEqual({
+        attributes: {
+          downloadData: { workflow: { nodes: [] } },
+          listingId,
+          title: 'Test Workflow',
+          type: 'workflow',
+        },
+        id: purchaseId,
+        type: 'install-data',
+      });
+      // A buyer in another organization, a user with no purchase and a
+      // caller with no token never receive the payload.
+      const otherOrganization = await request(
+        `/marketplace/purchases/by-listing/${listingId}/install-data`,
+        wrongOrganizationToken,
+      );
+      expect(otherOrganization.status).toBe(403);
+      expect(JSON.stringify(await otherOrganization.json())).not.toContain(
+        'nodes',
+      );
+      expect(
+        (
+          await request(
+            `/marketplace/purchases/by-listing/${listingId}/install-data`,
+            sellerToken,
+          )
+        ).status,
+      ).toBe(403);
+      expect(
+        (
+          await request(
+            `/marketplace/purchases/by-listing/${listingId}/install-data`,
+          )
+        ).status,
+      ).toBe(401);
       expect(
         (await request(`/marketplace/checkout/unrelated-session`, buyerToken))
           .status,
