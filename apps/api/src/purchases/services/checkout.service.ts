@@ -174,7 +174,7 @@ export class CheckoutService {
         type: 'marketplace',
       },
       mode: 'payment',
-      payment_method_types: ['card'],
+      allowed_payment_method_types: ['card'],
       success_url: `${successUrl}?session_id={CHECKOUT_SESSION_ID}`,
     };
 
