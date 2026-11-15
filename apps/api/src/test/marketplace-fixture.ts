@@ -12,6 +12,7 @@ import {
 } from '@api/ops/provision-database';
 import type { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
+import { ThrottlerStorage } from '@nestjs/throttler';
 import { exportJWK, generateKeyPair, SignJWT } from 'jose';
 import { Client } from 'pg';
 import Stripe from 'stripe';
@@ -112,7 +113,9 @@ export interface MarketplaceFixture {
  * creation is faked, and webhook signatures use a disposable secret. No Stripe
  * credentials, production data or network access are needed.
  */
-export async function startMarketplaceFixture(): Promise<MarketplaceFixture> {
+export async function startMarketplaceFixture(
+  options: { rateLimited?: boolean } = {},
+): Promise<MarketplaceFixture> {
   if (!adminUrl) throw new Error('Test database required');
 
   const suffix = randomBytes(5).toString('hex');
@@ -217,7 +220,21 @@ export async function startMarketplaceFixture(): Promise<MarketplaceFixture> {
     },
   };
 
-  const moduleRef = await Test.createTestingModule({ imports: [AppModule] })
+  // Journeys start many checkouts from one address. Unless a suite is about
+  // the rate limit, count nothing so the limit cannot hide a real failure.
+  const unlimitedStorage = {
+    increment: async () => ({
+      isBlocked: false,
+      timeToBlockExpire: 0,
+      timeToExpire: 0,
+      totalHits: 1,
+    }),
+  };
+  const testing = Test.createTestingModule({ imports: [AppModule] });
+  if (!options.rateLimited) {
+    testing.overrideProvider(ThrottlerStorage).useValue(unlimitedStorage);
+  }
+  const moduleRef = await testing
     .overrideProvider(MarketplaceStripeService)
     .useValue({
       client: fakeStripeClient,

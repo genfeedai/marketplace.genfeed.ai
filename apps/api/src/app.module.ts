@@ -9,8 +9,10 @@ import { WebhooksModule } from '@api/webhooks/webhooks.module';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { MarketplaceConfigModule } from './config/config.module';
 import { HealthController } from './health/health.controller';
+import { DEFAULT_RATE_LIMIT } from './rate-limit';
 
 @Module({
   imports: [
@@ -18,6 +20,7 @@ import { HealthController } from './health/health.controller';
       envFilePath: ['.env.local', '.env'],
       isGlobal: true,
     }),
+    ThrottlerModule.forRoot([DEFAULT_RATE_LIMIT]),
     MarketplaceConfigModule,
     PrismaModule,
     MarketplaceStripeModule,
@@ -29,6 +32,8 @@ import { HealthController } from './health/health.controller';
   controllers: [HealthController],
   providers: [
     JwtVerifierService,
+    // Runs before authentication so a flood is refused before a token is checked.
+    { provide: APP_GUARD, useClass: ThrottlerGuard },
     { provide: APP_GUARD, useClass: BetterAuthGuard },
   ],
 })

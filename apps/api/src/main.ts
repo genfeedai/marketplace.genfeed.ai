@@ -1,32 +1,16 @@
-import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import type { NestExpressApplication } from '@nestjs/platform-express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
-import { MarketplaceConfigService } from './config/config.service';
+import { configureApp } from './app.setup';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, { rawBody: true });
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+    rawBody: true,
+  });
   app.enableShutdownHooks();
 
-  const marketplaceConfig = app.get(MarketplaceConfigService);
-  const origins = [new URL(marketplaceConfig.marketplaceUrl).origin];
-  if (marketplaceConfig.nodeEnv === 'development') {
-    origins.push('http://localhost:3205', 'http://127.0.0.1:3205');
-  }
-
-  app.enableCors({
-    credentials: true,
-    origin: origins,
-  });
-
-  app.useGlobalPipes(
-    new ValidationPipe({
-      forbidNonWhitelisted: true,
-      transform: true,
-      transformOptions: { enableImplicitConversion: true },
-      whitelist: true,
-    }),
-  );
+  configureApp(app);
 
   const config = new DocumentBuilder()
     .setTitle('Marketplace API')

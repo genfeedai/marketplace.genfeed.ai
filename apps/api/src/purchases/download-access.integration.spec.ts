@@ -84,6 +84,30 @@ describe.skipIf(!adminUrl)(
       expect((await download(otherOrganizationToken)).status).toBe(404);
     });
 
+    it('tells the buyer they own the listing they paid for', async () => {
+      const response = await fixture.request(
+        `/marketplace/purchases/by-listing/${listingId}/ownership`,
+        buyerToken,
+      );
+
+      expect(response.status).toBe(200);
+      expect((await response.json()).data.attributes).toEqual({
+        listingId,
+        owned: true,
+        purchaseId,
+      });
+    });
+
+    it('tells a colleague in the same organization they do not own it', async () => {
+      const response = await fixture.request(
+        `/marketplace/purchases/by-listing/${listingId}/ownership`,
+        sameOrganizationToken,
+      );
+
+      expect(response.status).toBe(200);
+      expect((await response.json()).data.attributes.owned).toBe(false);
+    });
+
     it('refuses a request with no token', async () => {
       expect((await download()).status).toBe(401);
     });
