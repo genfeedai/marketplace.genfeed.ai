@@ -136,7 +136,7 @@ const INDEXABLE_ROUTES = [
     path: '/terms',
     title: 'Terms of Service',
     description:
-      'Read the terms for buying on the Genfeed.ai marketplace, including accounts, purchases, licences, refunds and acceptable use of the service.',
+      'Read the terms for buying in the Genfeed store, including accounts, purchases, product licences, refunds and acceptable use of the service.',
     changeFrequency: 'yearly',
     priority: 0.3,
   },
@@ -144,7 +144,7 @@ const INDEXABLE_ROUTES = [
     path: '/privacy',
     title: 'Privacy Policy',
     description:
-      'Learn what personal data the Genfeed.ai marketplace collects, how it is used, and how to request access, export, or deletion of your information.',
+      'Learn what personal data the Genfeed store collects, how it is used, who it is shared with, and how to request access, export, or deletion.',
     changeFrequency: 'yearly',
     priority: 0.3,
   },

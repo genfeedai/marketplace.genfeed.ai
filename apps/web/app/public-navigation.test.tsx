@@ -9,6 +9,8 @@ import ContactPage from './contact/page';
 import GalleryPage from './gallery/page';
 import GuidelinesPage from './guidelines/page';
 import HomePage from './page';
+import PrivacyPage from './privacy/page';
+import TermsPage from './terms/page';
 
 vi.mock('next/navigation', () => ({ usePathname: () => '/videos' }));
 
@@ -107,6 +109,8 @@ describe('store public navigation', () => {
       GuidelinesPage(),
       ContactPage(),
       GalleryPage(),
+      TermsPage(),
+      PrivacyPage(),
     ]
       .map((page) => renderToStaticMarkup(page))
       .join('');
