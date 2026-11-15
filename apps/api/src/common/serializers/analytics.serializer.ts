@@ -5,8 +5,8 @@ class AnalyticsOverviewSerializerClass implements IJsonApiSerializer {
 
   serialize(data: unknown): unknown {
     const item = data as Record<string, unknown>;
-    const id = item._id?.toString?.() ?? item.id ?? 'overview';
-    const { _id, __v, ...attributes } = item;
+    const id = item.id ?? 'overview';
+    const { __v, ...attributes } = item;
 
     return {
       data: { attributes, id: String(id), type: 'analytics-overview' },

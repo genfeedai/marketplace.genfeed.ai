@@ -16,7 +16,7 @@ timeout=$5
 task=''
 stopped=false
 # ShellCheck cannot see the EXIT trap invocation; timeout/API-error tests exercise it.
-# shellcheck disable=SC2317
+# shellcheck disable=SC2317,SC2329
 cleanup() {
   if [ -n "$task" ] && [ "$stopped" != true ]; then
     aws ecs stop-task --cluster "$cluster" --task "$task" \

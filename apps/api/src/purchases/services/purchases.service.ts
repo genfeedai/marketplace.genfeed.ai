@@ -1,5 +1,4 @@
 import { HandleErrors } from '@api/common/decorators/error-handler.decorator';
-import { createLegacyId } from '@api/common/prisma/legacy-id.util';
 import { mapPurchaseRecord } from '@api/common/prisma/marketplace.mapper';
 import type { PurchaseRecord } from '@api/common/prisma/marketplace.types';
 import { buildOrderBy } from '@api/common/prisma/order-by.util';
@@ -84,7 +83,7 @@ export class PurchasesService {
     const title = purchase.listingSnapshot.title?.toLowerCase() ?? '';
     const sellerName = purchase.sellerData?.displayName?.toLowerCase() ?? '';
     const stripeSessionId = purchase.stripeSessionId?.toLowerCase() ?? '';
-    const purchaseId = purchase._id.toLowerCase();
+    const purchaseId = purchase.id.toLowerCase();
 
     return (
       title.includes(normalized) ||
@@ -259,7 +258,6 @@ export class PurchasesService {
       buyer: buyerId,
       currency: listing.currency,
       discount: 0,
-      id: createLegacyId(),
       isDeleted: false,
       listing: listingId,
       listingSnapshot: {
@@ -289,7 +287,7 @@ export class PurchasesService {
     this.logOperation('claimFreeItem', 'completed', {
       buyerId,
       listingId,
-      purchaseId: purchase._id,
+      purchaseId: purchase.id,
     });
 
     return purchase;
@@ -332,7 +330,6 @@ export class PurchasesService {
       discountCode: dto.discountCode,
       giftMessage: dto.giftMessage,
       giftRecipient: dto.giftRecipientId,
-      id: createLegacyId(),
       isDeleted: false,
       isGift: Boolean(dto.giftRecipientId),
       listing: dto.listingId,
@@ -365,7 +362,7 @@ export class PurchasesService {
 
     this.logOperation('createPurchase', 'completed', {
       buyerId,
-      purchaseId: purchase._id,
+      purchaseId: purchase.id,
     });
 
     return purchase;

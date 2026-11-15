@@ -1,5 +1,5 @@
 import { randomBytes } from 'node:crypto';
-import { readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { createServer, type Server } from 'node:http';
 import { AppModule } from '@api/app.module';
 import {
@@ -16,6 +16,8 @@ const adminUrl = process.env.MARKETPLACE_DB_TEST_ADMIN_URL;
 if (process.env.CI === 'true' && !adminUrl) {
   throw new Error('CI requires the PostgreSQL integration fixture');
 }
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 const suffix = randomBytes(5).toString('hex');
 const database = `mp_journey_${suffix}`;
 const runtimeRole = `mp_user_${suffix}`;
@@ -72,12 +74,12 @@ describe.skipIf(!adminUrl)(
       });
       await migration.connect();
       try {
-        await migration.query(
-          readFileSync(
-            'prisma/migrations/20260930000000_initial_marketplace/migration.sql',
-            'utf8',
-          ),
-        );
+        for (const name of readdirSync('prisma/migrations').sort()) {
+          const file = `prisma/migrations/${name}/migration.sql`;
+          if (existsSync(file)) {
+            await migration.query(readFileSync(file, 'utf8'));
+          }
+        }
       } finally {
         await migration.end();
       }
@@ -172,13 +174,15 @@ describe.skipIf(!adminUrl)(
       });
       expect(response.status).toBe(201);
       listingId = (await response.json()).data.id;
+      expect(listingId).toMatch(UUID_PATTERN);
       const created = await request(
         `/seller/listings/${listingId}`,
         sellerToken,
       );
-      expect((await created.json()).data.attributes.organization).toBe(
-        'seller-org',
-      );
+      const createdBody = await created.json();
+      expect(createdBody.data.attributes.organization).toBe('seller-org');
+      expect(createdBody.data.id).toBe(listingId);
+      expect(JSON.stringify(createdBody)).not.toContain('"_id"');
     });
 
     it('requires operator authority to approve a listing and hides download payloads publicly', async () => {
@@ -217,9 +221,14 @@ describe.skipIf(!adminUrl)(
         {},
       );
       expect(claim.status).toBe(201);
-      purchaseId = (await claim.json()).data.id;
+      const claimBody = await claim.json();
+      purchaseId = claimBody.data.id;
+      expect(purchaseId).toMatch(UUID_PATTERN);
+      expect(JSON.stringify(claimBody)).not.toContain('"_id"');
       const library = await request('/marketplace/purchases', buyerToken);
-      expect((await library.json()).data).toHaveLength(1);
+      const libraryBody = await library.json();
+      expect(libraryBody.data).toHaveLength(1);
+      expect(JSON.stringify(libraryBody)).not.toContain('"_id"');
       expect(
         (await request('/marketplace/purchases', wrongOrganizationToken))
           .status,

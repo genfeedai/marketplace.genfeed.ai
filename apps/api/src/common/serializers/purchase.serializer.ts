@@ -19,8 +19,8 @@ class PurchaseSerializerClass implements IJsonApiSerializer {
   }
 
   private serializeItem(item: Record<string, unknown>): unknown {
-    const id = item._id?.toString?.() ?? item.id ?? '';
-    const { _id, __v, ...attributes } = item;
+    const id = item.id ?? '';
+    const { __v, ...attributes } = item;
 
     // Flatten lookup data if present
     if (attributes.listingData && typeof attributes.listingData === 'object') {

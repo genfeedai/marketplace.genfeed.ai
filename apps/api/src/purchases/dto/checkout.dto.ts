@@ -1,12 +1,20 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsMongoId, IsOptional, IsUrl } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  IsUrl,
+  MaxLength,
+} from 'class-validator';
 
 export class CheckoutDto {
   @ApiProperty({
     description: 'ID of the listing to purchase',
   })
   @IsOptional()
-  @IsMongoId()
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(36)
   listingId?: string;
 
   @ApiProperty({

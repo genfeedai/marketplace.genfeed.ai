@@ -1,5 +1,4 @@
 import { HandleErrors } from '@api/common/decorators/error-handler.decorator';
-import { createLegacyId } from '@api/common/prisma/legacy-id.util';
 import { mapSellerRecord } from '@api/common/prisma/marketplace.mapper';
 import type { SellerRecord } from '@api/common/prisma/marketplace.types';
 import { buildOrderBy } from '@api/common/prisma/order-by.util';
@@ -51,8 +50,8 @@ export class SellersService {
   private buildWhere(params: Record<string, unknown>): Prisma.SellerWhereInput {
     const where: Prisma.SellerWhereInput = {};
 
-    if (typeof params._id === 'string') {
-      where.id = params._id;
+    if (typeof params.id === 'string') {
+      where.id = params.id;
     }
 
     if (typeof params.slug === 'string') {
@@ -169,7 +168,7 @@ export class SellersService {
     }
 
     if (Object.keys(data).length === 0) {
-      return this.findOne({ _id: id });
+      return this.findOne({ id });
     }
 
     return this.updateSeller(id, data);
@@ -241,7 +240,6 @@ export class SellersService {
       badgeTier: SellerBadgeTier.NEW,
       bio: dto.bio,
       displayName: dto.displayName,
-      id: createLegacyId(),
       isDeleted: false,
       organization: organizationId,
       payoutEnabled: false,
@@ -254,7 +252,7 @@ export class SellersService {
     });
 
     this.logOperation('createSellerProfile', 'completed', {
-      sellerId: seller._id,
+      sellerId: seller.id,
       userId,
     });
 
@@ -287,7 +285,7 @@ export class SellersService {
 
   @HandleErrors('update badge tier', 'sellers')
   async updateBadgeTier(sellerId: string): Promise<SellerRecord | null> {
-    const seller = await this.findOne({ _id: sellerId });
+    const seller = await this.findOne({ id: sellerId });
     if (!seller) {
       return null;
     }

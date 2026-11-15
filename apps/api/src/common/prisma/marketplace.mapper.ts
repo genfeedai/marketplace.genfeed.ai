@@ -15,7 +15,6 @@ import type {
 
 export function mapSellerRecord(seller: PrismaSeller): SellerRecord {
   return {
-    _id: seller.id,
     avatar: seller.avatar,
     badgeTier: seller.badgeTier,
     bio: seller.bio,
@@ -45,7 +44,6 @@ export function mapListingRecord(
   listing: PrismaListing & { sellerRecord?: PrismaSeller | null },
 ): ListingRecord {
   return {
-    _id: listing.id,
     canBeSoldSeparately: listing.canBeSoldSeparately,
     changelog: listing.changelog,
     comfyuiTemplate: asOptionalJsonObject(listing.comfyuiTemplate),
@@ -97,7 +95,6 @@ export function mapPurchaseRecord(
   },
 ): PurchaseRecord {
   return {
-    _id: purchase.id,
     buyer: purchase.buyer,
     createdAt: purchase.createdAt,
     currency: purchase.currency,
