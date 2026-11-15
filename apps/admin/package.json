@@ -10,7 +10,8 @@
     "@types/node": "26.6.6",
     "@types/react": "19.2.14",
     "@types/react-dom": "19.2.3",
-    "typescript": "5.9.3"
+    "@typescript/native": "npm:typescript@7.0.2",
+    "typescript": "6.0.3"
   },
   "name": "@marketplace/admin",
   "private": true,
