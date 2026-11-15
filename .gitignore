@@ -28,3 +28,7 @@ coverage/
 # Python test caches
 __pycache__/
 *.py[cod]
+
+# Playwright output
+test-results/
+playwright-report/
