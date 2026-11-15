@@ -24,11 +24,11 @@ You need [Bun](https://bun.sh) 1.3 and Node 26 (see `.node-version`).
 
 ```bash
 bun install
-cp .env.example .env                 # then set DATABASE_URL
+cp .env.example apps/api/.env.local  # then set DATABASE_URL
 docker compose -f docker/docker-compose.yml up -d    # PostgreSQL on :5433
 cd apps/api
-bunx prisma generate --schema prisma/schema.prisma
-bunx prisma migrate deploy --schema prisma/schema.prisma
+bun --env-file=.env.local run prisma:generate
+bun --env-file=.env.local run prisma:migrate
 cd ../..
 bun run dev
 ```

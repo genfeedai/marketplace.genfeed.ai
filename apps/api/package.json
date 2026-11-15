@@ -8,8 +8,8 @@
     "@nestjs/platform-express": "12.5.0",
     "@nestjs/swagger": "12.1.2",
     "@nestjs/throttler": "6.7.1",
-    "@prisma/adapter-pg": "6.19.3",
-    "@prisma/client": "6.19.3",
+    "@prisma/adapter-pg": "7.10.1",
+    "@prisma/client": "7.10.1",
     "class-transformer": "0.5.1",
     "class-validator": "0.15.1",
     "helmet": "8.3.0",
@@ -28,7 +28,7 @@
     "@types/node": "26.6.6",
     "@types/pg": "8.23.1",
     "@typescript/native": "npm:typescript@7.0.2",
-    "prisma": "6.19.3",
+    "prisma": "7.10.1",
     "tsc-alias": "1.9.10",
     "tsconfig-paths": "4.2.0",
     "typescript": "6.0.3",
@@ -41,15 +41,15 @@
     "build": "tsc -p tsconfig.json && tsc-alias -p tsconfig.json",
     "dev": "nest start --watch",
     "lint": "biome check .",
-    "prisma:generate": "prisma generate --schema prisma/schema.prisma",
-    "prisma:validate": "prisma validate --schema prisma/schema.prisma",
+    "prisma:generate": "prisma generate",
+    "prisma:validate": "prisma validate",
     "start": "node -r tsconfig-paths/register dist/main",
     "start:prod": "node -r tsconfig-paths/register dist/main",
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.scripts.json",
     "typecheck:scripts": "tsc --noEmit -p tsconfig.scripts.json",
-    "prisma:migrate": "prisma migrate deploy --schema prisma/schema.prisma"
+    "prisma:migrate": "prisma migrate deploy"
   },
   "version": "0.1.0"
 }

@@ -18,13 +18,19 @@ Initialize the schema in that local database, then start the apps:
 ```bash
 cd apps/api
 bun --env-file=.env.local run prisma:generate
-bun --env-file=.env.local run prisma db push --schema prisma/schema.prisma
+bun --env-file=.env.local run prisma db push
 cd ../..
 bun run dev
 ```
 
 Run `db push` only against a disposable local development database. Production
 database changes require the deployment's migration process.
+
+Prisma 7 reads the schema path and the database URL from
+`apps/api/prisma.config.ts` and does not load `.env` files itself, which is why
+the commands above pass `--env-file`. `prisma:generate` needs no database;
+`prisma:migrate` and `db push` stop with "Connection url is empty" when
+`DATABASE_URL` is not set.
 
 Create `apps/web/.env.local` and `apps/admin/.env.local` with the local API
 and app origins before starting their development servers:
