@@ -60,10 +60,30 @@ For local gallery data, set `NEXT_PUBLIC_GENFEED_API_URL` in
 
 The retired npm prompt/workflow catalog importers and their seed commands have
 been removed. Create a seller profile and listing from `/dashboard`, submit
-the draft for review, then approve it through the operator API or local admin.
+the draft for review, then approve it as a platform superadmin (see below).
 Published products appear in `/workflows`, `/prompts`, and `/skills`.
 Free claims and paid purchases appear in `/library`; download data is never
 returned by public catalog or listing endpoints.
+
+### Reviewing listings
+
+A listing is published only after a platform superadmin approves it. Review
+runs from the Genfeed CLI (`@genfeedai/cli`, releases after 0.6.0), with the
+session `genfeed admin login` stores:
+
+```bash
+genfeed admin marketplace listings                 # listings waiting for review
+genfeed admin marketplace approve <listing id>     # preview; add --yes to publish
+genfeed admin marketplace reject <listing id> --reason "<text>" --yes
+```
+
+The CLI derives the Marketplace API URL from its Genfeed API URL
+(`api.example.com` becomes `api.marketplace.example.com`, local port 3010
+becomes 3200); `--marketplace-url` overrides it. The commands call
+`GET /admin/marketplace/listings` and
+`POST /admin/marketplace/listings/:id/approve` or `/reject`. Only a listing in
+`pending_review` can be approved or rejected, and the reject reason is shown to
+the seller. The local admin app on port 3205 calls the same routes.
 
 ## Production release
 
