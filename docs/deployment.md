@@ -102,7 +102,8 @@ Provisioning creates the `marketplace` database with distinct
 and the runtime's readable RDS CA bundle enabled.
 
 Configure the Stripe webhook for `https://api.marketplace.<DOMAIN>/webhooks/stripe`
-with its dedicated signing secret and checkout completed/expired events. Payment
+with its dedicated signing secret and the checkout completed, checkout expired
+and charge refunded events. Payment
 parameters must exist before infrastructure changes; the workflow checks their
 metadata without printing secret values.
 
