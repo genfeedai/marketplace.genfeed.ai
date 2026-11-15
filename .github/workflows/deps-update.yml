@@ -1,6 +1,18 @@
 # Weekly `bun run deps:update`. This repository does not use Dependabot, so
 # package bumps honor the ncu rejects (typescript, @typescript/native), wait
 # out the 3 hour release cooldown, and Action pins move in the same PR.
+#
+# Two jobs, so package install scripts never run next to a write token:
+#   update   no token, read-only: runs ncu and `bun install`, and hands over a
+#            patch limited to package manifests and the lockfile.
+#   publish  token, fresh checkout, no install: checks the patch touches only
+#            those files, applies it, bumps the Action pins with a plain Bun
+#            script, then pushes and opens or refreshes the PR.
+#
+# GITHUB_TOKEN can never push a change under `.github/workflows`, and a pull
+# request it opens does not start CI. DEPS_UPDATE_TOKEN is a fine-grained token
+# with Contents, Pull requests and Workflows write access. Without it the PR
+# carries package bumps only.
 name: Update Dependencies
 
 on:
@@ -21,22 +33,12 @@ env:
 
 jobs:
   update:
-    name: Run deps:update
+    name: Update packages
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    permissions:
-      contents: write
-      pull-requests: write
     steps:
-      # GITHUB_TOKEN can never push a change under `.github/workflows`, and a
-      # pull request it opens does not start CI. DEPS_UPDATE_TOKEN is a
-      # fine-grained token with Contents, Pull requests and Workflows write
-      # access. Without it the PR carries package bumps only. The token never
-      # reaches the checkout or the package install: credentials are not
-      # persisted, and the push step below passes the token to git itself.
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
         with:
-          fetch-depth: 0
           persist-credentials: false
 
       - name: Setup Bun environment
@@ -44,10 +46,61 @@ jobs:
         with:
           install-command: "bun install"
 
-      - name: Update packages and Action pins
+      - name: Update packages
+        run: bun run deps:update:packages
+
+      - name: Write the package patch
+        run: git diff --binary -- package.json 'apps/*/package.json' bun.lock > deps.patch
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: deps-patch
+          path: deps.patch
+          if-no-files-found: error
+
+  publish:
+    name: Open or refresh the weekly PR
+    needs: update
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: deps-patch
+
+      # No `bun install` here: this job holds the push token, so it runs no
+      # package scripts.
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+        with:
+          bun-version-file: package.json
+
+      - name: Apply the package patch
+        run: |
+          set -euo pipefail
+          if [[ -s deps.patch ]]; then
+            git apply --numstat deps.patch | awk '{ print $3 }' | while read -r path; do
+              if [[ ! "$path" =~ ^(package\.json|apps/[^/]+/package\.json|bun\.lock)$ ]]; then
+                echo "::error::The package patch touches $path, which is not a manifest or the lockfile."
+                exit 1
+              fi
+            done
+            git apply deps.patch
+          fi
+          rm -f deps.patch
+
+      - name: Update Action pins
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: bun run deps:update
+        run: bun run deps:update:actions
 
       - name: Open or refresh the weekly PR
         env:
