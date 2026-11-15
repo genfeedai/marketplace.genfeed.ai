@@ -145,3 +145,13 @@ model Payout {
 
   @@map("payouts")
 }
+
+model StripeEvent {
+  id            String    @id @default(dbgenerated("(gen_random_uuid())::text")) @db.VarChar(36)
+  stripeEventId String    @unique
+  type          String
+  processedAt   DateTime?
+  createdAt     DateTime  @default(now())
+
+  @@map("stripe_events")
+}

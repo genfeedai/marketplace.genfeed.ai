@@ -11,6 +11,10 @@ import { QueryDefaultsUtil } from '@api/common/utils/query-defaults.util';
 import { ListingsService } from '@api/listings/services/listings.service';
 import type { CreatePurchaseDto } from '@api/purchases/dto/create-purchase.dto';
 import type { PurchaseQueryDto } from '@api/purchases/dto/purchase-query.dto';
+import {
+  canTransitionPurchase,
+  purchaseStatusesThatMayBecome,
+} from '@api/purchases/purchase-status';
 import { SellersService } from '@api/sellers/services/sellers.service';
 import { PurchaseStatus } from '@genfeedai/enums';
 import {
@@ -368,43 +372,127 @@ export class PurchasesService {
     return purchase;
   }
 
-  @HandleErrors('complete purchase', 'purchases')
-  async completePurchase(purchaseId: string): Promise<PurchaseRecord> {
+  @HandleErrors('find purchase', 'purchases')
+  async findById(purchaseId: string): Promise<PurchaseRecord | null> {
     const purchase = await this.prisma.purchase.findUnique({
+      include: { listingRecord: true, sellerRecord: true },
       where: { id: purchaseId },
     });
 
+    return purchase ? mapPurchaseRecord(purchase) : null;
+  }
+
+  @HandleErrors('find purchase by payment', 'purchases')
+  async findByPaymentIntentId(
+    paymentIntentId: string,
+  ): Promise<PurchaseRecord | null> {
+    const purchase = await this.prisma.purchase.findFirst({
+      include: { listingRecord: true, sellerRecord: true },
+      where: { stripePaymentIntentId: paymentIntentId },
+    });
+
+    return purchase ? mapPurchaseRecord(purchase) : null;
+  }
+
+  /**
+   * Move a purchase to a new status only along an allowed transition. The
+   * status check and the write are one statement, so two deliveries of the
+   * same event cannot both win. Returns whether this call made the move.
+   */
+  private async transitionStatus(
+    purchaseId: string,
+    to: PurchaseStatus,
+    data: Prisma.PurchaseUpdateManyMutationInput = {},
+  ): Promise<{ applied: boolean; purchase: PurchaseRecord }> {
+    const { count } = await this.prisma.purchase.updateMany({
+      data: { ...data, status: to },
+      where: {
+        id: purchaseId,
+        status: { in: purchaseStatusesThatMayBecome(to) },
+      },
+    });
+
+    const purchase = await this.findById(purchaseId);
     if (!purchase) {
       throw new NotFoundException('Purchase not found');
     }
 
-    if (purchase.status === PurchaseStatus.COMPLETED) {
-      const completedPurchase = await this.prisma.purchase.findUnique({
-        include: {
-          listingRecord: true,
-          sellerRecord: true,
-        },
-        where: { id: purchaseId },
+    if (count === 0 && !canTransitionPurchase(purchase.status, to)) {
+      this.logger.warn('Purchase status change refused', {
+        from: purchase.status,
+        purchaseId,
+        to,
       });
-
-      return mapPurchaseRecord(completedPurchase!);
     }
 
-    const updated = await this.updatePurchase(purchaseId, {
-      status: PurchaseStatus.COMPLETED,
-    });
+    return { applied: count === 1, purchase };
+  }
 
+  @HandleErrors('complete purchase', 'purchases')
+  async completePurchase(
+    purchaseId: string,
+    paymentIntentId: string | null,
+  ): Promise<{ applied: boolean; purchase: PurchaseRecord }> {
+    const result = await this.transitionStatus(
+      purchaseId,
+      PurchaseStatus.COMPLETED,
+      { stripePaymentIntentId: paymentIntentId },
+    );
+
+    if (result.applied) {
+      await this.addPurchaseToStats(result.purchase, 1);
+    }
+
+    return result;
+  }
+
+  @HandleErrors('refund purchase', 'purchases')
+  async refundPurchase(
+    purchaseId: string,
+    paymentIntentId: string | null,
+  ): Promise<{ applied: boolean; purchase: PurchaseRecord }> {
+    const before = await this.findById(purchaseId);
+    if (!before) {
+      throw new NotFoundException('Purchase not found');
+    }
+
+    const result = await this.transitionStatus(
+      purchaseId,
+      PurchaseStatus.REFUNDED,
+      { stripePaymentIntentId: paymentIntentId },
+    );
+
+    // Only a purchase that had counted as a sale gives that sale back.
+    if (result.applied && before.status === PurchaseStatus.COMPLETED) {
+      await this.addPurchaseToStats(result.purchase, -1);
+    }
+
+    return result;
+  }
+
+  @HandleErrors('fail purchase', 'purchases')
+  failPurchase(
+    purchaseId: string,
+    reason: string,
+  ): Promise<{ applied: boolean; purchase: PurchaseRecord }> {
+    return this.transitionStatus(purchaseId, PurchaseStatus.FAILED, {
+      failureReason: reason,
+    });
+  }
+
+  private async addPurchaseToStats(
+    purchase: PurchaseRecord,
+    direction: 1 | -1,
+  ): Promise<void> {
     await this.listingsService.updateListingStats(purchase.listing, {
-      purchases: 1,
-      revenue: purchase.total,
+      purchases: direction,
+      revenue: direction * purchase.total,
     });
 
     await this.sellersService.incrementSellerStats(purchase.seller, {
-      totalEarnings: purchase.sellerEarnings,
-      totalSales: 1,
+      totalEarnings: direction * purchase.sellerEarnings,
+      totalSales: direction,
     });
-
-    return updated!;
   }
 
   @HandleErrors('track download', 'purchases')
@@ -441,9 +529,10 @@ export class PurchasesService {
       organization: organizationId,
     };
 
-    if (query.status) {
-      where.status = query.status;
-    }
+    // A refunded purchase leaves the library unless it is asked for by status.
+    where.status = query.status
+      ? query.status
+      : { not: PurchaseStatus.REFUNDED };
 
     const orderBy = buildOrderBy(
       query.sort,
