@@ -1,6 +1,7 @@
 import { MarketplaceStripeService } from '@api/common/services/stripe.service';
 import { MarketplaceConfigService } from '@api/config/config.service';
 import { CheckoutService } from '@api/purchases/services/checkout.service';
+import { StripeEventLedgerService } from '@api/webhooks/stripe-event-ledger.service';
 import { StripeWebhookService } from '@api/webhooks/stripe-webhook.service';
 import { WebhooksController } from '@api/webhooks/webhooks.controller';
 import type { INestApplication } from '@nestjs/common';
@@ -41,6 +42,13 @@ describe('Stripe signed raw-body delivery', () => {
           useValue: { stripeWebhookSecret: secret },
         },
         { provide: CheckoutService, useValue: checkout },
+        {
+          provide: StripeEventLedgerService,
+          useValue: {
+            claim: vi.fn().mockResolvedValue(true),
+            markProcessed: vi.fn().mockResolvedValue(undefined),
+          },
+        },
       ],
     }).compile();
     app = module.createNestApplication({ rawBody: true });
