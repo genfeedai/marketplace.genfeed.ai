@@ -1,6 +1,6 @@
 # Marketplace
 
-Private content marketplace for Genfeed.ai — standalone cloud product, not deployed yet.
+Content marketplace for Genfeed.ai. Open source (AGPL-3.0), its own repository, not in production yet. See `README.md`, `SECURITY.md` and `CONTRIBUTING.md`.
 
 ## Structure
 
@@ -33,7 +33,7 @@ Consumes `@genfeedai/*` packages from NPM:
 ## Rules
 
 1. No `any` types in TypeScript.
-2. No secrets in repo.
+2. No secrets in repo. Issues, pull requests and comments are public: no customer names, production identifiers or credentials.
 3. Conventional commits.
 4. Prefer existing patterns over novel architecture.
 5. Keep changes minimal and scoped.

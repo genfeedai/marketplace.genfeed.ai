@@ -36,7 +36,7 @@ Agents must not dispatch or retry a release without explicit user approval.
 
 ## Production configuration
 
-Create a `production` environment **in this repository**. No private checkout
+Create a `production` environment **in this repository**. No checkout
 token is needed: every checkout is from the same repository and approved SHA.
 
 | Variable | Meaning |
