@@ -72,9 +72,12 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
+      # Outside the workspace, so nothing in the artifact can replace a file
+      # this job runs. Only `deps.patch` is read, below.
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           name: deps-patch
+          path: ${{ runner.temp }}/deps-patch
 
       # No `bun install` and no `bun run` here: this job holds the push token,
       # so it runs no package script. The patched package.json is data only;
@@ -85,18 +88,19 @@ jobs:
           bun-version-file: package.json
 
       - name: Apply the package patch
+        env:
+          PATCH: ${{ runner.temp }}/deps-patch/deps.patch
         run: |
           set -euo pipefail
-          if [[ -s deps.patch ]]; then
-            git apply --numstat deps.patch | awk '{ print $3 }' | while read -r path; do
+          if [[ -s "$PATCH" ]]; then
+            git apply --numstat "$PATCH" | awk '{ print $3 }' | while read -r path; do
               if [[ ! "$path" =~ ^(package\.json|apps/[^/]+/package\.json|bun\.lock)$ ]]; then
                 echo "::error::The package patch touches $path, which is not a manifest or the lockfile."
                 exit 1
               fi
             done
-            git apply deps.patch
+            git apply "$PATCH"
           fi
-          rm -f deps.patch
 
       - name: Update Action pins
         env:
