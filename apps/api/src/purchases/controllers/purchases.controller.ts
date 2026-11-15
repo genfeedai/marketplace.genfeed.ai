@@ -30,6 +30,7 @@ import { CheckoutDto } from '@api/purchases/dto/checkout.dto';
 import { PurchaseQueryDto } from '@api/purchases/dto/purchase-query.dto';
 import { CheckoutService } from '@api/purchases/services/checkout.service';
 import { PurchasesService } from '@api/purchases/services/purchases.service';
+import { PURCHASE_RATE_LIMIT } from '@api/rate-limit';
 import { AdminSellerQueryDto } from '@api/sellers/dto/admin-seller-query.dto';
 import { SellersService } from '@api/sellers/services/sellers.service';
 import {
@@ -46,6 +47,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import type { Request } from 'express';
 
 @AutoSwagger()
@@ -69,6 +71,7 @@ export class PurchasesController {
    * Create Stripe Checkout session for a listing
    */
   @Post('listings/:listingId/checkout')
+  @Throttle(PURCHASE_RATE_LIMIT)
   @LogMethod({ logEnd: false, logError: true, logStart: true })
   async createCheckoutSession(
     @Req() request: Request,
@@ -153,6 +156,7 @@ export class PurchasesController {
    * Claim a free listing
    */
   @Post('listings/:listingId/claim')
+  @Throttle(PURCHASE_RATE_LIMIT)
   @LogMethod({ logEnd: false, logError: true, logStart: true })
   async claimFreeListing(
     @Req() request: Request,
@@ -315,6 +319,37 @@ export class PurchasesController {
   }
 
   /**
+   * Check if user owns a listing
+   */
+  @Get('purchases/by-listing/:listingId/ownership')
+  @LogMethod({ logEnd: false, logError: true, logStart: true })
+  async checkOwnership(
+    @Param('listingId') listingId: string,
+    @CurrentUser() user: MarketplacePrincipal,
+  ): Promise<JsonApiSingleResponse> {
+    const publicMetadata = getIdentity(user);
+
+    const { owned, purchase } =
+      await this.purchasesService.checkListingOwnership(
+        listingId,
+        publicMetadata.user,
+        publicMetadata.organization,
+      );
+
+    return {
+      data: {
+        attributes: {
+          listingId,
+          owned,
+          purchaseId: purchase?.id,
+        },
+        id: listingId,
+        type: 'listing-ownership',
+      },
+    };
+  }
+
+  /**
    * Install payload of a listing the caller has bought. The Genfeed API relays
    * the buyer's own token here; the payload is returned only for a completed,
    * non-deleted purchase of this listing by this user in this organization.
@@ -356,37 +391,6 @@ export class PurchasesController {
         },
         id: purchase.id,
         type: 'install-data',
-      },
-    };
-  }
-
-  /**
-   * Check if user owns a listing
-   */
-  @Get('listings/:listingId/ownership')
-  @LogMethod({ logEnd: false, logError: true, logStart: true })
-  async checkOwnership(
-    @Param('listingId') listingId: string,
-    @CurrentUser() user: MarketplacePrincipal,
-  ): Promise<JsonApiSingleResponse> {
-    const publicMetadata = getIdentity(user);
-
-    const { owned, purchase } =
-      await this.purchasesService.checkListingOwnership(
-        listingId,
-        publicMetadata.user,
-        publicMetadata.organization,
-      );
-
-    return {
-      data: {
-        attributes: {
-          listingId,
-          owned,
-          purchaseId: purchase?.id,
-        },
-        id: listingId,
-        type: 'listing-ownership',
       },
     };
   }
@@ -499,14 +503,8 @@ export class AdminMarketplacePurchasesController {
   async getPurchases(
     @Req() request: Request,
     @ValidatedQuery(AdminPurchaseQueryDto) query: AdminPurchaseQueryDto,
-    @CurrentUser() user: MarketplacePrincipal,
   ): Promise<JsonApiCollectionResponse> {
-    const publicMetadata = getIdentity(user);
-
-    const data = await this.purchasesService.getAdminPurchases(
-      publicMetadata.organization,
-      query,
-    );
+    const data = await this.purchasesService.getAdminPurchases(query);
 
     return serializeCollection(
       request,
@@ -521,13 +519,9 @@ export class AdminMarketplacePurchasesController {
   async getPurchase(
     @Req() request: Request,
     @Param('purchaseId') purchaseId: string,
-    @CurrentUser() user: MarketplacePrincipal,
   ): Promise<JsonApiSingleResponse> {
-    const publicMetadata = getIdentity(user);
-    const purchase = await this.purchasesService.getAdminPurchaseById(
-      publicMetadata.organization,
-      purchaseId,
-    );
+    const purchase =
+      await this.purchasesService.getAdminPurchaseById(purchaseId);
 
     if (!purchase) {
       return returnNotFound('AdminMarketplacePurchasesController', purchaseId);
@@ -565,7 +559,6 @@ export class AdminMarketplaceController {
     const parsedDays = days ? Number(days) : 30;
 
     const analytics = await this.purchasesService.getAdminAnalyticsOverview(
-      publicMetadata.organization,
       Number.isFinite(parsedDays) ? parsedDays : 30,
     );
 
@@ -581,13 +574,8 @@ export class AdminMarketplaceController {
   async getPayouts(
     @Req() request: Request,
     @ValidatedQuery(AdminSellerQueryDto) query: AdminSellerQueryDto,
-    @CurrentUser() user: MarketplacePrincipal,
   ): Promise<JsonApiCollectionResponse> {
-    const publicMetadata = getIdentity(user);
-    const data = await this.sellersService.getAdminPayouts(
-      publicMetadata.organization,
-      query,
-    );
+    const data = await this.sellersService.getAdminPayouts(query);
 
     return serializeCollection(
       request,

@@ -520,8 +520,7 @@ export class PurchasesService {
     organizationId: string,
     query: PurchaseQueryDto,
   ): Promise<PaginatedResult<PurchaseRecord>> {
-    const { limit, page, pagination } =
-      QueryDefaultsUtil.getPaginationDefaults(query);
+    const { limit, page } = QueryDefaultsUtil.getPaginationDefaults(query);
 
     const where: Prisma.PurchaseWhereInput = {
       buyer: buyerId,
@@ -539,24 +538,6 @@ export class PurchasesService {
       PurchasesService.sortableFields,
       'createdAt',
     );
-
-    if (!pagination) {
-      const docs = await this.prisma.purchase.findMany({
-        include: {
-          listingRecord: true,
-          sellerRecord: true,
-        },
-        orderBy,
-        where,
-      });
-
-      return paginateDocs({
-        docs: docs.map(mapPurchaseRecord),
-        limit: Math.max(docs.length, 1),
-        page: 1,
-        total: docs.length,
-      });
-    }
 
     const [total, docs] = await this.prisma.$transaction([
       this.prisma.purchase.count({ where }),
@@ -639,8 +620,7 @@ export class PurchasesService {
     sellerId: string,
     query: PurchaseQueryDto,
   ): Promise<PaginatedResult<PurchaseRecord>> {
-    const { limit, page, pagination } =
-      QueryDefaultsUtil.getPaginationDefaults(query);
+    const { limit, page } = QueryDefaultsUtil.getPaginationDefaults(query);
 
     const where: Prisma.PurchaseWhereInput = {
       isDeleted: false,
@@ -656,24 +636,6 @@ export class PurchasesService {
       PurchasesService.sortableFields,
       'createdAt',
     );
-
-    if (!pagination) {
-      const docs = await this.prisma.purchase.findMany({
-        include: {
-          listingRecord: true,
-          sellerRecord: true,
-        },
-        orderBy,
-        where,
-      });
-
-      return paginateDocs({
-        docs: docs.map(mapPurchaseRecord),
-        limit: Math.max(docs.length, 1),
-        page: 1,
-        total: docs.length,
-      });
-    }
 
     const [total, docs] = await this.prisma.$transaction([
       this.prisma.purchase.count({ where }),
@@ -779,15 +741,12 @@ export class PurchasesService {
 
   @HandleErrors('get admin purchases', 'purchases')
   async getAdminPurchases(
-    organizationId: string,
     query: PurchaseQueryDto & { search?: string },
   ): Promise<PaginatedResult<PurchaseRecord>> {
-    const { limit, page, pagination } =
-      QueryDefaultsUtil.getPaginationDefaults(query);
+    const { limit, page } = QueryDefaultsUtil.getPaginationDefaults(query);
 
     const where: Prisma.PurchaseWhereInput = {
       isDeleted: false,
-      organization: organizationId,
     };
 
     if (query.status) {
@@ -815,21 +774,11 @@ export class PurchasesService {
       this.matchesAdminSearch(purchase, search),
     );
 
-    if (!pagination) {
-      return paginateDocs({
-        docs: filteredDocs,
-        limit: Math.max(filteredDocs.length, 1),
-        page: 1,
-        total: filteredDocs.length,
-      });
-    }
-
     return this.paginateMappedDocs(filteredDocs, page, limit);
   }
 
   @HandleErrors('get admin purchase by id', 'purchases')
   async getAdminPurchaseById(
-    organizationId: string,
     purchaseId: string,
   ): Promise<PurchaseRecord | null> {
     const purchase = await this.prisma.purchase.findFirst({
@@ -840,7 +789,6 @@ export class PurchasesService {
       where: {
         id: purchaseId,
         isDeleted: false,
-        organization: organizationId,
       },
     });
 
@@ -848,10 +796,7 @@ export class PurchasesService {
   }
 
   @HandleErrors('get admin analytics overview', 'purchases')
-  async getAdminAnalyticsOverview(
-    organizationId: string,
-    days = 30,
-  ): Promise<{
+  async getAdminAnalyticsOverview(days = 30): Promise<{
     totalRevenue: number;
     totalSales: number;
     totalPlatformFees: number;
@@ -872,7 +817,6 @@ export class PurchasesService {
       },
       where: {
         isDeleted: false,
-        organization: organizationId,
       },
     });
 

@@ -7,8 +7,10 @@ import {
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
+import { SkipThrottle } from '@nestjs/throttler';
 
 @ApiTags('health')
+@SkipThrottle()
 @Controller('health')
 export class HealthController {
   constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}

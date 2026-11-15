@@ -417,13 +417,8 @@ export class AdminSellersController {
   async getSellers(
     @Req() request: Request,
     @ValidatedQuery(AdminSellerQueryDto) query: AdminSellerQueryDto,
-    @CurrentUser() user: MarketplacePrincipal,
   ): Promise<JsonApiCollectionResponse> {
-    const publicMetadata = getIdentity(user);
-    const data = await this.sellersService.getAdminSellers(
-      publicMetadata.organization,
-      query,
-    );
+    const data = await this.sellersService.getAdminSellers(query);
 
     return serializeCollection(
       request,
@@ -438,13 +433,8 @@ export class AdminSellersController {
   async getSeller(
     @Req() request: Request,
     @Param('sellerId') sellerId: string,
-    @CurrentUser() user: MarketplacePrincipal,
   ): Promise<JsonApiSingleResponse> {
-    const publicMetadata = getIdentity(user);
-    const seller = await this.sellersService.getAdminSellerById(
-      publicMetadata.organization,
-      sellerId,
-    );
+    const seller = await this.sellersService.getAdminSellerById(sellerId);
 
     if (!seller) {
       return returnNotFound('AdminSellersController', sellerId);
@@ -464,11 +454,8 @@ export class AdminSellersController {
     @Req() request: Request,
     @Param('sellerId') sellerId: string,
     @ValidatedBody(UpdateSellerStatusDto) body: UpdateSellerStatusDto,
-    @CurrentUser() user: MarketplacePrincipal,
   ): Promise<JsonApiSingleResponse> {
-    const publicMetadata = getIdentity(user);
     const updated = await this.sellersService.setSellerStatus(
-      publicMetadata.organization,
       sellerId,
       body.status,
     );

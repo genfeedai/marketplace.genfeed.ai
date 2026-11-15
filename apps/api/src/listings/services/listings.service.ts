@@ -360,8 +360,7 @@ export class ListingsService {
     sellerId: string,
     query: ListingQueryDto,
   ): Promise<PaginatedResult<ListingRecord>> {
-    const { limit, page, pagination } =
-      QueryDefaultsUtil.getPaginationDefaults(query);
+    const { limit, page } = QueryDefaultsUtil.getPaginationDefaults(query);
 
     const where: Prisma.ListingWhereInput = {
       isDeleted: false,
@@ -381,21 +380,6 @@ export class ListingsService {
       ListingsService.sortableFields,
       'createdAt',
     );
-
-    if (!pagination) {
-      const docs = await this.prisma.listing.findMany({
-        include: { sellerRecord: true },
-        orderBy,
-        where,
-      });
-
-      return paginateDocs({
-        docs: docs.map(mapListingRecord),
-        limit: Math.max(docs.length, 1),
-        page: 1,
-        total: docs.length,
-      });
-    }
 
     const [total, docs] = await this.prisma.$transaction([
       this.prisma.listing.count({ where }),
@@ -420,8 +404,7 @@ export class ListingsService {
   async getPublicListings(
     query: ListingQueryDto,
   ): Promise<PaginatedResult<ListingRecord>> {
-    const { limit, page, pagination } =
-      QueryDefaultsUtil.getPaginationDefaults(query);
+    const { limit, page } = QueryDefaultsUtil.getPaginationDefaults(query);
 
     const where: Prisma.ListingWhereInput = {
       isDeleted: false,
@@ -478,21 +461,6 @@ export class ListingsService {
       'createdAt',
     );
 
-    if (!pagination) {
-      const docs = await this.prisma.listing.findMany({
-        include: { sellerRecord: true },
-        orderBy,
-        where,
-      });
-
-      return paginateDocs({
-        docs: docs.map(mapListingRecord),
-        limit: Math.max(docs.length, 1),
-        page: 1,
-        total: docs.length,
-      });
-    }
-
     const [total, docs] = await this.prisma.$transaction([
       this.prisma.listing.count({ where }),
       this.prisma.listing.findMany({
@@ -514,15 +482,12 @@ export class ListingsService {
 
   @HandleErrors('get admin listings', 'listings')
   async getAdminListings(
-    organizationId: string,
     query: ListingQueryDto,
   ): Promise<PaginatedResult<ListingRecord>> {
-    const { limit, page, pagination } =
-      QueryDefaultsUtil.getPaginationDefaults(query);
+    const { limit, page } = QueryDefaultsUtil.getPaginationDefaults(query);
 
     const where: Prisma.ListingWhereInput = {
       isDeleted: false,
-      organization: organizationId,
     };
 
     if (query.status) {
@@ -548,21 +513,6 @@ export class ListingsService {
       'createdAt',
     );
 
-    if (!pagination) {
-      const docs = await this.prisma.listing.findMany({
-        include: { sellerRecord: true },
-        orderBy,
-        where,
-      });
-
-      return paginateDocs({
-        docs: docs.map(mapListingRecord),
-        limit: Math.max(docs.length, 1),
-        page: 1,
-        total: docs.length,
-      });
-    }
-
     const [total, docs] = await this.prisma.$transaction([
       this.prisma.listing.count({ where }),
       this.prisma.listing.findMany({
@@ -583,16 +533,12 @@ export class ListingsService {
   }
 
   @HandleErrors('get admin listing', 'listings')
-  async getAdminListingById(
-    organizationId: string,
-    listingId: string,
-  ): Promise<ListingRecord | null> {
+  async getAdminListingById(listingId: string): Promise<ListingRecord | null> {
     const listing = await this.prisma.listing.findFirst({
       include: { sellerRecord: true },
       where: {
         id: listingId,
         isDeleted: false,
-        organization: organizationId,
       },
     });
 
