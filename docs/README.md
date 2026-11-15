@@ -80,8 +80,11 @@ The initial migration targets a fresh database. Existing databases initialized
 with `db push` require a verified migration baseline before production deploy.
 
 Configure Stripe to deliver signed events to `/webhooks/stripe`, including
-`checkout.session.completed` and `checkout.session.expired`. Invalid signatures
-return 400; processing failures return 500 so Stripe retries. Real payment and
+`checkout.session.completed`, `checkout.session.expired` and `charge.refunded`.
+Each event id is stored and applied once; a purchase completes only when the
+session is paid and its amount and currency match, and a fully refunded charge
+refunds its purchase. Invalid signatures return 400; processing failures
+return 500 so Stripe retries. Real payment and
 payout verification still requires an authorized Stripe test environment.
 
 Validation commands:

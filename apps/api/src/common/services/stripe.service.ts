@@ -69,6 +69,15 @@ export interface StripePaymentIntent {
   id: string;
 }
 
+export interface StripeCharge {
+  id: string;
+  amount: number;
+  amount_refunded: number;
+  currency: string;
+  payment_intent?: string | null;
+  refunded: boolean;
+}
+
 export interface StripeRefund {
   id: string;
 }
@@ -98,6 +107,10 @@ interface StripeLikeClient {
         params: StripeCheckoutSessionCreateParams,
       ): Promise<StripeCheckoutSession>;
       retrieve(sessionId: string): Promise<StripeCheckoutSession>;
+      list(params: {
+        limit: number;
+        payment_intent: string;
+      }): Promise<{ data: StripeCheckoutSession[] }>;
     };
   };
   accounts: {
