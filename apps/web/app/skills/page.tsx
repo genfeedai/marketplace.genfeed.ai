@@ -12,9 +12,8 @@ export default function SkillsPage(): ReactNode {
   return (
     <main className="mx-auto max-w-7xl px-4 py-8">
       <PageHeader
-        icon={'\uD83E\uDDE0'}
         title="Skills"
-        description="Agent skills that extend what your AI can do"
+        description="Agent skills that teach your AI how to make the content"
       />
       <ProductCatalog type="skill" />
     </main>

@@ -10,69 +10,57 @@ export const metadata: Metadata = createIndexableMetadata('/about');
 export default function AboutPage(): ReactNode {
   return (
     <ContentPage
-      icon={'\u2728'}
       title="About"
-      description="Curated systems for creators with taste"
+      description="The systems Genfeed uses to make content, ready for you to run"
     >
       <ContentSection heading="What this is">
         <p>
-          The Genfeed.ai marketplace is where creators buy and sell the systems
-          behind their output — automated workflows, prompt collections, agent
-          skills, and presets. Not one-off files, but the repeatable machinery
-          that produces work at a consistent standard.
+          The Genfeed store sells the workflows, prompts, presets and skills
+          that Genfeed builds and uses to make content. Each one is a working
+          system, not a loose file: you run it and it produces the post, the
+          clip or the carousel.
         </p>
       </ContentSection>
 
-      <ContentSection heading="Why curated">
+      <ContentSection heading="Who makes it">
         <p>
-          Volume is easy and quality is not. Every listing is reviewed against
-          our{' '}
+          Everything here is made and maintained by Genfeed. Each listing says
+          what it produces, what it needs and what you receive, so you know what
+          you are buying before you pay. The{' '}
           <Link className="text-white underline" href="/guidelines">
-            guidelines
+            store standards
           </Link>{' '}
-          before it goes live, so previews reflect what a listing actually
-          produces and dependencies are declared up front. The aim is a
-          catalogue you can buy from without having to verify each claim
-          yourself.
+          set the bar.
         </p>
       </ContentSection>
 
-      <ContentSection heading="For sellers">
+      <ContentSection heading="How buying works">
         <p>
-          If you have already built the workflow, prompt system, or skill that
-          your own work depends on, it is likely worth something to someone
-          else. Sellers keep ownership of what they list and are paid through
-          Stripe — the{' '}
-          <Link className="text-white underline" href="/sell">
-            seller page
-          </Link>{' '}
-          covers how to start and{' '}
-          <Link className="text-white underline" href="/payouts">
-            payouts
-          </Link>{' '}
-          covers the money.
+          You pay once, by card. What you buy appears in your{' '}
+          <Link className="text-white underline" href="/library">
+            library
+          </Link>
+          , ready to download. Free products are added to your library the same
+          way.
         </p>
       </ContentSection>
 
       <ContentSection heading="Relationship to Genfeed.ai">
         <p>
-          The marketplace is part of Genfeed.ai, the content operating system
-          for create, remix, publish, repeat. Purchases install into your
-          Genfeed.ai workspace, though you do not need a Genfeed.ai subscription
-          to browse or buy here.
+          The store is part of Genfeed.ai. You sign in with your Genfeed
+          account. You do not need a paid Genfeed plan to browse or buy here.
         </p>
       </ContentSection>
 
       <ContentSection heading="Get in touch">
         <p>
-          Questions, listing reports, and partnership enquiries all go through
-          our{' '}
+          Questions and order problems go through the{' '}
           <Link className="text-white underline" href="/contact">
             contact page
           </Link>
-          . Or start with{' '}
+          , which says what to include. Or start by{' '}
           <Link className="text-white underline" href="/browse">
-            browsing the catalogue
+            browsing the store
           </Link>
           .
         </p>

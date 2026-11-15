@@ -12,9 +12,8 @@ export default function WorkflowsPage(): ReactNode {
   return (
     <main className="mx-auto max-w-7xl px-4 py-8">
       <PageHeader
-        icon={'\u2699\uFE0F'}
         title="Workflows"
-        description="Automated content workflows ready to deploy"
+        description="Content workflows you run from a brief to a finished post"
       />
       <ProductCatalog type="workflow" />
     </main>

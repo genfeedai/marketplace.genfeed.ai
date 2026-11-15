@@ -12,14 +12,12 @@ export default async function LeaderboardPage(): Promise<ReactNode> {
   return (
     <main className="mx-auto max-w-5xl px-4 py-8">
       <PageHeader
-        icon={'\uD83C\uDFC6'}
         title="Leaderboard"
         description="The most-viewed public posts from the Genfeed community"
       />
 
       {result.status === 'unavailable' && (
         <EmptyState
-          icon={'\u26A0\uFE0F'}
           label="Leaderboard Unavailable"
           description="Genfeed could not load public post rankings right now. Please try again shortly."
         />
@@ -27,7 +25,6 @@ export default async function LeaderboardPage(): Promise<ReactNode> {
 
       {result.status === 'success' && rankedPosts.length === 0 && (
         <EmptyState
-          icon={'\uD83C\uDFC6'}
           label="No Public Rankings Yet"
           description="Popular posts will appear here when creators publish content publicly on Genfeed."
         />

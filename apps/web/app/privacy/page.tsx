@@ -12,7 +12,6 @@ const LAST_UPDATED = '5 August 2026';
 export default function PrivacyPage(): ReactNode {
   return (
     <ContentPage
-      icon={'\uD83D\uDD12'}
       title="Privacy Policy"
       description={`Last updated ${LAST_UPDATED}`}
     >
