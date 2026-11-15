@@ -172,12 +172,14 @@ jobs:
       # carries, so an incompatible schema stops here and not at deploy.
       - name: Check migrations match the Prisma schema
         working-directory: apps/api
+        env:
+          DATABASE_URL: postgresql://postgres@127.0.0.1:5432/migrations_check
         run: |
-          psql postgresql://postgres@127.0.0.1:5432/postgres -c 'CREATE DATABASE prisma_shadow'
+          psql postgresql://postgres@127.0.0.1:5432/postgres -c 'CREATE DATABASE migrations_check'
+          bun run prisma:migrate
           bunx prisma migrate diff \
-            --from-migrations prisma/migrations \
-            --to-schema-datamodel prisma/schema.prisma \
-            --shadow-database-url postgresql://postgres@127.0.0.1:5432/prisma_shadow \
+            --from-config-datasource \
+            --to-schema prisma/schema.prisma \
             --exit-code
 
   e2e:
