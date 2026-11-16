@@ -5,6 +5,7 @@ locals {
   hosted            = var.network
   secret_arn_prefix = "arn:aws:ssm:${var.region}:${data.aws_caller_identity.current.account_id}:parameter"
   image             = "${aws_ecr_repository.marketplace.repository_url}@${var.image_digest}"
+  acm_caa_issuers   = ["amazon.com", "amazontrust.com", "awstrust.com", "amazonaws.com"]
   app_secret_names  = ["DATABASE_URL", "STRIPE_SECRET_KEY", "STRIPE_WEBHOOK_SECRET"]
   app_secrets       = [for name in local.app_secret_names : { name = name, valueFrom = "${local.secret_arn_prefix}${var.ssm_path}/${name}" }]
   environment = [
@@ -116,10 +117,27 @@ resource "aws_ecs_task_definition" "operation" {
     logConfiguration = { logDriver = "awslogs", options = { "awslogs-group" = aws_cloudwatch_log_group.operations.name, "awslogs-region" = var.region, "awslogs-stream-prefix" = each.key } },
   }])
 }
+# marketplace.<domain> is a CNAME to Vercel, so a name below it with no CAA set of
+# its own inherits Vercel's CAA set, which does not allow Amazon. ACM then fails
+# the certificate with CAA_ERROR. Own the set here so issuance never depends on
+# the parent name.
+resource "aws_route53_record" "caa" {
+  zone_id = local.hosted.route53_zone_id
+  name    = local.fqdn
+  type    = "CAA"
+  ttl     = 300
+  records = [for ca in local.acm_caa_issuers : "0 issue \"${ca}\""]
+}
+# The CAA set exists before the certificate is requested. A certificate that ended
+# in FAILED cannot be validated again, so a change to the set also replaces it.
 resource "aws_acm_certificate" "api" {
   domain_name       = local.fqdn
   validation_method = "DNS"
-  lifecycle { create_before_destroy = true }
+  depends_on        = [aws_route53_record.caa]
+  lifecycle {
+    create_before_destroy = true
+    replace_triggered_by  = [aws_route53_record.caa]
+  }
 }
 resource "aws_route53_record" "validation" {
   for_each = { for d in aws_acm_certificate.api.domain_validation_options : d.domain_name => d }
