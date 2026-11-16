@@ -8,7 +8,7 @@ import { join, relative } from 'node:path';
  * listings through the seller routes. Nothing here writes to a database.
  */
 
-export interface SkillFile {
+interface SkillFile {
   path: string;
   content: string;
 }
@@ -82,7 +82,7 @@ export function shortDescription(text: string): string {
   return `${cut.slice(0, cut.lastIndexOf(' '))}…`;
 }
 
-export function readSkillFiles(skillDir: string): SkillFile[] {
+function readSkillFiles(skillDir: string): SkillFile[] {
   const files: SkillFile[] = [];
   const walk = (dir: string) => {
     for (const entry of readdirSync(dir).sort()) {

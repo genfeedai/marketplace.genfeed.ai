@@ -1,7 +1,7 @@
 import { record, stripeRedirect, text } from './marketplace-api';
 import { getApiBaseUrl } from './public-content';
 
-export interface SkillsProPack {
+interface SkillsProPack {
   slug: string;
   name: string;
   category: string;
@@ -15,8 +15,8 @@ export interface SkillsProBundle {
 }
 
 /** The path the buyer returns to after Stripe; the store page reads `session_id`. */
-export const SKILLS_PRO_SUCCESS_PATH = '/skills/purchased';
-export const SKILLS_PRO_CANCEL_PATH = '/skills';
+const SKILLS_PRO_SUCCESS_PATH = '/skills/purchased';
+const SKILLS_PRO_CANCEL_PATH = '/skills';
 
 export function parseSkillsProStorefront(payload: unknown): SkillsProBundle {
   if (
