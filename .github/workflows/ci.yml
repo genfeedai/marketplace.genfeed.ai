@@ -50,6 +50,8 @@ jobs:
         run: bun run lint
       - name: Check GitHub Action pins
         run: bun run check:action-versions
+      - name: Check the TypeScript toolchain
+        run: bun run check:typescript-toolchain
 
   secrets:
     name: Secret scan
