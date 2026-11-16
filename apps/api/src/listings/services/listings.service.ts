@@ -10,7 +10,7 @@ import type { CreateListingDto } from '@api/listings/dto/create-listing.dto';
 import type { ListingQueryDto } from '@api/listings/dto/listing-query.dto';
 import type { UpdateListingDto } from '@api/listings/dto/update-listing.dto';
 import { SellersService } from '@api/sellers/services/sellers.service';
-import { ListingStatus, SellerStatus } from '@genfeedai/enums';
+import { ListingStatus, SellerStatus } from '@genfeedai/contracts/enums';
 import {
   BadRequestException,
   Inject,

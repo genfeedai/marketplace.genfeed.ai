@@ -18,7 +18,7 @@ import {
 } from '@api/listings/utils/external-checkout';
 import { PurchasesService } from '@api/purchases/services/purchases.service';
 import { SellersService } from '@api/sellers/services/sellers.service';
-import { PurchaseStatus } from '@genfeedai/enums';
+import { PurchaseStatus } from '@genfeedai/contracts/enums';
 import {
   BadRequestException,
   Inject,

@@ -26,10 +26,6 @@
     "secretlint": "secretlint '**/*'",
     "prepare": "husky || true"
   },
-  "overrides": {
-    "@genfeedai/constants": "2.2.9",
-    "@genfeedai/enums": "2.3.2"
-  },
   "devDependencies": {
     "@biomejs/biome": "2.6.8",
     "@secretlint/secretlint-rule-preset-recommend": "13.1.0",
