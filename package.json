@@ -34,7 +34,7 @@
     "@secretlint/secretlint-rule-preset-recommend": "13.1.0",
     "@typescript/native": "npm:typescript@7.0.2",
     "husky": "9.1.7",
-    "secretlint": "13.1.0",
+    "secretlint": "14.0.0",
     "turbo": "2.11.11",
     "typescript": "6.0.3"
   }
