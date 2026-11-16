@@ -1,5 +1,9 @@
 import { BaseQueryDto } from '@api/common/dto/base-query.dto';
-import { ListingStatus, ListingType, PricingTier } from '@genfeedai/enums';
+import {
+  ListingStatus,
+  ListingType,
+  PricingTier,
+} from '@genfeedai/contracts/enums';
 import { ApiProperty } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import {
