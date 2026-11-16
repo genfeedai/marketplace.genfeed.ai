@@ -89,9 +89,29 @@ The deploy role needs read access to the referenced network and Marketplace
 state, writes to only its state key, image repository, IAM task-role prefix and
 Marketplace resources, permission to pass its ECS roles, create/tag/wait for
 its pre-migration RDS snapshots, and add its database ingress, API listener rule,
-certificate and DNS records. The Genfeed deployment role's OIDC trust does not
-automatically authorize this repository; provision a dedicated role before an
-approved release. None of these account settings are applied by merging this PR.
+certificate and DNS records, and `logs:FilterLogEvents` on the `operations` log
+group so a failed run can print the task output. The Genfeed deployment role's
+OIDC trust does not automatically authorize this repository; provision a
+dedicated role before an approved release. None of these account settings are applied by merging this PR.
+
+## Recovering a failed API deploy
+
+Every infrastructure step reads the Marketplace state, so a failed attempt leaves
+what it created and the next attempt continues from it. Dispatch Release again
+with the same `vX.Y.Z`; no tag exists until the last job passes. The source SHA
+must be the current master head, so it moves once a fix has merged.
+
+- Each attempt uploads its own image tag and registers a new task definition.
+- Database provisioning is skipped when the dedicated parameters exist, the
+  migration task is idempotent, and every attempt takes another RDS snapshot.
+- The API domain stays unpointed until the service has a healthy target, so a
+  failed attempt never serves traffic.
+- `api.marketplace.<DOMAIN>` carries its own CAA set that allows Amazon. Without
+  it the lookup climbs to `marketplace.<DOMAIN>`, which is a CNAME to Vercel, and
+  ACM fails the certificate with `CAA_ERROR`. A certificate in `FAILED` cannot
+  be validated again, so changing the CAA set replaces the certificate.
+- `listener_priority` must be a number no other application uses on the shared
+  listener. A `PriorityInUse` error means it is taken; choose a free one.
 
 ## Dedicated database and payment parameters
 

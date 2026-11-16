@@ -46,7 +46,9 @@ variable "network" {
     error_message = "Private task subnets and database security groups are required."
   }
 }
+# Priorities 10 to 30 are the Genfeed hosted stack and 40 is the console API, all on
+# the shared HTTPS listener. Pick a free one and never reuse another app's number.
 variable "listener_priority" {
   type    = number
-  default = 40
+  default = 50
 }
