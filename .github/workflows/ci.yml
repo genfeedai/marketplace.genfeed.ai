@@ -137,8 +137,8 @@ jobs:
         uses: ./.github/actions/setup-bun-env
         with:
           generate-prisma: 'true'
-      # apps/api compiles with tsc; apps/web and apps/admin are Next.js builds.
-      # Every environment variable those two read has an inline fallback, so the
+      # apps/api compiles with tsc; apps/web is a Next.js build. Every
+      # environment variable those two read has an inline fallback, so the
       # build needs no secrets.
       - name: Run build
         run: bunx turbo run build --continue

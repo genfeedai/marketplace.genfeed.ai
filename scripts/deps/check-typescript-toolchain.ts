@@ -20,7 +20,6 @@ const TYPESCRIPT_7_ALIAS = `npm:typescript@${TYPESCRIPT_7_VERSION}`;
 
 const LEGACY_API_CONSUMERS = new Set([
   'package.json',
-  'apps/admin/package.json',
   'apps/api/package.json',
   'apps/e2e/package.json',
   'apps/web/package.json',

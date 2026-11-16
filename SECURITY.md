@@ -33,8 +33,8 @@ Reports are voluntary and unpaid. Genfeed does not run a bug bounty.
 
 ## Scope
 
-In scope: the API in `apps/api`, the storefront in `apps/web`, the operator
-panel in `apps/admin`, and the deployment workflows in `.github/`.
+In scope: the API in `apps/api`, the storefront in `apps/web`, and the
+deployment workflows in `.github/`.
 
 Out of scope: the main Genfeed application (report that at
 [genfeedai/genfeed.ai](https://github.com/genfeedai/genfeed.ai/security/policy)),

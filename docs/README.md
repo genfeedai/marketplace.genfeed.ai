@@ -1,6 +1,6 @@
 # Marketplace Documentation
 
-Run the API, web app, and admin app in parallel with Bun 1.4.4 and Node 26:
+Run the API and web app in parallel with Bun 1.4.4 and Node 26:
 
 ```bash
 bun install --frozen-lockfile
@@ -32,8 +32,8 @@ the commands above pass `--env-file`. `prisma:generate` needs no database;
 `prisma:migrate` and `db push` stop with "Connection url is empty" when
 `DATABASE_URL` is not set.
 
-Create `apps/web/.env.local` and `apps/admin/.env.local` with the local API
-and app origins before starting their development servers:
+Create `apps/web/.env.local` with the local API and app origins before
+starting its development server:
 
 ```dotenv
 NEXT_PUBLIC_MARKETPLACE_API_URL=http://localhost:3200
@@ -41,8 +41,8 @@ NEXT_PUBLIC_GENFEED_API_URL=https://api.genfeed.localhost
 NEXT_PUBLIC_GENFEED_APP_URL=https://app.genfeed.localhost
 ```
 
-The API reads `.env.local` before `.env`. API, web, and admin listen on ports
-3200, 3204, and 3205 respectively. Verify `http://localhost:3200/health` and
+The API reads `.env.local` before `.env`. API and web listen on ports 3200
+and 3204 respectively. Verify `http://localhost:3200/health` and
 `http://localhost:3200/health/ready` and
 `http://localhost:3200/marketplace/listings`; all should return HTTP 200.
 
@@ -61,8 +61,7 @@ only when testing those integrations.
 
 For local gallery data, set `NEXT_PUBLIC_GENFEED_API_URL` in
 `apps/web/.env.local` to your running Genfeed API, normally
-`https://api.genfeed.localhost`. The admin app uses
-`NEXT_PUBLIC_MARKETPLACE_API_URL`, defaulting to `http://localhost:3200`.
+`https://api.genfeed.localhost`.
 
 The retired npm prompt/workflow catalog importers and their seed commands have
 been removed. Create a seller profile and listing from `/dashboard`, submit
@@ -89,8 +88,7 @@ becomes 3200); `--marketplace-url` overrides it. The commands call
 `GET /admin/marketplace/listings` and
 `POST /admin/marketplace/listings/:id/approve` or `/reject`. Only a listing in
 `pending_review` can be approved or rejected, and the reject reason is shown to
-the seller. The local admin app on port 3205 calls the same routes. The
-private operator console (`https://console.genfeed.ai`, port 3000 locally)
+the seller. The private operator console (`https://console.genfeed.ai`, port 3000 locally)
 calls them from the operator's browser with the operator's own token, so the
 API's CORS list allows that origin next to the store.
 
@@ -101,7 +99,6 @@ with an exact Marketplace master SHA. Keep Vercel Git auto-deploy disabled. See
 [deployment.md](deployment.md) for the release steps, the `production`
 environment settings, and the infrastructure in `infra/production`. The
 workflow never checks out or calls the Genfeed monorepo.
-There is no production deployment of the standalone admin app.
 
 `docker/Dockerfile.api` builds the production API and migration/provisioning
 commands. Use `prisma:migrate` with the migration role's `DATABASE_URL`; the

@@ -24,11 +24,6 @@
         "postcss-load-config"
       ]
     },
-    "apps/admin": {
-      "ignoreDependencies": [
-        "@typescript/native"
-      ]
-    },
     "apps/e2e": {
       "ignoreDependencies": [
         "@typescript/native"
