@@ -259,6 +259,51 @@ describe.skipIf(!adminUrl)(
       expect(purchases).toBe(0);
     });
 
+    it('leaves a completed purchase in place when the refund only settles an uncertain call', async () => {
+      const listing = await fixture.publishListing({
+        title: 'Settled Keep',
+        price: 2900,
+        downloadData: WORKFLOW,
+      });
+      const body = call(listing.id);
+      await record(serviceToken, body);
+
+      const settle = await fixture.request(REFUND, serviceToken, {
+        ...body,
+        keepCompleted: true,
+      });
+
+      expect((await settle.json()).data.attributes.status).toBe('completed');
+      expect((await rows(listing.id)).map((row) => row.status)).toEqual([
+        'completed',
+      ]);
+      expect(await libraryIds(buyerToken)).toContain(listing.id);
+      const [{ purchases }] = await fixture.sql<{ purchases: number }>(
+        'SELECT purchases FROM listings WHERE id = $1',
+        [listing.id],
+      );
+      expect(purchases).toBe(1);
+    });
+
+    it('still keeps a late record call from completing when the settling refund found nothing', async () => {
+      const listing = await fixture.publishListing({
+        title: 'Settled Late',
+        price: 2900,
+        downloadData: WORKFLOW,
+      });
+      const body = call(listing.id);
+
+      const settle = await fixture.request(REFUND, serviceToken, {
+        ...body,
+        keepCompleted: true,
+      });
+      const late = await record(serviceToken, body);
+
+      expect((await settle.json()).data.attributes.status).toBe('refunded');
+      expect((await late.json()).data.attributes.status).toBe('refunded');
+      expect(await libraryIds(buyerToken)).not.toContain(listing.id);
+    });
+
     it('answers 404 when a refund names a key that recorded nothing', async () => {
       const response = await fixture.request(REFUND, serviceToken, {
         idempotencyKey: 'never-recorded',

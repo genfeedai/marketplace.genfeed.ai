@@ -417,12 +417,18 @@ export class PurchasesService {
    * cannot complete the purchase after the credits went back. Without them,
    * or for a listing that can no longer be sold, there is nothing to write and
    * the result is null.
+   *
+   * With `keepCompleted`, a purchase that is already completed stays in the
+   * library and is returned unchanged: the caller settles an uncertain call,
+   * and refunding a purchase that a concurrent call of the same attempt
+   * completed would reverse it behind that call's back.
    */
   @HandleErrors('refund credit purchase', 'purchases')
   async refundCreditPurchase(input: {
     buyerId?: string;
     creditsPaid?: number;
     idempotencyKey: string;
+    keepCompleted?: boolean;
     listingId?: string;
     organizationId?: string;
   }): Promise<PurchaseRecord | null> {
@@ -438,6 +444,14 @@ export class PurchasesService {
         throw new BadRequestException(
           'This purchase was not paid with credits',
         );
+      }
+      if (input.keepCompleted) {
+        // A caller that could not learn the outcome of its record call must
+        // not undo a purchase another call of the same attempt completed.
+        const current = await this.findById(row.id);
+        if (current?.status === PurchaseStatus.COMPLETED) {
+          return current;
+        }
       }
       return (await this.refundPurchase(row.id, null)).purchase;
     };
