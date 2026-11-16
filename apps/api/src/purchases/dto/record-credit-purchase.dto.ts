@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
+  IsBoolean,
   IsInt,
   IsNotEmpty,
   IsOptional,
@@ -79,4 +80,14 @@ export class RefundCreditPurchaseDto {
   @IsInt()
   @Min(1)
   creditsPaid?: number;
+
+  @ApiPropertyOptional({
+    description:
+      'Settle an uncertain call without undoing a finished one: a completed ' +
+      'purchase under the key is left in place and returned as it is. ' +
+      'Otherwise the key is refunded, or written as refunded, as usual.',
+  })
+  @IsOptional()
+  @IsBoolean()
+  keepCompleted?: boolean;
 }
