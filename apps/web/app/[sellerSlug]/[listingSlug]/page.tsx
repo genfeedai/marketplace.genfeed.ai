@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import type { ReactNode } from 'react';
 import {
+  formatCredits,
   formatPrice,
   type Listing,
   listingFromResource,
@@ -77,6 +78,11 @@ export default async function ListingPage({
         <p className="text-xl font-semibold">
           {formatPrice(listing.price, listing.currency)}
         </p>
+        {listing.creditPrice !== null && (
+          <p className="mt-1 text-white/70">
+            or {formatCredits(listing.creditPrice)}, 25% below the card price
+          </p>
+        )}
         <p className="mt-6 whitespace-pre-wrap text-white/70">
           {listing.description}
         </p>

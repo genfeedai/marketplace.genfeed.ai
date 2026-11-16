@@ -1,11 +1,13 @@
 import { afterEach, describe, expect, test, vi } from 'vitest';
 import {
   authenticatedRequest,
+  formatCredits,
   formatPrice,
   listingFromResource,
   listingHref,
   parseCollection,
   parseSingle,
+  payWithCredits,
   publicRequest,
   stripeRedirect,
 } from './marketplace-api';
@@ -99,5 +101,92 @@ describe('Marketplace browser contract', () => {
       stripeRedirect('https://checkout.stripe.com.attacker.example/pay'),
     ).toThrow();
     expect(() => stripeRedirect('javascript:alert(1)')).toThrow();
+  });
+
+  test.each([
+    [2175, 2175],
+    [0, null],
+    [-5, null],
+    [12.5, null],
+    ['2175', null],
+    [null, null],
+    [undefined, null],
+  ])('reads a GEN price of %j as %j', (creditPrice, expected) => {
+    const listing = listingFromResource({
+      id: 'a',
+      attributes: {
+        title: 'Item',
+        slug: 'genfeed/item',
+        price: 2900,
+        creditPrice,
+      },
+    });
+
+    expect(listing.creditPrice).toBe(expected);
+  });
+  test('formats GEN amounts with a thousands separator', () => {
+    expect(formatCredits(2175)).toBe('2,175 GEN');
+    expect(formatCredits(749)).toBe('749 GEN');
+  });
+});
+
+describe('Paying with GEN', () => {
+  test('sends the session token and the attempt key to the Genfeed API only', async () => {
+    vi.stubEnv('NEXT_PUBLIC_GENFEED_APP_URL', 'https://app.example.com');
+    vi.stubEnv(
+      'NEXT_PUBLIC_MARKETPLACE_API_URL',
+      'https://marketplace-api.example.com',
+    );
+    const request = vi
+      .fn()
+      .mockResolvedValueOnce(Response.json({ token: 'signed-fixture' }))
+      .mockResolvedValueOnce(Response.json({ creditsPaid: 2175 }));
+    vi.stubGlobal('fetch', request);
+
+    await payWithCredits('listing 1', 'attempt-1');
+
+    expect(request.mock.calls[1]).toEqual([
+      'https://app.example.com/v1/marketplace-purchases/listing%201/credits',
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({ idempotencyKey: 'attempt-1' }),
+        headers: {
+          Authorization: 'Bearer signed-fixture',
+          'Content-Type': 'application/json',
+        },
+      }),
+    ]);
+  });
+  test('shows the missing-GEN message the Genfeed API returns on a 402', async () => {
+    vi.stubEnv('NEXT_PUBLIC_GENFEED_APP_URL', 'https://app.example.com');
+    const detail =
+      'You need 120 more GEN to buy this. It costs 2175 and you have 2055. Nothing was taken.';
+    vi.stubGlobal(
+      'fetch',
+      vi
+        .fn()
+        .mockResolvedValueOnce(Response.json({ token: 'signed-fixture' }))
+        .mockResolvedValueOnce(
+          Response.json(
+            { errors: [{ detail, title: 'Insufficient credits' }] },
+            { status: 402 },
+          ),
+        ),
+    );
+
+    await expect(
+      payWithCredits('listing-1', 'attempt-1'),
+    ).rejects.toMatchObject({ message: detail, status: 402 });
+  });
+  test('does not call the Genfeed API without a signed-in session', async () => {
+    const request = vi
+      .fn()
+      .mockResolvedValue(new Response(null, { status: 401 }));
+    vi.stubGlobal('fetch', request);
+
+    await expect(
+      payWithCredits('listing-1', 'attempt-1'),
+    ).rejects.toMatchObject({ status: 401 });
+    expect(request).toHaveBeenCalledTimes(1);
   });
 });
