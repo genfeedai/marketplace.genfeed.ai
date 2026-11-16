@@ -71,10 +71,15 @@ export class SellersController {
   ): Promise<JsonApiSingleResponse> {
     const publicMetadata = getIdentity(user);
 
-    const eligibility = await this.sellersService.checkSellerEligibility(
-      publicMetadata.user,
-      publicMetadata.organization,
-    );
+    const eligibility = getIsSuperAdmin(user)
+      ? await this.sellersService.checkSellerEligibility(
+          publicMetadata.user,
+          publicMetadata.organization,
+        )
+      : {
+          eligible: false,
+          reason: 'Only the Genfeed official seller can sell',
+        };
 
     return {
       data: {
@@ -141,8 +146,11 @@ export class SellersController {
   }
 
   /**
-   * Create a seller profile for current user
+   * Create a seller profile for current user. The soft launch is a Genfeed-only
+   * store, so only a platform superadmin may sell.
    */
+  @UseGuards(RolesGuard)
+  @RolesDecorator('superadmin')
   @Post('profile')
   @LogMethod({ logEnd: false, logError: true, logStart: true })
   async createProfile(
@@ -195,6 +203,8 @@ export class SellersController {
   /**
    * Initiate Stripe Connect onboarding for the current seller
    */
+  @UseGuards(RolesGuard)
+  @RolesDecorator('superadmin')
   @Post('stripe/connect')
   @LogMethod({ logEnd: false, logError: true, logStart: true })
   async initiateStripeConnect(
@@ -250,6 +260,8 @@ export class SellersController {
   /**
    * Get Stripe Connect onboarding status for the current seller
    */
+  @UseGuards(RolesGuard)
+  @RolesDecorator('superadmin')
   @Get('stripe/status')
   @LogMethod({ logEnd: false, logError: true, logStart: true })
   async getStripeStatus(
@@ -308,6 +320,8 @@ export class SellersController {
   /**
    * Get Stripe Express dashboard link for the current seller
    */
+  @UseGuards(RolesGuard)
+  @RolesDecorator('superadmin')
   @Get('stripe/dashboard')
   @LogMethod({ logEnd: false, logError: true, logStart: true })
   async getStripeDashboard(
@@ -338,6 +352,8 @@ export class SellersController {
   /**
    * Get Stripe Connect account balance for the current seller
    */
+  @UseGuards(RolesGuard)
+  @RolesDecorator('superadmin')
   @Get('stripe/balance')
   @LogMethod({ logEnd: false, logError: true, logStart: true })
   async getStripeBalance(
@@ -366,6 +382,8 @@ export class SellersController {
   /**
    * List payouts for the current seller's Stripe Connect account
    */
+  @UseGuards(RolesGuard)
+  @RolesDecorator('superadmin')
   @Get('stripe/payouts')
   @LogMethod({ logEnd: false, logError: true, logStart: true })
   async getStripePayouts(

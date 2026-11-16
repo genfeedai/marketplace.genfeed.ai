@@ -291,6 +291,8 @@ export class SellerListingsController {
   /**
    * Create a new listing
    */
+  @UseGuards(RolesGuard)
+  @RolesDecorator('superadmin')
   @Post()
   @LogMethod({ logEnd: false, logError: true, logStart: true })
   async createListing(
@@ -428,6 +430,8 @@ export class SellerListingsController {
   /**
    * Submit listing for review
    */
+  @UseGuards(RolesGuard)
+  @RolesDecorator('superadmin')
   @Post(':listingId/submit')
   @LogMethod({ logEnd: false, logError: true, logStart: true })
   async submitForReview(
