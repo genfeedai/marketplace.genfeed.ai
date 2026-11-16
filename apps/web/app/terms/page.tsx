@@ -47,6 +47,21 @@ export default function TermsPage(): ReactNode {
           .
         </p>
         <p>
+          A paid product that shows a GEN price can also be bought with the GEN
+          credits in your Genfeed account. The credits are taken once, when you
+          confirm, and the product goes straight to your library. If the
+          purchase cannot be completed, no credits are taken, and a refunded GEN
+          purchase is repaid in GEN credits. GEN credits are used to pay for
+          Genfeed products and services. They are not money, and they cannot be
+          exchanged for money.
+        </p>
+        <p>
+          Skills Pro is sold in the Store but checked out and delivered through
+          Genfeed.ai. You receive a receipt that unlocks the CLI download and
+          the install into your Genfeed workspace, and the purchase does not
+          appear in your library.
+        </p>
+        <p>
           Digital products are delivered immediately, so purchases are generally
           final. If a product is materially misdescribed or does not function,{' '}
           <Link className="text-white underline" href="/contact">
