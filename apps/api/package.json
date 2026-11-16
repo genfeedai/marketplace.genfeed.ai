@@ -1,7 +1,7 @@
 {
   "dependencies": {
     "@aws-sdk/client-ssm": "3.1169.0",
-    "@genfeedai/enums": "2.3.2",
+    "@genfeedai/contracts": "0.1.0",
     "@nestjs/common": "12.5.0",
     "@nestjs/config": "12.1.1",
     "@nestjs/core": "12.5.0",

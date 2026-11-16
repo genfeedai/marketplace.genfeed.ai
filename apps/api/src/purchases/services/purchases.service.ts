@@ -19,7 +19,7 @@ import {
   purchaseStatusesThatMayBecome,
 } from '@api/purchases/purchase-status';
 import { SellersService } from '@api/sellers/services/sellers.service';
-import { PurchaseStatus } from '@genfeedai/enums';
+import { PurchaseStatus } from '@genfeedai/contracts/enums';
 import {
   BadRequestException,
   ConflictException,

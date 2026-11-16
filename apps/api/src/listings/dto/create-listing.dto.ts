@@ -1,4 +1,4 @@
-import { ListingType } from '@genfeedai/enums';
+import { ListingType } from '@genfeedai/contracts/enums';
 import { ApiProperty } from '@nestjs/swagger';
 import {
   IsArray,

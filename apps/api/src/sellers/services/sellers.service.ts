@@ -9,7 +9,7 @@ import { Prisma } from '@api/generated/prisma/client';
 import type { AdminSellerQueryDto } from '@api/sellers/dto/admin-seller-query.dto';
 import type { CreateSellerDto } from '@api/sellers/dto/create-seller.dto';
 import type { UpdateSellerDto } from '@api/sellers/dto/update-seller.dto';
-import { SellerBadgeTier, SellerStatus } from '@genfeedai/enums';
+import { SellerBadgeTier, SellerStatus } from '@genfeedai/contracts/enums';
 import {
   BadRequestException,
   Inject,

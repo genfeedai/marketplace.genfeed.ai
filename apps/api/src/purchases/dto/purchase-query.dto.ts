@@ -1,5 +1,5 @@
 import { BaseQueryDto } from '@api/common/dto/base-query.dto';
-import { PurchaseStatus } from '@genfeedai/enums';
+import { PurchaseStatus } from '@genfeedai/contracts/enums';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEnum, IsOptional } from 'class-validator';
 

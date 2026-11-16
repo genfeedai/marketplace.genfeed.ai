@@ -1,4 +1,4 @@
-import { PurchaseStatus } from '@genfeedai/enums';
+import { PurchaseStatus } from '@genfeedai/contracts/enums';
 
 /**
  * The only moves a purchase may make. Failed, refunded and disputed purchases

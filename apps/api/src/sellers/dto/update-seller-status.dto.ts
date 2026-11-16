@@ -1,4 +1,4 @@
-import { SellerStatus } from '@genfeedai/enums';
+import { SellerStatus } from '@genfeedai/contracts/enums';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEnum } from 'class-validator';
 
