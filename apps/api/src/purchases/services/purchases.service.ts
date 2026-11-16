@@ -701,12 +701,13 @@ export class PurchasesService {
     >();
 
     for (const purchase of purchases) {
-      totalEarnings += purchase.sellerEarnings;
-      totalPlatformFees += purchase.platformFee;
-      totalRevenue += purchase.total;
-
+      // Money counts only once a purchase is paid. A pending, failed or
+      // refunded purchase keeps its amounts on the row but earned nothing.
       if (purchase.status === PurchaseStatus.COMPLETED) {
         completedOrders += 1;
+        totalEarnings += purchase.sellerEarnings;
+        totalPlatformFees += purchase.platformFee;
+        totalRevenue += purchase.total;
 
         if (purchase.createdAt >= fromDate) {
           const date = purchase.createdAt.toISOString().slice(0, 10);
@@ -737,7 +738,7 @@ export class PurchasesService {
       totalEarnings,
       totalPlatformFees,
       totalRevenue,
-      totalSales: purchases.length,
+      totalSales: completedOrders,
     };
   }
 
@@ -806,6 +807,8 @@ export class PurchasesService {
     completedOrders: number;
     pendingOrders: number;
     failedOrders: number;
+    refundedOrders: number;
+    totalRefunded: number;
     recentSales: Array<{ date: string; count: number; revenue: number }>;
   }> {
     const purchases = await this.prisma.purchase.findMany({
@@ -825,7 +828,9 @@ export class PurchasesService {
     let completedOrders = 0;
     let failedOrders = 0;
     let pendingOrders = 0;
+    let refundedOrders = 0;
     let totalPlatformFees = 0;
+    let totalRefunded = 0;
     let totalRevenue = 0;
     let totalSellerEarnings = 0;
 
@@ -838,12 +843,13 @@ export class PurchasesService {
     >();
 
     for (const purchase of purchases) {
-      totalPlatformFees += purchase.platformFee;
-      totalRevenue += purchase.total;
-      totalSellerEarnings += purchase.sellerEarnings;
-
+      // Money counts only once a purchase is paid. A refund is reported on
+      // its own, so a refunded sale stays visible without counting as revenue.
       if (purchase.status === PurchaseStatus.COMPLETED) {
         completedOrders += 1;
+        totalPlatformFees += purchase.platformFee;
+        totalRevenue += purchase.total;
+        totalSellerEarnings += purchase.sellerEarnings;
 
         if (purchase.createdAt >= fromDate) {
           const date = purchase.createdAt.toISOString().slice(0, 10);
@@ -860,6 +866,9 @@ export class PurchasesService {
         failedOrders += 1;
       } else if (purchase.status === PurchaseStatus.PENDING) {
         pendingOrders += 1;
+      } else if (purchase.status === PurchaseStatus.REFUNDED) {
+        refundedOrders += 1;
+        totalRefunded += purchase.total;
       }
     }
 
@@ -872,9 +881,11 @@ export class PurchasesService {
         date,
         revenue: data.revenue,
       })),
+      refundedOrders,
       totalPlatformFees,
+      totalRefunded,
       totalRevenue,
-      totalSales: purchases.length,
+      totalSales: completedOrders,
       totalSellerEarnings,
     };
   }
