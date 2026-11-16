@@ -13,7 +13,6 @@ Licensed under [AGPL-3.0](LICENSE) (see also [NOTICE](NOTICE)). The store is not
 | --- | --- | --- |
 | `apps/api` | NestJS API: listings, sellers, checkout, purchases, Stripe webhooks. Prisma and PostgreSQL. | 3200 |
 | `apps/web` | Next.js storefront for buyers. | 3204 |
-| `apps/admin` | Next.js panel for the operator: listings, sellers, sales. | 3205 |
 
 Sign-in is Better Auth: the API verifies Genfeed's signed tokens against its
 public keys and holds no auth secret. Payments are Stripe Checkout.

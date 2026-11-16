@@ -31,12 +31,7 @@ export function configureApp(app: NestExpressApplication): void {
     OPERATOR_CONSOLE_ORIGIN,
   ];
   if (marketplaceConfig.nodeEnv === 'development') {
-    origins.push(
-      'http://localhost:3000',
-      'http://127.0.0.1:3000',
-      'http://localhost:3205',
-      'http://127.0.0.1:3205',
-    );
+    origins.push('http://localhost:3000', 'http://127.0.0.1:3000');
   }
 
   app.enableCors({

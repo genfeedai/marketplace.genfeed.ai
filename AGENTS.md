@@ -9,14 +9,15 @@ Content marketplace for Genfeed.ai. Open source (AGPL-3.0), its own repository, 
 
 - `apps/api` — NestJS marketplace API (port 3200)
 - `apps/web` — Next.js public marketplace frontend (port 3204)
-- `apps/admin` — Next.js operator/admin panel (port 3205)
 
-There is no `packages/` folder; types live in each app.
+There is no `packages/` folder; types live in each app. There is no admin app:
+listing review and sales run from the private operator console and the Genfeed CLI
+against the `/admin/marketplace/*` routes (see `docs/README.md`).
 
 ## Dependencies
 
 Consumes `@genfeedai/*` packages from NPM:
-- `@genfeedai/enums` — shared enums (ListingType, ListingStatus, SellerStatus, etc.), used by api and admin
+- `@genfeedai/enums` — shared enums (ListingType, ListingStatus, SellerStatus, etc.), used by the api
 
 ## Domain
 

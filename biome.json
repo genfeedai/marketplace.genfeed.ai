@@ -38,7 +38,7 @@
       }
     },
     {
-      "includes": ["**/apps/web/**", "**/apps/admin/**"],
+      "includes": ["**/apps/web/**"],
       "linter": {
         "rules": {
           "a11y": {
