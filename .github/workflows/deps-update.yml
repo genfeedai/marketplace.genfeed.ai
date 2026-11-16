@@ -1,18 +1,22 @@
-# Weekly `bun run deps:update`. This repository does not use Dependabot, so
-# package bumps honor the ncu rejects (typescript, @typescript/native), wait
-# out the 3 hour release cooldown, and Action pins move in the same PR.
+# Weekly `bun run deps:update:packages`. This repository does not use
+# Dependabot, so package bumps honor the ncu rejects (typescript,
+# @typescript/native) and wait out the 3 hour release cooldown.
+#
+# It runs on the built-in GITHUB_TOKEN only. No personal token or extra secret
+# is needed.
 #
 # Two jobs, so package install scripts never run next to a write token:
 #   update   no token, read-only: runs ncu and `bun install`, and hands over a
 #            patch limited to package manifests and the lockfile.
 #   publish  token, fresh checkout, no install: checks the patch touches only
-#            those files, applies it, bumps the Action pins with a plain Bun
-#            script, then pushes and opens or refreshes the PR.
+#            those files, applies it, pushes, and opens or refreshes the PR.
 #
-# GITHUB_TOKEN can never push a change under `.github/workflows`, and a pull
-# request it opens does not start CI. DEPS_UPDATE_TOKEN is a fine-grained token
-# with Contents, Pull requests and Workflows write access. Without it the PR
-# carries package bumps only.
+# Two limits of GITHUB_TOKEN shape the rest:
+#   - A pull request it opens or pushes to starts no `pull_request` run, so the
+#     publish job starts CI on the branch itself (`workflow_dispatch`).
+#   - It can never push a change under `.github/workflows`, so GitHub Action
+#     pins are not part of the weekly PR. Bump them from a normal branch with
+#     `bun run deps:update:actions`.
 name: Update Dependencies
 
 on:
@@ -64,6 +68,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
+      actions: write
       contents: write
       pull-requests: write
     steps:
@@ -80,13 +85,7 @@ jobs:
           path: ${{ runner.temp }}/deps-patch
 
       # No `bun install` and no `bun run` here: this job holds the push token,
-      # so it runs no package script. The patched package.json is data only;
-      # the Action pin updater is invoked by file path.
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
-        with:
-          bun-version-file: package.json
-
+      # so it runs no package script. The patched package.json is data only.
       - name: Apply the package patch
         env:
           PATCH: ${{ runner.temp }}/deps-patch/deps.patch
@@ -102,22 +101,13 @@ jobs:
             git apply "$PATCH"
           fi
 
-      - name: Update Action pins
+      - name: Open or refresh the weekly PR
+        id: publish
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: bun scripts/deps/update-github-action-versions.ts
-
-      - name: Open or refresh the weekly PR
-        env:
-          DEPS_UPDATE_TOKEN: ${{ secrets.DEPS_UPDATE_TOKEN }}
-          GITHUB_TOKEN: ${{ secrets.DEPS_UPDATE_TOKEN || secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
           git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
-          if [[ -z "${DEPS_UPDATE_TOKEN:-}" ]] && ! git diff --quiet -- .github; then
-            echo "::warning::Action pin updates are left out: add the DEPS_UPDATE_TOKEN secret (a fine-grained token with Workflows write access) so they ship in this PR."
-            git checkout -- .github
-          fi
           if git diff --quiet && git diff --cached --quiet; then
             echo "No dependency updates."
             exit 0
@@ -162,6 +152,7 @@ jobs:
             --force-with-lease="refs/heads/${branch}:${previous_sha}" \
             origin \
             "HEAD:refs/heads/${branch}"
+          echo "branch=${branch}" >> "$GITHUB_OUTPUT"
 
           if (( ${#pull_requests[@]} == 1 )); then
             echo "Refreshed weekly dependency PR #${pull_requests[0]}."
@@ -174,7 +165,7 @@ jobs:
             --head "$branch" \
             --title "chore(deps): weekly deps:update" \
             --body "$(cat <<'EOF'
-          Single weekly bump from `bun run deps:update`: npm-check-updates with a 3 hour release cooldown and the repo rejects (`typescript`, `@typescript/native`), lockfile install, and GitHub Action SHA pins.
+          Single weekly bump from `bun run deps:update`: npm-check-updates with a 3 hour release cooldown and the repo rejects (`typescript`, `@typescript/native`), and a lockfile install. GitHub Action pins are bumped separately with `bun run deps:update:actions`.
           EOF
           )"; then
             exit 0
@@ -202,3 +193,13 @@ jobs:
               ":refs/heads/${branch}"
           fi
           exit 1
+
+      # GITHUB_TOKEN pushed the branch, so no `pull_request` run started.
+      # `workflow_dispatch` is the one event it may start, and a run on the
+      # branch reports its checks on the PR's head commit.
+      - name: Start CI on the weekly PR
+        if: ${{ steps.publish.outputs.branch != '' }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BRANCH: ${{ steps.publish.outputs.branch }}
+        run: gh workflow run ci.yml --repo "$GITHUB_REPOSITORY" --ref "$BRANCH"
