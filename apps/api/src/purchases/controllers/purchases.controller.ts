@@ -29,6 +29,7 @@ import {
 } from '@api/common/utils/response.util';
 import { MarketplaceConfigService } from '@api/config/config.service';
 import { ListingsService } from '@api/listings/services/listings.service';
+import { AdminAnalyticsQueryDto } from '@api/purchases/dto/admin-analytics-query.dto';
 import { AdminPurchaseQueryDto } from '@api/purchases/dto/admin-purchase-query.dto';
 import { CheckoutDto } from '@api/purchases/dto/checkout.dto';
 import { PurchaseQueryDto } from '@api/purchases/dto/purchase-query.dto';
@@ -50,7 +51,6 @@ import {
   NotFoundException,
   Param,
   Post,
-  Query,
   Req,
   Res,
   UseGuards,
@@ -561,14 +561,14 @@ export class AdminMarketplaceController {
   @LogMethod({ logEnd: false, logError: true, logStart: true })
   async getOverview(
     @Req() request: Request,
-    @Query('days') days: string | undefined,
+    @ValidatedQuery(AdminAnalyticsQueryDto) query: AdminAnalyticsQueryDto,
     @CurrentUser() user: MarketplacePrincipal,
   ): Promise<JsonApiSingleResponse> {
     const publicMetadata = getIdentity(user);
-    const parsedDays = days ? Number(days) : 30;
 
     const analytics = await this.purchasesService.getAdminAnalyticsOverview(
-      Number.isFinite(parsedDays) ? parsedDays : 30,
+      query.days ?? 30,
+      { from: query.from, to: query.to },
     );
 
     return serializeSingle(request, MarketplaceAnalyticsOverviewSerializer, {

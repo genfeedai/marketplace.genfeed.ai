@@ -938,7 +938,7 @@ export class PurchasesService {
 
   @HandleErrors('get admin purchases', 'purchases')
   async getAdminPurchases(
-    query: PurchaseQueryDto & { search?: string },
+    query: PurchaseQueryDto & { search?: string; from?: string; to?: string },
   ): Promise<Page<PurchaseRecord>> {
     const { limit, page } = QueryDefaultsUtil.getPaginationDefaults(query);
 
@@ -948,6 +948,11 @@ export class PurchasesService {
 
     if (query.status) {
       where.status = query.status;
+    }
+
+    const createdAt = PurchasesService.periodFilter(query);
+    if (createdAt) {
+      where.createdAt = createdAt;
     }
 
     const orderBy = buildOrderBy(
@@ -993,9 +998,13 @@ export class PurchasesService {
   }
 
   @HandleErrors('get admin analytics overview', 'purchases')
-  async getAdminAnalyticsOverview(days = 30): Promise<{
+  async getAdminAnalyticsOverview(
+    days = 30,
+    period: { from?: string; to?: string } = {},
+  ): Promise<{
     totalRevenue: number;
     totalSales: number;
+    paidOrders: number;
     totalPlatformFees: number;
     totalSellerEarnings: number;
     completedOrders: number;
@@ -1016,11 +1025,15 @@ export class PurchasesService {
       },
       where: {
         isDeleted: false,
+        ...(PurchasesService.periodFilter(period)
+          ? { createdAt: PurchasesService.periodFilter(period) }
+          : {}),
       },
     });
 
     let completedOrders = 0;
     let failedOrders = 0;
+    let paidOrders = 0;
     let pendingOrders = 0;
     let refundedOrders = 0;
     let totalPlatformFees = 0;
@@ -1028,8 +1041,12 @@ export class PurchasesService {
     let totalRevenue = 0;
     let totalSellerEarnings = 0;
 
-    const fromDate = new Date();
-    fromDate.setDate(fromDate.getDate() - Math.max(1, days));
+    // With a period the daily list covers the period; without one it covers
+    // the last `days` days while the totals stay all time.
+    const fromDate = period.from ? new Date(period.from) : new Date();
+    if (!period.from) {
+      fromDate.setDate(fromDate.getDate() - Math.max(1, days));
+    }
 
     const recentSalesMap = new Map<
       string,
@@ -1041,6 +1058,9 @@ export class PurchasesService {
       // its own, so a refunded sale stays visible without counting as revenue.
       if (purchase.status === PurchaseStatus.COMPLETED) {
         completedOrders += 1;
+        if (purchase.total > 0) {
+          paidOrders += 1;
+        }
         totalPlatformFees += purchase.platformFee;
         totalRevenue += purchase.total;
         totalSellerEarnings += purchase.sellerEarnings;
@@ -1069,6 +1089,7 @@ export class PurchasesService {
     return {
       completedOrders,
       failedOrders,
+      paidOrders,
       pendingOrders,
       recentSales: [...recentSalesMap.entries()].map(([date, data]) => ({
         count: data.count,
@@ -1081,6 +1102,21 @@ export class PurchasesService {
       totalRevenue,
       totalSales: completedOrders,
       totalSellerEarnings,
+    };
+  }
+
+  /** The createdAt filter for an optional ISO 8601 period, or undefined. */
+  private static periodFilter(period: {
+    from?: string;
+    to?: string;
+  }): Prisma.DateTimeFilter | undefined {
+    if (!period.from && !period.to) {
+      return undefined;
+    }
+
+    return {
+      ...(period.from ? { gte: new Date(period.from) } : {}),
+      ...(period.to ? { lte: new Date(period.to) } : {}),
     };
   }
 
