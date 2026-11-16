@@ -15,15 +15,6 @@
   border-color: rgba(255, 255, 255, 0.2);
 }
 
-/* Radial gradient for hero background */
-.hero-glow {
-  background: radial-gradient(
-    circle at 70% 30%,
-    rgba(255, 255, 255, 0.05),
-    transparent 70%
-  );
-}
-
 /* Hide scrollbar for carousels and nav */
 .hide-scrollbar {
   -ms-overflow-style: none;
@@ -32,30 +23,4 @@
 
 .hide-scrollbar::-webkit-scrollbar {
   display: none;
-}
-
-/* Category card hover lift */
-.category-card {
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.category-card:hover {
-  transform: translateY(-0.5rem);
-}
-
-/* Staff picks card */
-.staff-pick-card {
-  transition: all 0.7s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.staff-pick-card:hover {
-  transform: translateY(-0.75rem);
-}
-
-/* Blur orb effect */
-.blur-orb {
-  position: absolute;
-  border-radius: 9999px;
-  filter: blur(100px);
-  background: rgba(255, 255, 255, 0.05);
 }

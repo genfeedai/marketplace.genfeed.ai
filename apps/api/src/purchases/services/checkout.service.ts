@@ -5,10 +5,12 @@ import type {
 } from '@api/common/prisma/marketplace.types';
 import {
   MarketplaceStripeService,
+  type StripeCharge,
   type StripeCheckoutSession,
   type StripeCheckoutSessionCreateParams,
 } from '@api/common/services/stripe.service';
 import { MarketplaceConfigService } from '@api/config/config.service';
+import type { Prisma } from '@api/generated/prisma/client';
 import { ListingsService } from '@api/listings/services/listings.service';
 import {
   EXTERNAL_CHECKOUT_MESSAGE,
@@ -24,7 +26,6 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
-import type { Prisma } from '@prisma/client';
 
 @Injectable()
 export class CheckoutService {
@@ -181,7 +182,7 @@ export class CheckoutService {
         type: 'marketplace',
       },
       mode: 'payment',
-      payment_method_types: ['card'],
+      allowed_payment_method_types: ['card'],
       success_url: `${successUrl}?session_id={CHECKOUT_SESSION_ID}`,
     };
 
@@ -211,9 +212,14 @@ export class CheckoutService {
     return this.stripeService.client.checkout.sessions.retrieve(sessionId);
   }
 
+  /**
+   * Complete a purchase only when Stripe says the session is paid and the
+   * amount and currency match the purchase row. A mismatch is logged and the
+   * purchase stays as it is; it is not retried because a retry cannot fix it.
+   */
   @HandleErrors('handle successful checkout', 'checkout')
   async handleSuccessfulCheckout(session: StripeCheckoutSession): Promise<{
-    purchase: PurchaseRecord;
+    purchase: PurchaseRecord | null;
     success: boolean;
   }> {
     const purchaseId = session.metadata?.purchaseId;
@@ -224,40 +230,143 @@ export class CheckoutService {
         { sessionId: session.id },
       );
 
-      return { purchase: null as unknown as PurchaseRecord, success: false };
+      return { purchase: null, success: false };
     }
 
-    const purchase = await this.purchasesService.completePurchase(purchaseId);
+    const purchase = await this.purchasesService.findById(purchaseId);
+    if (!purchase) {
+      throw new NotFoundException('Purchase not found');
+    }
 
-    await this.purchasesService.patch(purchaseId, {
-      stripePaymentIntentId: session.payment_intent ?? null,
-    });
+    const mismatch = this.findPaymentMismatch(session, purchase);
+    if (mismatch) {
+      this.logger.error(`${this.constructorName} payment mismatch`, {
+        mismatch,
+        purchaseId,
+        sessionId: session.id,
+      });
 
-    this.logger.log(`${this.constructorName} checkout completed successfully`, {
+      return { purchase, success: false };
+    }
+
+    const result = await this.purchasesService.completePurchase(
+      purchaseId,
+      session.payment_intent ?? null,
+    );
+
+    this.logger.log(`${this.constructorName} checkout handled`, {
+      applied: result.applied,
       listingId: session.metadata?.listingId,
       purchaseId,
       sessionId: session.id,
+      status: result.purchase.status,
     });
 
-    return { purchase, success: true };
+    return { purchase: result.purchase, success: result.applied };
+  }
+
+  private findPaymentMismatch(
+    session: StripeCheckoutSession,
+    purchase: PurchaseRecord,
+  ): string | null {
+    if (session.payment_status !== 'paid') {
+      return `session is ${session.payment_status ?? 'unknown'}, not paid`;
+    }
+
+    if (purchase.stripeSessionId && purchase.stripeSessionId !== session.id) {
+      return 'session is not the one created for this purchase';
+    }
+
+    if (session.amount_total !== purchase.total) {
+      return `amount ${session.amount_total} differs from purchase total ${purchase.total}`;
+    }
+
+    if (session.currency?.toLowerCase() !== purchase.currency.toLowerCase()) {
+      return `currency ${session.currency} differs from purchase currency ${purchase.currency}`;
+    }
+
+    return null;
   }
 
   @HandleErrors('handle failed checkout', 'checkout')
-  async handleFailedCheckout(sessionId: string, reason: string): Promise<void> {
-    const session = await this.getCheckoutSession(sessionId);
+  async handleFailedCheckout(
+    session: StripeCheckoutSession,
+    reason: string,
+  ): Promise<void> {
     const purchaseId = session.metadata?.purchaseId;
 
     if (purchaseId) {
-      await this.purchasesService.patch(purchaseId, {
-        failureReason: reason,
-        status: PurchaseStatus.FAILED,
-      });
-
-      this.logger.log(`${this.constructorName} checkout marked as failed`, {
+      const result = await this.purchasesService.failPurchase(
         purchaseId,
         reason,
-        sessionId,
+      );
+
+      this.logger.log(`${this.constructorName} checkout failure handled`, {
+        applied: result.applied,
+        purchaseId,
+        reason,
+        sessionId: session.id,
+        status: result.purchase.status,
       });
     }
+  }
+
+  /**
+   * A fully refunded charge refunds its purchase. The charge only names the
+   * payment intent, so the purchase is found by the intent stored when it
+   * completed, or else through the checkout session that paid it. A refund can
+   * arrive before the completed event; the purchase is then refunded straight
+   * away and the late completed event is refused.
+   */
+  @HandleErrors('handle refunded charge', 'checkout')
+  async handleRefundedCharge(charge: StripeCharge): Promise<void> {
+    if (!charge.refunded) {
+      this.logger.log(`${this.constructorName} partial refund ignored`, {
+        amountRefunded: charge.amount_refunded,
+        chargeId: charge.id,
+      });
+      return;
+    }
+
+    const paymentIntentId = charge.payment_intent;
+    if (!paymentIntentId) {
+      return;
+    }
+
+    let purchase =
+      await this.purchasesService.findByPaymentIntentId(paymentIntentId);
+
+    if (!purchase) {
+      const sessions = await this.stripeService.client.checkout.sessions.list({
+        limit: 1,
+        payment_intent: paymentIntentId,
+      });
+      const metadata = sessions.data[0]?.metadata;
+
+      if (metadata?.type !== 'marketplace' || !metadata.purchaseId) {
+        this.logger.log(`${this.constructorName} refund is not a purchase`, {
+          chargeId: charge.id,
+        });
+        return;
+      }
+
+      purchase = await this.purchasesService.findById(metadata.purchaseId);
+    }
+
+    if (!purchase) {
+      throw new NotFoundException('Purchase not found');
+    }
+
+    const result = await this.purchasesService.refundPurchase(
+      purchase.id,
+      paymentIntentId,
+    );
+
+    this.logger.log(`${this.constructorName} refund handled`, {
+      applied: result.applied,
+      chargeId: charge.id,
+      purchaseId: purchase.id,
+      status: result.purchase.status,
+    });
   }
 }

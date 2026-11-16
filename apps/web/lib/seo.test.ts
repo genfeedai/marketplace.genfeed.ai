@@ -1,6 +1,8 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, test } from 'vitest';
+import { metadata as payoutsMetadata } from '../app/payouts/page';
 import robots from '../app/robots';
+import { metadata as sellMetadata } from '../app/sell/page';
 import sitemap from '../app/sitemap';
 import nextConfig from '../next.config';
 import {
@@ -24,16 +26,16 @@ describe('marketplace SEO contract', () => {
       '/browse',
       '/workflows',
       '/prompts',
+      '/presets',
       '/skills',
+      '/gallery',
       '/videos',
       '/images',
       '/music',
       '/posts',
       '/leaderboard',
-      '/sell',
-      '/guidelines',
-      '/payouts',
       '/about',
+      '/guidelines',
       '/contact',
       '/terms',
       '/privacy',
@@ -117,6 +119,14 @@ describe('marketplace SEO contract', () => {
         noarchive: true,
       });
     }
+  });
+
+  test('keeps the unlinked seller pages out of the index', () => {
+    expect(sellMetadata.robots).toMatchObject({ index: false, follow: false });
+    expect(payoutsMetadata.robots).toMatchObject({
+      index: false,
+      follow: false,
+    });
   });
 
   test('keeps retired marketplace identities as hard cuts', () => {

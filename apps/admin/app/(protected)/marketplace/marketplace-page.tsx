@@ -209,7 +209,7 @@ export default function MarketplacePage() {
         limit: 50,
         page: 1,
         search: search || undefined,
-        sort: 'createdAt: -1',
+        sort: '-createdAt',
         status: listingStatus ? (listingStatus as ListingStatus) : undefined,
         type: listingType ? (listingType as ListingType) : undefined,
       });
@@ -228,7 +228,7 @@ export default function MarketplacePage() {
         limit: 50,
         page: 1,
         search: search || undefined,
-        sort: 'createdAt: -1',
+        sort: '-createdAt',
         status: ListingStatus.PENDING_REVIEW,
       });
     },
@@ -246,7 +246,7 @@ export default function MarketplacePage() {
         limit: 50,
         page: 1,
         search: search || undefined,
-        sort: 'totalSales: -1',
+        sort: '-totalSales',
         status: sellerStatus ? (sellerStatus as SellerStatus) : undefined,
       });
     },
@@ -264,7 +264,7 @@ export default function MarketplacePage() {
         limit: 50,
         page: 1,
         search: search || undefined,
-        sort: 'createdAt: -1',
+        sort: '-createdAt',
       });
     },
     {
@@ -281,7 +281,7 @@ export default function MarketplacePage() {
         limit: 50,
         page: 1,
         search: search || undefined,
-        sort: 'totalEarnings: -1',
+        sort: '-totalEarnings',
       });
     },
     {
@@ -429,6 +429,7 @@ export default function MarketplacePage() {
         render: (listing) => (
           <div className="flex items-center gap-2">
             <button
+              type="button"
               className="btn btn-primary"
               onClick={() => handleApprove(listing)}
               disabled={isSubmittingReview}
@@ -436,6 +437,7 @@ export default function MarketplacePage() {
               Approve
             </button>
             <button
+              type="button"
               className="btn btn-destructive"
               onClick={() => setRejectTarget(listing)}
               disabled={isSubmittingReview}
@@ -473,6 +475,7 @@ export default function MarketplacePage() {
         key: 'actions',
         render: (seller) => (
           <button
+            type="button"
             className="btn btn-secondary"
             onClick={() => handleSellerStatusToggle(seller)}
           >
@@ -601,6 +604,7 @@ export default function MarketplacePage() {
         <div className="tab-bar">
           {TABS.map((tab) => (
             <button
+              type="button"
               key={tab.key}
               className={`btn ${activeTab === tab.key ? 'btn-secondary' : 'btn-ghost'}`}
               onClick={() => setActiveTab(tab.key)}
@@ -610,6 +614,7 @@ export default function MarketplacePage() {
           ))}
           <div className="ml-auto">
             <button
+              type="button"
               className="btn btn-ghost"
               onClick={handleRefresh}
               disabled={isRefreshing}
@@ -816,6 +821,7 @@ export default function MarketplacePage() {
       {rejectTarget && (
         <div
           className="dialog-backdrop"
+          role="presentation"
           onClick={(e) => {
             if (e.target === e.currentTarget) setRejectTarget(null);
           }}
@@ -836,12 +842,14 @@ export default function MarketplacePage() {
             </div>
             <div className="dialog-footer">
               <button
+                type="button"
                 className="btn btn-secondary"
                 onClick={() => setRejectTarget(null)}
               >
                 Cancel
               </button>
               <button
+                type="button"
                 className="btn btn-destructive"
                 onClick={handleConfirmReject}
                 disabled={isSubmittingReview}

@@ -39,16 +39,66 @@ jobs:
           persist-credentials: false
       - name: Setup Bun environment
         uses: ./.github/actions/setup-bun-env
-      # Deliberately NOT `bun run lint`. The per-app lint scripts are scoped to
-      # `src/` (api) and `app/` (web, admin), so `turbo lint` never sees
-      # apps/api/scripts, apps/web/{components,hooks,lib,styles} or
-      # apps/admin/{hooks,lib,services,types}. Checking apps/ directly is the
-      # only way this gate covers the whole tree.
-      #
-      # `biome check` covers formatting, import organization and lint rules in
-      # one pass, so there is no separate format job to duplicate it.
+      # One command, same as local: each app's `lint` script checks its whole
+      # directory and the root script adds `scripts/`. `biome check` covers
+      # formatting, import organization and lint rules in one pass, so there is
+      # no separate format job to duplicate it.
       - name: Run lint
-        run: bunx biome check apps/
+        run: bun run lint
+      - name: Check GitHub Action pins
+        run: bun run check:action-versions
+
+  secrets:
+    name: Secret scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      # Full history: gitleaks reads the commits a pull request adds.
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          ref: ${{ inputs.source_sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Setup Bun environment
+        uses: ./.github/actions/setup-bun-env
+      - name: Scan the tree with secretlint
+        run: bun run secretlint
+      # The open-source gitleaks CLI, so no licence key is needed. Pull
+      # requests scan their own commits; every master commit arrived through a
+      # scanned pull request.
+      - name: Scan the pull request commits with gitleaks
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          GITLEAKS_VERSION: 8.30.0
+          GITLEAKS_LINUX_X64_SHA256: 79a3ab579b53f71efd634f3aaf7e04a0fa0cf206b7ed434638d1547a2470a66e
+        run: |
+          set -euo pipefail
+          archive="${RUNNER_TEMP}/gitleaks.tar.gz"
+          curl -fsSL --retry 3 -o "${archive}" \
+            "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          echo "${GITLEAKS_LINUX_X64_SHA256}  ${archive}" | sha256sum --check --strict -
+          tar -xzf "${archive}" -C "${RUNNER_TEMP}" gitleaks
+          "${RUNNER_TEMP}/gitleaks" git \
+            --config .gitleaks.toml \
+            --log-opts="${BASE_SHA}..HEAD" \
+            --redact --verbose --no-banner --exit-code 1
+
+  dead-code:
+    name: Dead code
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          ref: ${{ inputs.source_sha || github.sha }}
+          persist-credentials: false
+      - name: Setup Bun environment
+        uses: ./.github/actions/setup-bun-env
+        with:
+          generate-prisma: 'true'
+      - name: Check for unused files, exports and dependencies
+        run: bun run check:dead-code
 
   typecheck:
     name: Typecheck
@@ -112,9 +162,65 @@ jobs:
         uses: ./.github/actions/setup-bun-env
         with:
           generate-prisma: 'true'
+      # The database suites in apps/api (paid checkout, buyer-only downloads,
+      # payment events) run here against the Postgres service above. They need
+      # no Stripe credentials: the Stripe client is replaced in-process.
       - name: Run tests
         id: tests
         run: bun run test
+      # Fails when apps/api/prisma/schema.prisma has a change no migration
+      # carries, so an incompatible schema stops here and not at deploy.
+      - name: Check migrations match the Prisma schema
+        working-directory: apps/api
+        env:
+          DATABASE_URL: postgresql://postgres@127.0.0.1:5432/migrations_check
+        run: |
+          psql postgresql://postgres@127.0.0.1:5432/postgres -c 'CREATE DATABASE migrations_check'
+          bun run prisma:migrate
+          bunx prisma migrate diff \
+            --from-config-datasource \
+            --to-schema prisma/schema.prisma \
+            --exit-code
+
+  e2e:
+    name: Browser flow
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports: ['127.0.0.1:5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      MARKETPLACE_DB_TEST_ADMIN_URL: postgresql://postgres@127.0.0.1:5432/postgres
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          ref: ${{ inputs.source_sha || github.sha }}
+          persist-credentials: false
+      - name: Setup Bun environment
+        uses: ./.github/actions/setup-bun-env
+        with:
+          generate-prisma: 'true'
+      - name: Build the API
+        run: bunx turbo run build --filter=@marketplace/api
+      # NEXT_PUBLIC_* is inlined at build time, so the web app is built with the
+      # local API and the sign-in stand-in that apps/e2e starts.
+      - name: Build the web app against the local stack
+        env:
+          NEXT_PUBLIC_MARKETPLACE_API_URL: http://127.0.0.1:3200
+          NEXT_PUBLIC_GENFEED_APP_URL: http://127.0.0.1:3299
+        run: bun run --cwd apps/web build
+      - name: Install Chromium
+        working-directory: apps/e2e
+        run: bunx playwright install --with-deps chromium
+      - name: Run the browser flow
+        working-directory: apps/e2e
+        run: bun run e2e
 
   api-image:
     name: API image smoke test
@@ -196,13 +302,13 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     # Tests include real database isolation and gate release readiness.
-    needs: [lint, typecheck, build, test, api-image, deployment-checks]
+    needs: [lint, typecheck, build, test, e2e, api-image, deployment-checks]
     if: always()
     steps:
       - name: Verify gating jobs succeeded
         run: |
-          RESULTS="${{ needs.lint.result }} ${{ needs.typecheck.result }} ${{ needs.build.result }} ${{ needs.test.result }} ${{ needs.api-image.result }} ${{ needs.deployment-checks.result }}"
-          echo "lint=${{ needs.lint.result }} typecheck=${{ needs.typecheck.result }} build=${{ needs.build.result }} ${{ needs.test.result }}"
+          RESULTS="${{ needs.lint.result }} ${{ needs.typecheck.result }} ${{ needs.build.result }} ${{ needs.test.result }} ${{ needs.e2e.result }} ${{ needs.api-image.result }} ${{ needs.deployment-checks.result }}"
+          echo "lint=${{ needs.lint.result }} typecheck=${{ needs.typecheck.result }} build=${{ needs.build.result }} test=${{ needs.test.result }} e2e=${{ needs.e2e.result }}"
           for result in $RESULTS; do
             if [ "$result" != "success" ]; then
               echo "::error::A required job did not succeed."

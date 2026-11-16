@@ -2,12 +2,10 @@ import { HandleErrors } from '@api/common/decorators/error-handler.decorator';
 import { mapSellerRecord } from '@api/common/prisma/marketplace.mapper';
 import type { SellerRecord } from '@api/common/prisma/marketplace.types';
 import { buildOrderBy } from '@api/common/prisma/order-by.util';
-import {
-  type PaginatedResult,
-  paginateDocs,
-} from '@api/common/prisma/pagination.util';
+import type { Page } from '@api/common/prisma/page';
 import { PrismaService } from '@api/common/prisma/prisma.service';
 import { QueryDefaultsUtil } from '@api/common/utils/query-defaults.util';
+import { Prisma } from '@api/generated/prisma/client';
 import type { AdminSellerQueryDto } from '@api/sellers/dto/admin-seller-query.dto';
 import type { CreateSellerDto } from '@api/sellers/dto/create-seller.dto';
 import type { UpdateSellerDto } from '@api/sellers/dto/update-seller.dto';
@@ -18,7 +16,6 @@ import {
   Injectable,
   Logger,
 } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
 import slugify from 'slugify';
 
 interface SellerPatchInput extends Partial<UpdateSellerDto> {
@@ -362,20 +359,16 @@ export class SellersService {
 
   @HandleErrors('get admin sellers', 'sellers')
   async getAdminSellers(
-    organizationId: string,
     query: AdminSellerQueryDto,
-  ): Promise<PaginatedResult<SellerRecord>> {
+  ): Promise<Page<SellerRecord>> {
     this.logOperation('getAdminSellers', 'started', {
-      organizationId,
       query,
     });
 
-    const { limit, page, pagination } =
-      QueryDefaultsUtil.getPaginationDefaults(query);
+    const { limit, page } = QueryDefaultsUtil.getPaginationDefaults(query);
 
     const where: Prisma.SellerWhereInput = {
       isDeleted: false,
-      organization: organizationId,
     };
 
     if (query.status) {
@@ -396,27 +389,6 @@ export class SellersService {
       'createdAt',
     );
 
-    if (!pagination) {
-      const docs = await this.prisma.seller.findMany({
-        orderBy,
-        where,
-      });
-
-      const result = paginateDocs({
-        docs: docs.map(mapSellerRecord),
-        limit: Math.max(docs.length, 1),
-        page: 1,
-        total: docs.length,
-      });
-
-      this.logOperation('getAdminSellers', 'completed', {
-        count: result.docs.length,
-        organizationId,
-      });
-
-      return result;
-    }
-
     const [total, docs] = await this.prisma.$transaction([
       this.prisma.seller.count({ where }),
       this.prisma.seller.findMany({
@@ -427,28 +399,23 @@ export class SellersService {
       }),
     ]);
 
-    const result = paginateDocs({
-      docs: docs.map(mapSellerRecord),
+    const result = {
+      items: docs.map(mapSellerRecord),
       limit,
       page,
       total,
-    });
+    };
 
     this.logOperation('getAdminSellers', 'completed', {
-      count: result.docs.length,
-      organizationId,
+      count: result.items.length,
     });
 
     return result;
   }
 
   @HandleErrors('get admin seller by id', 'sellers')
-  async getAdminSellerById(
-    organizationId: string,
-    sellerId: string,
-  ): Promise<SellerRecord | null> {
+  async getAdminSellerById(sellerId: string): Promise<SellerRecord | null> {
     this.logOperation('getAdminSellerById', 'started', {
-      organizationId,
       sellerId,
     });
 
@@ -456,13 +423,11 @@ export class SellersService {
       where: {
         id: sellerId,
         isDeleted: false,
-        organization: organizationId,
       },
     });
 
     this.logOperation('getAdminSellerById', 'completed', {
       found: Boolean(seller),
-      organizationId,
       sellerId,
     });
 
@@ -471,11 +436,10 @@ export class SellersService {
 
   @HandleErrors('set seller status', 'sellers')
   async setSellerStatus(
-    organizationId: string,
     sellerId: string,
     status: SellerStatus,
   ): Promise<SellerRecord> {
-    const seller = await this.getAdminSellerById(organizationId, sellerId);
+    const seller = await this.getAdminSellerById(sellerId);
 
     if (!seller) {
       throw new BadRequestException('Seller not found');
@@ -486,22 +450,19 @@ export class SellersService {
 
   @HandleErrors('get admin payouts', 'sellers')
   async getAdminPayouts(
-    organizationId: string,
     query: AdminSellerQueryDto,
-  ): Promise<PaginatedResult<SellerRecord>> {
+  ): Promise<Page<SellerRecord>> {
     this.logOperation('getAdminPayouts', 'started', {
-      organizationId,
       query,
     });
 
-    const result = await this.getAdminSellers(organizationId, {
+    const result = await this.getAdminSellers({
       ...query,
-      sort: query.sort || 'totalEarnings: -1',
+      sort: query.sort || '-totalEarnings',
     });
 
     this.logOperation('getAdminPayouts', 'completed', {
-      count: result.docs.length,
-      organizationId,
+      count: result.items.length,
     });
 
     return result;

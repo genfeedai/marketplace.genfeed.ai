@@ -1,0 +1,204 @@
+# Weekly `bun run deps:update`. This repository does not use Dependabot, so
+# package bumps honor the ncu rejects (typescript, @typescript/native), wait
+# out the 3 hour release cooldown, and Action pins move in the same PR.
+#
+# Two jobs, so package install scripts never run next to a write token:
+#   update   no token, read-only: runs ncu and `bun install`, and hands over a
+#            patch limited to package manifests and the lockfile.
+#   publish  token, fresh checkout, no install: checks the patch touches only
+#            those files, applies it, bumps the Action pins with a plain Bun
+#            script, then pushes and opens or refreshes the PR.
+#
+# GITHUB_TOKEN can never push a change under `.github/workflows`, and a pull
+# request it opens does not start CI. DEPS_UPDATE_TOKEN is a fine-grained token
+# with Contents, Pull requests and Workflows write access. Without it the PR
+# carries package bumps only.
+name: Update Dependencies
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Weekly, Tuesday 6am UTC
+    - cron: '0 6 * * 2'
+
+concurrency:
+  group: deps-update
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  TZ: UTC
+
+jobs:
+  update:
+    name: Update packages
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+
+      - name: Setup Bun environment
+        uses: ./.github/actions/setup-bun-env
+        with:
+          install-command: "bun install"
+
+      - name: Update packages
+        run: bun run deps:update:packages
+
+      - name: Write the package patch
+        run: git diff --binary -- package.json 'apps/*/package.json' bun.lock > deps.patch
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: deps-patch
+          path: deps.patch
+          if-no-files-found: error
+
+  publish:
+    name: Open or refresh the weekly PR
+    needs: update
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      # Outside the workspace, so nothing in the artifact can replace a file
+      # this job runs. Only `deps.patch` is read, below.
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: deps-patch
+          path: ${{ runner.temp }}/deps-patch
+
+      # No `bun install` and no `bun run` here: this job holds the push token,
+      # so it runs no package script. The patched package.json is data only;
+      # the Action pin updater is invoked by file path.
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+        with:
+          bun-version-file: package.json
+
+      - name: Apply the package patch
+        env:
+          PATCH: ${{ runner.temp }}/deps-patch/deps.patch
+        run: |
+          set -euo pipefail
+          if [[ -s "$PATCH" ]]; then
+            git apply --numstat "$PATCH" | awk '{ print $3 }' | while read -r path; do
+              if [[ ! "$path" =~ ^(package\.json|apps/[^/]+/package\.json|bun\.lock)$ ]]; then
+                echo "::error::The package patch touches $path, which is not a manifest or the lockfile."
+                exit 1
+              fi
+            done
+            git apply "$PATCH"
+          fi
+
+      - name: Update Action pins
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: bun scripts/deps/update-github-action-versions.ts
+
+      - name: Open or refresh the weekly PR
+        env:
+          DEPS_UPDATE_TOKEN: ${{ secrets.DEPS_UPDATE_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.DEPS_UPDATE_TOKEN || secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          if [[ -z "${DEPS_UPDATE_TOKEN:-}" ]] && ! git diff --quiet -- .github; then
+            echo "::warning::Action pin updates are left out: add the DEPS_UPDATE_TOKEN secret (a fine-grained token with Workflows write access) so they ship in this PR."
+            git checkout -- .github
+          fi
+          if git diff --quiet && git diff --cached --quiet; then
+            echo "No dependency updates."
+            exit 0
+          fi
+
+          branch="chore/deps-update"
+          head_owner="${GITHUB_REPOSITORY%%/*}"
+          list_weekly_pull_requests() {
+            gh api \
+              --method GET \
+              "repos/${GITHUB_REPOSITORY}/pulls" \
+              --raw-field state=open \
+              --raw-field base=master \
+              --raw-field head="${head_owner}:${branch}" \
+              --raw-field per_page=2 \
+              --jq '.[].number'
+          }
+          pull_request_numbers="$(list_weekly_pull_requests)"
+          pull_requests=()
+          if [[ -n "$pull_request_numbers" ]]; then
+            mapfile -t pull_requests <<< "$pull_request_numbers"
+          fi
+          if (( ${#pull_requests[@]} > 1 )); then
+            echo "::error::Expected at most one open weekly dependency PR, found ${#pull_requests[@]}. Close duplicates before retrying."
+            exit 1
+          fi
+
+          previous_sha="$(
+            git ls-remote --heads origin "refs/heads/${branch}" \
+              | awk 'NR == 1 { print $1 }'
+          )"
+          if [[ -n "$previous_sha" ]]; then
+            git fetch --no-tags origin "$previous_sha"
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -B "$branch"
+          git add -A
+          git commit -m "chore(deps): weekly deps:update"
+          update_sha="$(git rev-parse HEAD)"
+          git push \
+            --force-with-lease="refs/heads/${branch}:${previous_sha}" \
+            origin \
+            "HEAD:refs/heads/${branch}"
+
+          if (( ${#pull_requests[@]} == 1 )); then
+            echo "Refreshed weekly dependency PR #${pull_requests[0]}."
+            exit 0
+          fi
+
+          if gh pr create \
+            --repo "$GITHUB_REPOSITORY" \
+            --base master \
+            --head "$branch" \
+            --title "chore(deps): weekly deps:update" \
+            --body "$(cat <<'EOF'
+          Single weekly bump from `bun run deps:update`: npm-check-updates with a 3 hour release cooldown and the repo rejects (`typescript`, `@typescript/native`), lockfile install, and GitHub Action SHA pins.
+          EOF
+          )"; then
+            exit 0
+          fi
+
+          echo "::error::GitHub Actions could not create the weekly dependency PR. Enable Settings → Actions → General → Allow GitHub Actions to create and approve pull requests, then retry this workflow."
+          if ! pull_request_numbers="$(list_weekly_pull_requests)"; then
+            echo "::error::Could not verify whether GitHub created the PR after the CLI error; preserving ${branch} at ${update_sha} to avoid detaching a potentially-created PR."
+            exit 1
+          fi
+          if [[ -n "$pull_request_numbers" ]]; then
+            echo "Weekly dependency PR #${pull_request_numbers%%$'\n'*} became visible after the CLI error."
+            exit 0
+          fi
+
+          if [[ -n "$previous_sha" ]]; then
+            git push \
+              --force-with-lease="refs/heads/${branch}:${update_sha}" \
+              origin \
+              "${previous_sha}:refs/heads/${branch}"
+          else
+            git push \
+              --force-with-lease="refs/heads/${branch}:${update_sha}" \
+              origin \
+              ":refs/heads/${branch}"
+          fi
+          exit 1

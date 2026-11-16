@@ -1,4 +1,5 @@
 import { Injectable, ServiceUnavailableException } from '@nestjs/common';
+import type Stripe from 'stripe';
 
 export interface StripeCheckoutSession {
   id: string;
@@ -11,45 +12,18 @@ export interface StripeCheckoutSession {
   payment_intent?: string | null;
 }
 
-export interface StripeCheckoutSessionCreateParams {
-  [key: string]: unknown;
-  allow_promotion_codes?: boolean;
-  cancel_url?: string;
-  line_items?: unknown[];
-  metadata?: Record<string, string>;
-  mode?: string;
-  payment_intent_data?: {
-    application_fee_amount?: number;
-    transfer_data?: {
-      destination: string;
-    };
-  };
-  payment_method_types?: string[];
-  success_url?: string;
-}
+/**
+ * Request parameters are the SDK's own types, so a parameter the SDK's pinned
+ * Stripe API version no longer accepts fails the typecheck here.
+ */
+export type StripeCheckoutSessionCreateParams =
+  Stripe.Checkout.SessionCreateParams;
 
 export interface StripeAccount {
   id: string;
   charges_enabled?: boolean;
   details_submitted?: boolean;
   payouts_enabled?: boolean;
-}
-
-export interface StripeAccountCreateParams {
-  business_profile?: {
-    name?: string;
-  };
-  capabilities?: Record<string, unknown>;
-  email?: string;
-  metadata?: Record<string, string>;
-  type?: string;
-}
-
-export interface StripeAccountLinkCreateParams {
-  account: string;
-  refresh_url: string;
-  return_url: string;
-  type: string;
 }
 
 export interface StripePayout {
@@ -69,6 +43,15 @@ export interface StripePaymentIntent {
   id: string;
 }
 
+export interface StripeCharge {
+  id: string;
+  amount: number;
+  amount_refunded: number;
+  currency: string;
+  payment_intent?: string | null;
+  refunded: boolean;
+}
+
 export interface StripeRefund {
   id: string;
 }
@@ -78,7 +61,7 @@ export type StripeRefundReason =
   | 'fraudulent'
   | 'requested_by_customer';
 
-export interface StripeBalance {
+interface StripeBalance {
   available: Array<{ amount: number }>;
   pending: Array<{ amount: number }>;
 }
@@ -98,34 +81,39 @@ interface StripeLikeClient {
         params: StripeCheckoutSessionCreateParams,
       ): Promise<StripeCheckoutSession>;
       retrieve(sessionId: string): Promise<StripeCheckoutSession>;
+      list(
+        params: Stripe.Checkout.SessionListParams,
+      ): Promise<{ data: StripeCheckoutSession[] }>;
     };
   };
   accounts: {
-    create(params: StripeAccountCreateParams): Promise<StripeAccount>;
+    create(params: Stripe.AccountCreateParams): Promise<StripeAccount>;
     createLoginLink(accountId: string): Promise<{ url: string }>;
     retrieve(accountId: string): Promise<StripeAccount>;
   };
   accountLinks: {
-    create(params: StripeAccountLinkCreateParams): Promise<{ url: string }>;
+    create(params: Stripe.AccountLinkCreateParams): Promise<{ url: string }>;
   };
   balance: {
     retrieve(params: { stripeAccount: string }): Promise<StripeBalance>;
   };
   payouts: {
     create(
-      params: { amount: number; currency: string },
+      params: Stripe.PayoutCreateParams,
       options: { stripeAccount: string },
     ): Promise<StripePayout>;
     list(
-      params: { limit: number },
+      params: Stripe.PayoutListParams,
       options: { stripeAccount: string },
     ): Promise<StripePayoutList>;
   };
   paymentIntents: {
-    create(params: Record<string, unknown>): Promise<StripePaymentIntent>;
+    create(
+      params: Stripe.PaymentIntentCreateParams,
+    ): Promise<StripePaymentIntent>;
   };
   refunds: {
-    create(params: Record<string, unknown>): Promise<StripeRefund>;
+    create(params: Stripe.RefundCreateParams): Promise<StripeRefund>;
   };
   webhooks: {
     constructEvent(

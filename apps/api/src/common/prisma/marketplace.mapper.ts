@@ -11,7 +11,7 @@ import type {
   Listing as PrismaListing,
   Purchase as PrismaPurchase,
   Seller as PrismaSeller,
-} from '@prisma/client';
+} from '@api/generated/prisma/client';
 
 export function mapSellerRecord(seller: PrismaSeller): SellerRecord {
   return {
@@ -102,12 +102,8 @@ export function mapPurchaseRecord(
     discountCode: purchase.discountCode,
     downloadCount: purchase.downloadCount,
     failureReason: purchase.failureReason,
-    giftMessage: purchase.giftMessage,
-    giftRecipient: purchase.giftRecipient,
-    hasReviewed: purchase.hasReviewed,
     id: purchase.id,
     isDeleted: purchase.isDeleted,
-    isGift: purchase.isGift,
     lastDownloadedAt: purchase.lastDownloadedAt,
     listing: purchase.listing,
     listingData: purchase.listingRecord
@@ -119,7 +115,6 @@ export function mapPurchaseRecord(
     organization: purchase.organization,
     paymentMethod: purchase.paymentMethod,
     platformFee: purchase.platformFee,
-    review: asOptionalJsonObject(purchase.review),
     seller: purchase.seller,
     sellerData: purchase.sellerRecord
       ? mapSellerRecord(purchase.sellerRecord)

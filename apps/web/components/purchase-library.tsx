@@ -97,7 +97,7 @@ export default function PurchaseLibrary() {
           >
             <div>
               <h2 className="font-semibold">
-                {text(info.title) || 'Marketplace purchase'}
+                {text(info.title) || 'Store purchase'}
               </h2>
               <p className="text-sm text-white/60">
                 {text(item.attributes.status)}

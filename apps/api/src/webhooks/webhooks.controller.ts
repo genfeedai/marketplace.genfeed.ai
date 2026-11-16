@@ -10,8 +10,10 @@ import {
   RawBody,
 } from '@nestjs/common';
 import { ApiExcludeController } from '@nestjs/swagger';
+import { SkipThrottle } from '@nestjs/throttler';
 
 @ApiExcludeController()
+@SkipThrottle()
 @Controller('webhooks')
 export class WebhooksController {
   constructor(

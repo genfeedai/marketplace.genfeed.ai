@@ -31,7 +31,7 @@ export function record(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
-export function parseResource(value: unknown): Resource {
+function parseResource(value: unknown): Resource {
   if (
     !record(value) ||
     typeof value.id !== 'string' ||
@@ -103,7 +103,7 @@ export function formatPrice(price: number, currency: string): string {
   );
 }
 
-export function marketplaceBaseUrl(): string {
+function marketplaceBaseUrl(): string {
   return (
     process.env.NEXT_PUBLIC_MARKETPLACE_API_URL ||
     'https://api.marketplace.genfeed.ai'

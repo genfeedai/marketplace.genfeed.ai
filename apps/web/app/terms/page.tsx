@@ -12,7 +12,6 @@ const LAST_UPDATED = '5 August 2026';
 export default function TermsPage(): ReactNode {
   return (
     <ContentPage
-      icon={'\uD83D\uDCC4'}
       title="Terms of Service"
       description={`Last updated ${LAST_UPDATED}`}
     >

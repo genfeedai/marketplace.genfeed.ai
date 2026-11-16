@@ -10,21 +10,22 @@ import {
 } from '@/lib/marketplace-api';
 
 interface ProductCatalogProps {
-  type: 'workflow' | 'prompt' | 'skill';
+  /** Leave out to list every product type. */
+  type?: 'workflow' | 'prompt' | 'preset' | 'skill';
 }
 
 export default async function ProductCatalog({ type }: ProductCatalogProps) {
+  const query = type ? `type=${type}&limit=50` : 'limit=50';
   let listings: Listing[];
   try {
     listings = parseCollection(
-      await publicRequest(`/marketplace/listings?type=${type}&limit=50`),
+      await publicRequest(`/marketplace/listings?${query}`),
     ).map(listingFromResource);
     // Validate all addresses before rendering untrusted links.
     for (const listing of listings) listingHref(listing.slug);
   } catch {
     return (
       <EmptyState
-        icon="🛒"
         label="Catalog unavailable"
         description="We could not load the catalog. Please try again shortly."
       />
@@ -33,9 +34,8 @@ export default async function ProductCatalog({ type }: ProductCatalogProps) {
   if (!listings.length) {
     return (
       <EmptyState
-        icon="🛒"
-        label="No listings yet"
-        description="Published community products will appear here. Create your first listing from the seller dashboard."
+        label="Nothing here yet"
+        description="New products from Genfeed will appear here."
       />
     );
   }

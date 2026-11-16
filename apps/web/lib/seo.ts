@@ -14,25 +14,25 @@ interface IndexableRoute {
 const INDEXABLE_ROUTES = [
   {
     path: '/',
-    title: 'Creator Marketplace',
+    title: 'Genfeed Store',
     description:
-      'Explore public videos, images, music, and posts from Genfeed.ai creators, alongside upcoming marketplace categories for workflows, prompts, and skills.',
+      'Buy the workflows, prompts, presets and agent skills Genfeed uses to make content. Pick one, run it and post the result the same day.',
     changeFrequency: 'daily',
     priority: 1,
   },
   {
     path: '/browse',
-    title: 'Browse Creator Products',
+    title: 'All Store Products',
     description:
-      'Find public videos, images, music, and posts from Genfeed.ai creators, plus the upcoming marketplace categories for workflows, prompts, and skills.',
+      'Browse every product in the Genfeed store in one list: content workflows, prompt collections, presets and agent skills, all made by Genfeed.',
     changeFrequency: 'daily',
     priority: 0.9,
   },
   {
     path: '/workflows',
-    title: 'Workflows',
+    title: 'Content Workflows',
     description:
-      'Community-built content workflows are coming soon to the Genfeed.ai marketplace. This category will hold workflows for content creation.',
+      'Content workflows from the Genfeed store. Each one runs from a brief to a finished post, clip or carousel without manual repair along the way.',
     changeFrequency: 'weekly',
     priority: 0.8,
   },
@@ -40,7 +40,15 @@ const INDEXABLE_ROUTES = [
     path: '/prompts',
     title: 'AI Prompt Collections',
     description:
-      'AI prompt collections are coming soon to the Genfeed.ai marketplace. This category is reserved for prompts shared by the creator community.',
+      'Prompt collections from the Genfeed store, built with structure, variables and guidance so each prompt produces work you can post.',
+    changeFrequency: 'weekly',
+    priority: 0.8,
+  },
+  {
+    path: '/presets',
+    title: 'Content Presets',
+    description:
+      'Presets from the Genfeed store: saved looks and settings that give your images, videos and posts the same consistent result every time.',
     changeFrequency: 'weekly',
     priority: 0.8,
   },
@@ -48,41 +56,49 @@ const INDEXABLE_ROUTES = [
     path: '/skills',
     title: 'AI Agent Skills',
     description:
-      'Packaged AI agent skills are coming soon to the Genfeed.ai marketplace. This category is reserved for skills from the creator community.',
+      'Agent skills from the Genfeed store. Install a skill and your AI agent knows how to plan, write and produce a specific kind of content.',
     changeFrequency: 'weekly',
     priority: 0.8,
   },
   {
+    path: '/gallery',
+    title: 'Public Content Gallery',
+    description:
+      'See what people make with Genfeed: a gallery of public videos, images, music and posts, plus a leaderboard of the most viewed posts.',
+    changeFrequency: 'daily',
+    priority: 0.7,
+  },
+  {
     path: '/videos',
-    title: 'Public Videos',
+    title: 'Public AI Videos',
     description:
       'Watch public AI-generated videos shared by Genfeed.ai creators, with playback controls and titles in a gallery of community video content.',
     changeFrequency: 'daily',
-    priority: 0.8,
+    priority: 0.6,
   },
   {
     path: '/images',
-    title: 'Public Images',
+    title: 'Public AI Images',
     description:
       'Browse a gallery of public AI-generated images shared by Genfeed.ai creators, with image previews and titles from the community.',
     changeFrequency: 'daily',
-    priority: 0.8,
+    priority: 0.6,
   },
   {
     path: '/music',
-    title: 'Public Music',
+    title: 'Public AI Music',
     description:
       'Listen to public AI-composed music shared by Genfeed.ai creators, with audio playback controls and track titles from the community.',
     changeFrequency: 'daily',
-    priority: 0.8,
+    priority: 0.6,
   },
   {
     path: '/posts',
-    title: 'Public Posts',
+    title: 'Public Creator Posts',
     description:
       'Read public content shared by Genfeed.ai creators. Explore community posts and open individual entries to see their published content.',
     changeFrequency: 'daily',
-    priority: 0.8,
+    priority: 0.6,
   },
   {
     path: '/leaderboard',
@@ -90,45 +106,29 @@ const INDEXABLE_ROUTES = [
     description:
       'See public Genfeed community posts ranked by their view counts, with post titles and publishing platforms in the content leaderboard.',
     changeFrequency: 'daily',
-    priority: 0.7,
-  },
-  {
-    path: '/sell',
-    title: 'Sell on the Marketplace',
-    description:
-      'Learn how to list workflows, prompts, and agent skills on the Genfeed.ai marketplace, prepare your seller profile, and receive Stripe payouts.',
-    changeFrequency: 'monthly',
-    priority: 0.7,
-  },
-  {
-    path: '/guidelines',
-    title: 'Marketplace Guidelines',
-    description:
-      'Read the quality, originality, and conduct standards for Genfeed.ai marketplace listings, including rights, dependencies, and seller responsibilities.',
-    changeFrequency: 'monthly',
-    priority: 0.5,
-  },
-  {
-    path: '/payouts',
-    title: 'Seller Payouts',
-    description:
-      'Learn how Genfeed.ai marketplace sellers receive Stripe Connect payouts, including onboarding, fees, payout timing, and payment support.',
-    changeFrequency: 'monthly',
-    priority: 0.5,
+    priority: 0.6,
   },
   {
     path: '/about',
-    title: 'About the Marketplace',
+    title: 'About the Genfeed Store',
     description:
-      'Learn how the Genfeed.ai marketplace connects creators with workflows, prompts, and agent skills, and what curated listings mean for buyers.',
+      'Learn what the Genfeed store sells, who makes the products, how buying and your library work, and how the store relates to Genfeed.ai.',
+    changeFrequency: 'monthly',
+    priority: 0.5,
+  },
+  {
+    path: '/guidelines',
+    title: 'Store Standards',
+    description:
+      'Read the standards every Genfeed store product meets: accurate descriptions, declared requirements, a quality bar and what happens if one fails.',
     changeFrequency: 'monthly',
     priority: 0.5,
   },
   {
     path: '/contact',
-    title: 'Contact Marketplace Support',
+    title: 'Contact Store Support',
     description:
-      'Contact the Genfeed.ai marketplace team for help with orders, listings, seller onboarding, payouts, privacy requests, and content reports.',
+      'Contact the Genfeed store team for help with orders, refunds, a product that does not work as described, and privacy requests about your data.',
     changeFrequency: 'monthly',
     priority: 0.4,
   },
@@ -136,7 +136,7 @@ const INDEXABLE_ROUTES = [
     path: '/terms',
     title: 'Terms of Service',
     description:
-      'Read the terms for buying and selling on the Genfeed.ai marketplace, including listing responsibilities, purchases, licences, and refunds.',
+      'Read the terms for buying on the Genfeed.ai marketplace, including accounts, purchases, licences, refunds and acceptable use of the service.',
     changeFrequency: 'yearly',
     priority: 0.3,
   },
@@ -179,7 +179,7 @@ function createMetadata({
     alternates: { canonical: path },
     openGraph: {
       type: 'website',
-      siteName: 'Genfeed Marketplace',
+      siteName: 'Genfeed Store',
       title,
       description,
       url: path,
@@ -221,7 +221,6 @@ function isRetiredSellerSlug(sellerSlug: string): boolean {
   return RETIRED_SELLER_SLUGS.some((retired) => retired === sellerSlug);
 }
 
-export type { IndexablePath, IndexableRoute };
 export {
   absoluteMarketplaceUrl,
   createIndexableMetadata,

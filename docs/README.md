@@ -1,6 +1,6 @@
 # Marketplace Documentation
 
-Run the API, web app, and admin app in parallel with Bun 1.3.14 and Node 26:
+Run the API, web app, and admin app in parallel with Bun 1.4.4 and Node 26:
 
 ```bash
 bun install --frozen-lockfile
@@ -18,13 +18,19 @@ Initialize the schema in that local database, then start the apps:
 ```bash
 cd apps/api
 bun --env-file=.env.local run prisma:generate
-bun --env-file=.env.local run prisma db push --schema prisma/schema.prisma
+bun --env-file=.env.local run prisma db push
 cd ../..
 bun run dev
 ```
 
 Run `db push` only against a disposable local development database. Production
 database changes require the deployment's migration process.
+
+Prisma 7 reads the schema path and the database URL from
+`apps/api/prisma.config.ts` and does not load `.env` files itself, which is why
+the commands above pass `--env-file`. `prisma:generate` needs no database;
+`prisma:migrate` and `db push` stop with "Connection url is empty" when
+`DATABASE_URL` is not set.
 
 Create `apps/web/.env.local` and `apps/admin/.env.local` with the local API
 and app origins before starting their development servers:
@@ -60,17 +66,38 @@ For local gallery data, set `NEXT_PUBLIC_GENFEED_API_URL` in
 
 The retired npm prompt/workflow catalog importers and their seed commands have
 been removed. Create a seller profile and listing from `/dashboard`, submit
-the draft for review, then approve it through the operator API or local admin.
+the draft for review, then approve it as a platform superadmin (see below).
 Published products appear in `/workflows`, `/prompts`, and `/skills`.
 Free claims and paid purchases appear in `/library`; download data is never
 returned by public catalog or listing endpoints.
 
+### Reviewing listings
+
+A listing is published only after a platform superadmin approves it. Review
+runs from the Genfeed CLI (`@genfeedai/cli`, releases after 0.6.0), with the
+session `genfeed admin login` stores:
+
+```bash
+genfeed admin marketplace listings                 # listings waiting for review
+genfeed admin marketplace approve <listing id>     # preview; add --yes to publish
+genfeed admin marketplace reject <listing id> --reason "<text>" --yes
+```
+
+The CLI derives the Marketplace API URL from its Genfeed API URL
+(`api.example.com` becomes `api.marketplace.example.com`, local port 3010
+becomes 3200); `--marketplace-url` overrides it. The commands call
+`GET /admin/marketplace/listings` and
+`POST /admin/marketplace/listings/:id/approve` or `/reject`. Only a listing in
+`pending_review` can be approved or rejected, and the reject reason is shown to
+the seller. The local admin app on port 3205 calls the same routes.
+
 ## Production release
 
-Production runs through the public `genfeedai/genfeed.ai` hosted SaaS workflow,
-with exact Genfeed and Marketplace master SHAs. Keep Vercel Git auto-deploy
-disabled. See that repository's `infra/tofu/marketplace/README.md` for the
-dedicated AWS service, database roles, SSM parameters, and release settings.
+Production ships from this repository through the manual **Release** workflow,
+with an exact Marketplace master SHA. Keep Vercel Git auto-deploy disabled. See
+[deployment.md](deployment.md) for the release steps, the `production`
+environment settings, and the infrastructure in `infra/production`. The
+workflow never checks out or calls the Genfeed monorepo.
 There is no production deployment of the standalone admin app.
 
 `docker/Dockerfile.api` builds the production API and migration/provisioning
@@ -80,8 +107,11 @@ The initial migration targets a fresh database. Existing databases initialized
 with `db push` require a verified migration baseline before production deploy.
 
 Configure Stripe to deliver signed events to `/webhooks/stripe`, including
-`checkout.session.completed` and `checkout.session.expired`. Invalid signatures
-return 400; processing failures return 500 so Stripe retries. Real payment and
+`checkout.session.completed`, `checkout.session.expired` and `charge.refunded`.
+Each event id is stored and applied once; a purchase completes only when the
+session is paid and its amount and currency match, and a fully refunded charge
+refunds its purchase. Invalid signatures return 400; processing failures
+return 500 so Stripe retries. Real payment and
 payout verification still requires an authorized Stripe test environment.
 
 Validation commands:

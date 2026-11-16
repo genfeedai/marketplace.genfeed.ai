@@ -1,0 +1,38 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "workspaces": {
+    ".": {
+      "entry": [
+        "scripts/deps/*.ts"
+      ],
+      "ignoreDependencies": [
+        "@secretlint/secretlint-rule-preset-recommend",
+        "@typescript/native",
+        "husky",
+        "secretlint"
+      ]
+    },
+    "apps/api": {
+      "ignoreDependencies": [
+        "@prisma/client",
+        "@typescript/native"
+      ]
+    },
+    "apps/web": {
+      "ignoreDependencies": [
+        "@typescript/native",
+        "postcss-load-config"
+      ]
+    },
+    "apps/admin": {
+      "ignoreDependencies": [
+        "@typescript/native"
+      ]
+    },
+    "apps/e2e": {
+      "ignoreDependencies": [
+        "@typescript/native"
+      ]
+    }
+  }
+}

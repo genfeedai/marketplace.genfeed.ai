@@ -20,8 +20,9 @@ Agents must not dispatch or retry a release without explicit user approval.
    version, and `approval=deploy-production`. Configure required production
    reviewers in GitHub environment settings where the account plan supports
    them; the confirmation input does not replace organizational protection.
-4. CI reruns lint, type checking, builds, real database tests, deployment checks,
-   and the production API image smoke test for the same commit. The image that
+4. CI reruns lint, Action pin checks, secret scans, the dead-code check, type
+   checking, builds, real database tests, deployment checks, and the production
+   API image smoke test for the same commit. The image that
    passed those checks is retained as an artifact and pushed to ECR unchanged.
 5. The API workflow uses only Marketplace state. It provisions dedicated
    database roles if needed, takes the pre-migration backup, migrates only the
@@ -36,7 +37,7 @@ Agents must not dispatch or retry a release without explicit user approval.
 
 ## Production configuration
 
-Create a `production` environment **in this repository**. No private checkout
+Create a `production` environment **in this repository**. No checkout
 token is needed: every checkout is from the same repository and approved SHA.
 
 | Variable | Meaning |
@@ -102,7 +103,8 @@ Provisioning creates the `marketplace` database with distinct
 and the runtime's readable RDS CA bundle enabled.
 
 Configure the Stripe webhook for `https://api.marketplace.<DOMAIN>/webhooks/stripe`
-with its dedicated signing secret and checkout completed/expired events. Payment
+with its dedicated signing secret and the checkout completed, checkout expired
+and charge refunded events. Payment
 parameters must exist before infrastructure changes; the workflow checks their
 metadata without printing secret values.
 

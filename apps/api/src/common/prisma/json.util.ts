@@ -1,4 +1,4 @@
-import type { Prisma } from '@prisma/client';
+import type { Prisma } from '@api/generated/prisma/client';
 
 export function asJsonObject(
   value: Prisma.JsonValue | null | undefined,

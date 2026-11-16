@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import type { ReactNode } from 'react';
+import { GALLERY_LINK, PRODUCT_LINKS } from '@/lib/store-navigation';
 
 interface FooterLink {
   href: string;
@@ -14,48 +15,33 @@ interface FooterSection {
 
 const FOOTER_SECTIONS: FooterSection[] = [
   {
-    title: 'Domain',
+    title: 'Store',
     links: [
-      { href: '/browse', label: 'Browse' },
-      { href: '/workflows', label: 'Workflows' },
-      { href: '/prompts', label: 'Prompts' },
-      { href: '/skills', label: 'Skills' },
-      { href: '/videos', label: 'Videos' },
-      { href: '/images', label: 'Images' },
-      { href: '/music', label: 'Music' },
-      { href: '/posts', label: 'Posts' },
-      { href: '/leaderboard', label: 'Leaderboard' },
+      ...PRODUCT_LINKS,
+      GALLERY_LINK,
+      { href: '/library', label: 'Library' },
     ],
   },
   {
-    title: 'Protocol',
-    links: [
-      { href: '/sell', label: 'Be a Seller' },
-      { href: '/guidelines', label: 'Guidelines' },
-      { href: '/payouts', label: 'Payouts' },
-      { href: '/library', label: 'My Library' },
-    ],
-  },
-  {
-    title: 'Intelligence',
+    title: 'Genfeed',
     links: [
       { href: '/about', label: 'About' },
-      {
-        href: 'https://genfeed.ai/articles',
-        label: 'Journal',
-        isExternal: true,
-      },
+      { href: '/guidelines', label: 'Store standards' },
       { href: '/contact', label: 'Contact' },
     ],
   },
+  {
+    title: 'Legal',
+    links: [
+      { href: '/terms', label: 'Terms' },
+      { href: '/privacy', label: 'Privacy' },
+    ],
+  },
 ];
 
-const LEGAL_LINKS: FooterLink[] = [
-  { href: '/terms', label: 'Terms' },
-  { href: '/privacy', label: 'Privacy' },
-];
-
-const SOCIAL_LINKS: FooterLink[] = [
+const EXTERNAL_LINKS: FooterLink[] = [
+  { href: 'https://genfeed.ai', label: 'Genfeed.ai', isExternal: true },
+  { href: 'https://genfeed.ai/articles', label: 'Journal', isExternal: true },
   { href: 'https://x.com/genfeedai', label: 'X', isExternal: true },
   { href: 'https://discord.gg/Qy867n83Z4', label: 'Discord', isExternal: true },
   {
@@ -97,15 +83,19 @@ export default function Footer(): ReactNode {
         <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-4">
           <div className="flex flex-col gap-3">
             <Link className="text-lg font-bold text-white" href="/">
-              Marketplace
+              Genfeed Store
             </Link>
             <p className="max-w-xs text-sm text-white/60">
-              Creator products and public content from the Genfeed community.
+              Workflows, prompts, presets and skills made by Genfeed.
             </p>
           </div>
 
           {FOOTER_SECTIONS.map((section) => (
-            <nav key={section.title} className="flex flex-col gap-3">
+            <nav
+              key={section.title}
+              aria-label={`${section.title} links`}
+              className="flex flex-col gap-3"
+            >
               <h2 className="text-xs font-semibold uppercase tracking-wider text-white/40">
                 {section.title}
               </h2>
@@ -126,10 +116,7 @@ export default function Footer(): ReactNode {
           </p>
 
           <div className="flex flex-wrap items-center gap-4">
-            {LEGAL_LINKS.map((link) => (
-              <FooterAnchor key={link.href} link={link} />
-            ))}
-            {SOCIAL_LINKS.map((link) => (
+            {EXTERNAL_LINKS.map((link) => (
               <FooterAnchor key={link.href} link={link} />
             ))}
           </div>

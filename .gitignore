@@ -28,3 +28,13 @@ coverage/
 # Python test caches
 __pycache__/
 *.py[cod]
+
+# Playwright output
+test-results/
+playwright-report/
+
+# Vitest 5 report and attachment output
+.vitest/
+
+# Prisma client, written by `prisma generate`
+apps/api/src/generated/

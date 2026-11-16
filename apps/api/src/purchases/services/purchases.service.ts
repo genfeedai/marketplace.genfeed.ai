@@ -2,12 +2,10 @@ import { HandleErrors } from '@api/common/decorators/error-handler.decorator';
 import { mapPurchaseRecord } from '@api/common/prisma/marketplace.mapper';
 import type { PurchaseRecord } from '@api/common/prisma/marketplace.types';
 import { buildOrderBy } from '@api/common/prisma/order-by.util';
-import {
-  type PaginatedResult,
-  paginateDocs,
-} from '@api/common/prisma/pagination.util';
+import type { Page } from '@api/common/prisma/page';
 import { PrismaService } from '@api/common/prisma/prisma.service';
 import { QueryDefaultsUtil } from '@api/common/utils/query-defaults.util';
+import { Prisma } from '@api/generated/prisma/client';
 import { ListingsService } from '@api/listings/services/listings.service';
 import {
   EXTERNAL_CHECKOUT_MESSAGE,
@@ -15,6 +13,10 @@ import {
 } from '@api/listings/utils/external-checkout';
 import type { CreatePurchaseDto } from '@api/purchases/dto/create-purchase.dto';
 import type { PurchaseQueryDto } from '@api/purchases/dto/purchase-query.dto';
+import {
+  canTransitionPurchase,
+  purchaseStatusesThatMayBecome,
+} from '@api/purchases/purchase-status';
 import { SellersService } from '@api/sellers/services/sellers.service';
 import { PurchaseStatus } from '@genfeedai/enums';
 import {
@@ -24,7 +26,6 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
 
 const PLATFORM_COMMISSION_RATE = 0.15;
 
@@ -98,18 +99,18 @@ export class PurchasesService {
   }
 
   private paginateMappedDocs<T>(
-    docs: T[],
+    items: T[],
     page: number,
     limit: number,
-  ): PaginatedResult<T> {
+  ): Page<T> {
     const start = (page - 1) * limit;
 
-    return paginateDocs({
-      docs: docs.slice(start, start + limit),
+    return {
+      items: items.slice(start, start + limit),
       limit,
       page,
-      total: docs.length,
-    });
+      total: items.length,
+    };
   }
 
   async create(
@@ -336,10 +337,7 @@ export class PurchasesService {
       currency: listing.currency,
       discount: 0,
       discountCode: dto.discountCode,
-      giftMessage: dto.giftMessage,
-      giftRecipient: dto.giftRecipientId,
       isDeleted: false,
-      isGift: Boolean(dto.giftRecipientId),
       listing: dto.listingId,
       listingSnapshot: {
         price: listing.price,
@@ -376,43 +374,127 @@ export class PurchasesService {
     return purchase;
   }
 
-  @HandleErrors('complete purchase', 'purchases')
-  async completePurchase(purchaseId: string): Promise<PurchaseRecord> {
+  @HandleErrors('find purchase', 'purchases')
+  async findById(purchaseId: string): Promise<PurchaseRecord | null> {
     const purchase = await this.prisma.purchase.findUnique({
+      include: { listingRecord: true, sellerRecord: true },
       where: { id: purchaseId },
     });
 
+    return purchase ? mapPurchaseRecord(purchase) : null;
+  }
+
+  @HandleErrors('find purchase by payment', 'purchases')
+  async findByPaymentIntentId(
+    paymentIntentId: string,
+  ): Promise<PurchaseRecord | null> {
+    const purchase = await this.prisma.purchase.findFirst({
+      include: { listingRecord: true, sellerRecord: true },
+      where: { stripePaymentIntentId: paymentIntentId },
+    });
+
+    return purchase ? mapPurchaseRecord(purchase) : null;
+  }
+
+  /**
+   * Move a purchase to a new status only along an allowed transition. The
+   * status check and the write are one statement, so two deliveries of the
+   * same event cannot both win. Returns whether this call made the move.
+   */
+  private async transitionStatus(
+    purchaseId: string,
+    to: PurchaseStatus,
+    data: Prisma.PurchaseUpdateManyMutationInput = {},
+  ): Promise<{ applied: boolean; purchase: PurchaseRecord }> {
+    const { count } = await this.prisma.purchase.updateMany({
+      data: { ...data, status: to },
+      where: {
+        id: purchaseId,
+        status: { in: purchaseStatusesThatMayBecome(to) },
+      },
+    });
+
+    const purchase = await this.findById(purchaseId);
     if (!purchase) {
       throw new NotFoundException('Purchase not found');
     }
 
-    if (purchase.status === PurchaseStatus.COMPLETED) {
-      const completedPurchase = await this.prisma.purchase.findUnique({
-        include: {
-          listingRecord: true,
-          sellerRecord: true,
-        },
-        where: { id: purchaseId },
+    if (count === 0 && !canTransitionPurchase(purchase.status, to)) {
+      this.logger.warn('Purchase status change refused', {
+        from: purchase.status,
+        purchaseId,
+        to,
       });
-
-      return mapPurchaseRecord(completedPurchase!);
     }
 
-    const updated = await this.updatePurchase(purchaseId, {
-      status: PurchaseStatus.COMPLETED,
-    });
+    return { applied: count === 1, purchase };
+  }
 
+  @HandleErrors('complete purchase', 'purchases')
+  async completePurchase(
+    purchaseId: string,
+    paymentIntentId: string | null,
+  ): Promise<{ applied: boolean; purchase: PurchaseRecord }> {
+    const result = await this.transitionStatus(
+      purchaseId,
+      PurchaseStatus.COMPLETED,
+      { stripePaymentIntentId: paymentIntentId },
+    );
+
+    if (result.applied) {
+      await this.addPurchaseToStats(result.purchase, 1);
+    }
+
+    return result;
+  }
+
+  @HandleErrors('refund purchase', 'purchases')
+  async refundPurchase(
+    purchaseId: string,
+    paymentIntentId: string | null,
+  ): Promise<{ applied: boolean; purchase: PurchaseRecord }> {
+    const before = await this.findById(purchaseId);
+    if (!before) {
+      throw new NotFoundException('Purchase not found');
+    }
+
+    const result = await this.transitionStatus(
+      purchaseId,
+      PurchaseStatus.REFUNDED,
+      { stripePaymentIntentId: paymentIntentId },
+    );
+
+    // Only a purchase that had counted as a sale gives that sale back.
+    if (result.applied && before.status === PurchaseStatus.COMPLETED) {
+      await this.addPurchaseToStats(result.purchase, -1);
+    }
+
+    return result;
+  }
+
+  @HandleErrors('fail purchase', 'purchases')
+  failPurchase(
+    purchaseId: string,
+    reason: string,
+  ): Promise<{ applied: boolean; purchase: PurchaseRecord }> {
+    return this.transitionStatus(purchaseId, PurchaseStatus.FAILED, {
+      failureReason: reason,
+    });
+  }
+
+  private async addPurchaseToStats(
+    purchase: PurchaseRecord,
+    direction: 1 | -1,
+  ): Promise<void> {
     await this.listingsService.updateListingStats(purchase.listing, {
-      purchases: 1,
-      revenue: purchase.total,
+      purchases: direction,
+      revenue: direction * purchase.total,
     });
 
     await this.sellersService.incrementSellerStats(purchase.seller, {
-      totalEarnings: purchase.sellerEarnings,
-      totalSales: 1,
+      totalEarnings: direction * purchase.sellerEarnings,
+      totalSales: direction,
     });
-
-    return updated!;
   }
 
   @HandleErrors('track download', 'purchases')
@@ -439,9 +521,8 @@ export class PurchasesService {
     buyerId: string,
     organizationId: string,
     query: PurchaseQueryDto,
-  ): Promise<PaginatedResult<PurchaseRecord>> {
-    const { limit, page, pagination } =
-      QueryDefaultsUtil.getPaginationDefaults(query);
+  ): Promise<Page<PurchaseRecord>> {
+    const { limit, page } = QueryDefaultsUtil.getPaginationDefaults(query);
 
     const where: Prisma.PurchaseWhereInput = {
       buyer: buyerId,
@@ -449,33 +530,16 @@ export class PurchasesService {
       organization: organizationId,
     };
 
-    if (query.status) {
-      where.status = query.status;
-    }
+    // A refunded purchase leaves the library unless it is asked for by status.
+    where.status = query.status
+      ? query.status
+      : { not: PurchaseStatus.REFUNDED };
 
     const orderBy = buildOrderBy(
       query.sort,
       PurchasesService.sortableFields,
       'createdAt',
     );
-
-    if (!pagination) {
-      const docs = await this.prisma.purchase.findMany({
-        include: {
-          listingRecord: true,
-          sellerRecord: true,
-        },
-        orderBy,
-        where,
-      });
-
-      return paginateDocs({
-        docs: docs.map(mapPurchaseRecord),
-        limit: Math.max(docs.length, 1),
-        page: 1,
-        total: docs.length,
-      });
-    }
 
     const [total, docs] = await this.prisma.$transaction([
       this.prisma.purchase.count({ where }),
@@ -491,12 +555,12 @@ export class PurchasesService {
       }),
     ]);
 
-    return paginateDocs({
-      docs: docs.map(mapPurchaseRecord),
+    return {
+      items: docs.map(mapPurchaseRecord),
       limit,
       page,
       total,
-    });
+    };
   }
 
   @HandleErrors('verify ownership', 'purchases')
@@ -557,9 +621,8 @@ export class PurchasesService {
   async getSellerSales(
     sellerId: string,
     query: PurchaseQueryDto,
-  ): Promise<PaginatedResult<PurchaseRecord>> {
-    const { limit, page, pagination } =
-      QueryDefaultsUtil.getPaginationDefaults(query);
+  ): Promise<Page<PurchaseRecord>> {
+    const { limit, page } = QueryDefaultsUtil.getPaginationDefaults(query);
 
     const where: Prisma.PurchaseWhereInput = {
       isDeleted: false,
@@ -576,24 +639,6 @@ export class PurchasesService {
       'createdAt',
     );
 
-    if (!pagination) {
-      const docs = await this.prisma.purchase.findMany({
-        include: {
-          listingRecord: true,
-          sellerRecord: true,
-        },
-        orderBy,
-        where,
-      });
-
-      return paginateDocs({
-        docs: docs.map(mapPurchaseRecord),
-        limit: Math.max(docs.length, 1),
-        page: 1,
-        total: docs.length,
-      });
-    }
-
     const [total, docs] = await this.prisma.$transaction([
       this.prisma.purchase.count({ where }),
       this.prisma.purchase.findMany({
@@ -608,12 +653,12 @@ export class PurchasesService {
       }),
     ]);
 
-    return paginateDocs({
-      docs: docs.map(mapPurchaseRecord),
+    return {
+      items: docs.map(mapPurchaseRecord),
       limit,
       page,
       total,
-    });
+    };
   }
 
   @HandleErrors('get seller analytics', 'purchases')
@@ -698,15 +743,12 @@ export class PurchasesService {
 
   @HandleErrors('get admin purchases', 'purchases')
   async getAdminPurchases(
-    organizationId: string,
     query: PurchaseQueryDto & { search?: string },
-  ): Promise<PaginatedResult<PurchaseRecord>> {
-    const { limit, page, pagination } =
-      QueryDefaultsUtil.getPaginationDefaults(query);
+  ): Promise<Page<PurchaseRecord>> {
+    const { limit, page } = QueryDefaultsUtil.getPaginationDefaults(query);
 
     const where: Prisma.PurchaseWhereInput = {
       isDeleted: false,
-      organization: organizationId,
     };
 
     if (query.status) {
@@ -734,21 +776,11 @@ export class PurchasesService {
       this.matchesAdminSearch(purchase, search),
     );
 
-    if (!pagination) {
-      return paginateDocs({
-        docs: filteredDocs,
-        limit: Math.max(filteredDocs.length, 1),
-        page: 1,
-        total: filteredDocs.length,
-      });
-    }
-
     return this.paginateMappedDocs(filteredDocs, page, limit);
   }
 
   @HandleErrors('get admin purchase by id', 'purchases')
   async getAdminPurchaseById(
-    organizationId: string,
     purchaseId: string,
   ): Promise<PurchaseRecord | null> {
     const purchase = await this.prisma.purchase.findFirst({
@@ -759,7 +791,6 @@ export class PurchasesService {
       where: {
         id: purchaseId,
         isDeleted: false,
-        organization: organizationId,
       },
     });
 
@@ -767,10 +798,7 @@ export class PurchasesService {
   }
 
   @HandleErrors('get admin analytics overview', 'purchases')
-  async getAdminAnalyticsOverview(
-    organizationId: string,
-    days = 30,
-  ): Promise<{
+  async getAdminAnalyticsOverview(days = 30): Promise<{
     totalRevenue: number;
     totalSales: number;
     totalPlatformFees: number;
@@ -791,7 +819,6 @@ export class PurchasesService {
       },
       where: {
         isDeleted: false,
-        organization: organizationId,
       },
     });
 

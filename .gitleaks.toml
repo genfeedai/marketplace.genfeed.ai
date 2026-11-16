@@ -1,0 +1,13 @@
+title = "Marketplace gitleaks config"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Global allowlist"
+paths = [
+  '''node_modules''',
+  '''bun\.lock''',
+  '''\.secretlintrc\.json''',
+  '''\.gitleaks\.toml''',
+]

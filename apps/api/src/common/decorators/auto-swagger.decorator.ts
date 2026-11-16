@@ -1,6 +1,12 @@
 import { PATH_METADATA } from '@nestjs/common/constants';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { DECORATORS } from '@nestjs/swagger/dist/constants';
+
+// @nestjs/swagger 11.4 no longer exports `dist/constants`; these are its metadata keys.
+const DECORATORS = {
+  API_OPERATION: 'swagger/apiOperation',
+  API_RESPONSE: 'swagger/apiResponse',
+  API_TAGS: 'swagger/apiUseTags',
+} as const;
 
 export function AutoSwagger(tag?: string): ClassDecorator {
   // biome-ignore lint/complexity/noBannedTypes: ClassDecorator requires Function type

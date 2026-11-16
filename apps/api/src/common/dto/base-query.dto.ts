@@ -1,18 +1,15 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Transform, Type } from 'class-transformer';
-import {
-  IsBoolean,
-  IsNumber,
-  IsOptional,
-  IsString,
-  Min,
-  ValidateIf,
-} from 'class-validator';
+import { IsNumber, IsOptional, IsString, Max, Min } from 'class-validator';
+
+const MAX_PAGE_SIZE = 100;
+const MAX_PAGE_NUMBER = 10_000;
 
 export class BaseQueryDto {
   @ApiProperty({
     default: 1,
     description: 'Page number for pagination',
+    maximum: MAX_PAGE_NUMBER,
     minimum: 1,
     required: false,
   })
@@ -20,6 +17,7 @@ export class BaseQueryDto {
   @Type(() => Number)
   @IsNumber()
   @Min(1)
+  @Max(MAX_PAGE_NUMBER)
   @Transform(({ value }) =>
     value !== undefined && value !== null ? Number(value) : 1,
   )
@@ -28,7 +26,7 @@ export class BaseQueryDto {
   @ApiProperty({
     default: 10,
     description: 'Number of items per page',
-    maximum: 100,
+    maximum: MAX_PAGE_SIZE,
     minimum: 1,
     required: false,
   })
@@ -36,54 +34,22 @@ export class BaseQueryDto {
   @Type(() => Number)
   @IsNumber()
   @Min(1)
+  @Max(MAX_PAGE_SIZE)
   @Transform(({ value }) =>
     value !== undefined && value !== null ? Number(value) : 10,
   )
   limit = 10;
 
   @ApiProperty({
-    default: true,
-    description: 'Enable or disable pagination',
-    required: false,
-  })
-  @IsOptional()
-  @ValidateIf((o) => o.pagination !== undefined)
-  @Transform(({ value }) => {
-    if (value === undefined || value === null) return true;
-    if (value === 'false' || value === false) return false;
-    if (value === 'true' || value === true) return true;
-    if (value === '0' || value === 0) return false;
-    if (value === '') return false;
-    return Boolean(value);
-  })
-  @IsBoolean()
-  pagination = true;
-
-  @ApiProperty({
-    default: false,
-    description: 'Filter by deleted status',
-    required: false,
-  })
-  @IsOptional()
-  @ValidateIf((o) => o.isDeleted !== undefined)
-  @Transform(({ value }) => {
-    if (value === undefined || value === null) return false;
-    if (value === 'true' || value === true) return true;
-    if (value === 'false' || value === false) return false;
-    return Boolean(value);
-  })
-  @IsBoolean()
-  isDeleted = false;
-
-  @ApiProperty({
-    default: 'createdAt: -1',
-    description: 'Sort field(s) and order',
+    default: '-createdAt',
+    description:
+      'Comma-separated sort fields; prefix a field with - for descending order',
     required: false,
   })
   @IsOptional()
   @IsString()
   @Transform(({ value }) =>
-    value !== undefined && value !== null ? value : 'createdAt: -1',
+    value !== undefined && value !== null ? value : '-createdAt',
   )
-  sort = 'createdAt: -1';
+  sort = '-createdAt';
 }

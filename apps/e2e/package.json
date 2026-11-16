@@ -1,0 +1,17 @@
+{
+  "name": "@marketplace/e2e",
+  "private": true,
+  "license": "AGPL-3.0-or-later",
+  "version": "0.1.0",
+  "scripts": {
+    "e2e": "playwright test",
+    "lint": "biome check .",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.65.1",
+    "@types/node": "26.6.6",
+    "@typescript/native": "npm:typescript@7.0.2",
+    "typescript": "6.0.3"
+  }
+}

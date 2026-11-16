@@ -19,14 +19,12 @@ export default async function MusicPage(): Promise<ReactNode> {
   return (
     <main className="mx-auto max-w-7xl px-4 py-8">
       <PageHeader
-        icon={'\uD83C\uDFB5'}
         title="Music"
         description="Public AI-composed music from the Genfeed community"
       />
 
       {result.status === 'unavailable' && (
         <EmptyState
-          icon={'\u26A0\uFE0F'}
           label="Music Unavailable"
           description="Genfeed could not load public music right now. Please try again shortly."
         />
@@ -34,7 +32,6 @@ export default async function MusicPage(): Promise<ReactNode> {
 
       {result.status === 'success' && result.items.length === 0 && (
         <EmptyState
-          icon={'\uD83C\uDFB5'}
           label="No Public Music Yet"
           description="Music will appear here when creators publish it publicly on Genfeed."
         />
@@ -59,9 +56,6 @@ export default async function MusicPage(): Promise<ReactNode> {
                       <p className="mt-1 text-sm text-white/50">{duration}</p>
                     )}
                   </div>
-                  <span aria-hidden="true" className="text-2xl">
-                    {'\uD83C\uDFB5'}
-                  </span>
                 </div>
                 {/* biome-ignore lint/a11y/useMediaCaption: Music tracks do not have a spoken-caption track. */}
                 <audio

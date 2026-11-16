@@ -55,7 +55,6 @@ export class ListingsController {
     @Inject(ListingsService) private readonly listingsService: ListingsService,
     @Inject(PurchasesService)
     private readonly purchasesService: PurchasesService,
-    @Inject(SellersService) readonly _sellersService: SellersService,
   ) {}
 
   /**
@@ -473,13 +472,8 @@ export class AdminListingsController {
   async getListings(
     @Req() request: Request,
     @ValidatedQuery(ListingQueryDto) query: ListingQueryDto,
-    @CurrentUser() user: MarketplacePrincipal,
   ): Promise<JsonApiCollectionResponse> {
-    const publicMetadata = getIdentity(user);
-    const data = await this.listingsService.getAdminListings(
-      publicMetadata.organization,
-      query,
-    );
+    const data = await this.listingsService.getAdminListings(query);
 
     return serializeCollection(
       request,
@@ -494,13 +488,8 @@ export class AdminListingsController {
   async getListing(
     @Req() request: Request,
     @Param('listingId') listingId: string,
-    @CurrentUser() user: MarketplacePrincipal,
   ): Promise<JsonApiSingleResponse> {
-    const publicMetadata = getIdentity(user);
-    const listing = await this.listingsService.getAdminListingById(
-      publicMetadata.organization,
-      listingId,
-    );
+    const listing = await this.listingsService.getAdminListingById(listingId);
 
     if (!listing) {
       return returnNotFound('AdminListingsController', listingId);

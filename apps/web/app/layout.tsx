@@ -12,8 +12,8 @@ export const metadata: Metadata = {
   ...rootMetadata,
   metadataBase: new URL(MARKETPLACE_ORIGIN),
   title: {
-    default: 'Creator Marketplace | Genfeed.ai',
-    template: '%s | Genfeed Marketplace',
+    default: 'Genfeed Store: Workflows, Prompts, Presets and Skills',
+    template: '%s | Genfeed Store',
   },
 };
 

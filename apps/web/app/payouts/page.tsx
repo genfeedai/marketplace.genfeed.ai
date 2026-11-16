@@ -3,17 +3,17 @@ import ContentSection from '@components/content-section';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
-import { createIndexableMetadata } from '@/lib/seo';
+import { createNoIndexMetadata } from '@/lib/seo';
 
-export const metadata: Metadata = createIndexableMetadata('/payouts');
+export const metadata: Metadata = createNoIndexMetadata({
+  title: 'Seller Payouts',
+  description: 'Seller payout information for the Genfeed store.',
+  path: '/payouts',
+});
 
 export default function PayoutsPage(): ReactNode {
   return (
-    <ContentPage
-      icon={'\uD83D\uDCB8'}
-      title="Payouts"
-      description="How money reaches sellers"
-    >
+    <ContentPage title="Payouts" description="How money reaches sellers">
       <ContentSection heading="Stripe Connect">
         <p>
           Payouts run through Stripe Connect. Before your first listing can go
