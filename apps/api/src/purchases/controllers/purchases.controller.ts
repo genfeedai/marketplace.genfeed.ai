@@ -637,9 +637,7 @@ export class ServicePurchasesController {
     @Req() request: Request,
     @ValidatedBody(RefundCreditPurchaseDto) dto: RefundCreditPurchaseDto,
   ): Promise<JsonApiSingleResponse> {
-    const purchase = await this.purchasesService.refundCreditPurchase(
-      dto.idempotencyKey,
-    );
+    const purchase = await this.purchasesService.refundCreditPurchase(dto);
     if (!purchase) {
       throw new NotFoundException('No purchase was recorded under this key');
     }

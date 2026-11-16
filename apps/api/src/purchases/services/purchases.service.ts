@@ -409,24 +409,91 @@ export class PurchasesService {
 
   /**
    * Refund a purchase made with credits, found by the call key that recorded
-   * it. The item leaves the buyer's library. Returns null when no purchase
-   * was recorded under the key.
+   * it. The item leaves the buyer's library.
+   *
+   * When no purchase exists under the key, a record call may still be in
+   * flight. With the call's buyer, listing and amount, the key is written as
+   * an already-refunded purchase, so that call finds a refunded row and
+   * cannot complete the purchase after the credits went back. Without them,
+   * or for a listing that can no longer be sold, there is nothing to write and
+   * the result is null.
    */
   @HandleErrors('refund credit purchase', 'purchases')
-  async refundCreditPurchase(
-    idempotencyKey: string,
-  ): Promise<PurchaseRecord | null> {
-    const row = await this.prisma.purchase.findUnique({
-      select: { id: true, paymentMethod: true },
-      where: { idempotencyKey },
-    });
-    if (!row) {
+  async refundCreditPurchase(input: {
+    buyerId?: string;
+    creditsPaid?: number;
+    idempotencyKey: string;
+    listingId?: string;
+    organizationId?: string;
+  }): Promise<PurchaseRecord | null> {
+    const refundExisting = async (): Promise<PurchaseRecord | null> => {
+      const row = await this.prisma.purchase.findUnique({
+        select: { id: true, paymentMethod: true },
+        where: { idempotencyKey: input.idempotencyKey },
+      });
+      if (!row) {
+        return null;
+      }
+      if (row.paymentMethod !== 'credits') {
+        throw new BadRequestException(
+          'This purchase was not paid with credits',
+        );
+      }
+      return (await this.refundPurchase(row.id, null)).purchase;
+    };
+
+    const existing = await refundExisting();
+    if (existing) {
+      return existing;
+    }
+    if (
+      !input.buyerId ||
+      !input.listingId ||
+      !input.organizationId ||
+      !input.creditsPaid
+    ) {
       return null;
     }
-    if (row.paymentMethod !== 'credits') {
-      throw new BadRequestException('This purchase was not paid with credits');
+    const listing = await this.listingsService.getPublishedListing(
+      input.listingId,
+    );
+    if (!listing) {
+      return null;
     }
-    return (await this.refundPurchase(row.id, null)).purchase;
+    try {
+      return await this.create({
+        buyer: input.buyerId,
+        creditsPaid: input.creditsPaid,
+        currency: listing.currency,
+        discount: 0,
+        idempotencyKey: input.idempotencyKey,
+        isDeleted: false,
+        listing: input.listingId,
+        listingSnapshot: {
+          price: listing.price,
+          title: listing.title,
+          type: listing.type,
+          version: listing.version,
+        } as Prisma.InputJsonValue,
+        organization: input.organizationId,
+        paymentMethod: 'credits',
+        platformFee: 0,
+        seller: listing.seller,
+        sellerEarnings: 0,
+        status: PurchaseStatus.REFUNDED,
+        subtotal: 0,
+        total: 0,
+      });
+    } catch (error) {
+      // The record call won the insert; refund the purchase it made.
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        return refundExisting();
+      }
+      throw error;
+    }
   }
 
   @HandleErrors('create purchase', 'purchases')

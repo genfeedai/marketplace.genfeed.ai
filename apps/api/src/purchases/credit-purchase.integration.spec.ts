@@ -267,6 +267,70 @@ describe.skipIf(!adminUrl)(
       expect(response.status).toBe(404);
     });
 
+    it('keeps a late record call from completing a purchase that was refunded before it landed', async () => {
+      const listing = await fixture.publishListing({
+        title: 'Late Record',
+        price: 2900,
+        downloadData: WORKFLOW,
+      });
+      const body = call(listing.id);
+
+      const refund = await fixture.request(REFUND, serviceToken, {
+        idempotencyKey: body.idempotencyKey,
+        listingId: body.listingId,
+        buyerId: body.buyerId,
+        organizationId: body.organizationId,
+        creditsPaid: body.creditsPaid,
+      });
+      const late = await record(serviceToken, body);
+
+      expect(refund.status).toBe(201);
+      expect((await refund.json()).data.attributes.status).toBe('refunded');
+      expect((await late.json()).data.attributes.status).toBe('refunded');
+      expect((await rows(listing.id)).map((row) => row.status)).toEqual([
+        'refunded',
+      ]);
+      expect(await libraryIds(buyerToken)).not.toContain(listing.id);
+      const [{ purchases }] = await fixture.sql<{ purchases: number }>(
+        'SELECT purchases FROM listings WHERE id = $1',
+        [listing.id],
+      );
+      expect(purchases).toBe(0);
+    });
+
+    it('lets the buyer pay again under a new key after a refunded attempt', async () => {
+      const listing = await fixture.publishListing({
+        title: 'Pay Again',
+        price: 2900,
+        downloadData: WORKFLOW,
+      });
+      const first = call(listing.id);
+      await fixture.request(REFUND, serviceToken, {
+        idempotencyKey: first.idempotencyKey,
+        listingId: first.listingId,
+        buyerId: first.buyerId,
+        organizationId: first.organizationId,
+        creditsPaid: first.creditsPaid,
+      });
+
+      const second = await record(serviceToken, call(listing.id));
+
+      expect(second.status).toBe(201);
+      expect(await libraryIds(buyerToken)).toContain(listing.id);
+    });
+
+    it('answers 404 to a refund that names no purchase and no listing that can be sold', async () => {
+      const response = await fixture.request(REFUND, serviceToken, {
+        idempotencyKey: 'gone-listing',
+        listingId: '00000000-0000-4000-8000-000000000000',
+        buyerId: 'buyer-opaque',
+        organizationId: 'buyer-org',
+        creditsPaid: 2175,
+      });
+
+      expect(response.status).toBe(404);
+    });
+
     it('refuses to refund a card purchase through the credit route', async () => {
       const listing = await fixture.publishListing({
         title: 'Card Purchase',
