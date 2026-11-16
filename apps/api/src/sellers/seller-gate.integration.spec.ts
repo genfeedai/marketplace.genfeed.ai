@@ -54,17 +54,18 @@ describe.skipIf(!adminUrl)('only a superadmin can sell', () => {
     });
   });
 
-  it.each(
-    STRIPE_ROUTES,
-  )('refuses %s %s to a user without the superadmin claim', async (method, path) => {
-    const response = await fixture.request(
-      path,
-      userToken,
-      method === 'POST' ? {} : undefined,
-    );
+  it.each(STRIPE_ROUTES)(
+    'refuses %s %s to a user without the superadmin claim',
+    async (method, path) => {
+      const response = await fixture.request(
+        path,
+        userToken,
+        method === 'POST' ? {} : undefined,
+      );
 
-    expect(response.status).toBe(403);
-  });
+      expect(response.status).toBe(403);
+    },
+  );
 
   it('refuses listing creation and submission without the superadmin claim', async () => {
     const created = await fixture.request(
