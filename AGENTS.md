@@ -17,7 +17,7 @@ against the `/admin/marketplace/*` routes (see `docs/README.md`).
 ## Dependencies
 
 Consumes `@genfeedai/*` packages from NPM:
-- `@genfeedai/enums` — shared enums (ListingType, ListingStatus, SellerStatus, etc.), used by the api
+- `@genfeedai/contracts` — shared enums (ListingType, ListingStatus, SellerStatus, etc.) from its `/enums` entry, used by the api
 
 ## Domain
 
