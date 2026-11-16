@@ -81,6 +81,37 @@ describe('Public API limits and headers', () => {
     expect(statuses).toEqual([...Array<number>(10).fill(401), 429, 429]);
   });
 
+  it.each([
+    ['the operator console', 'https://console.genfeed.ai'],
+    ['the operator console in development', 'http://localhost:3000'],
+  ])(
+    'lets %s call the admin routes from the browser',
+    async (_name, origin) => {
+      const response = await fetch(`${url}/admin/marketplace/listings`, {
+        headers: {
+          'Access-Control-Request-Headers': 'authorization',
+          'Access-Control-Request-Method': 'POST',
+          Origin: origin,
+        },
+        method: 'OPTIONS',
+      });
+
+      expect(response.headers.get('access-control-allow-origin')).toBe(origin);
+    },
+  );
+
+  it('refuses a browser call from an unknown origin', async () => {
+    const response = await fetch(`${url}/admin/marketplace/listings`, {
+      headers: {
+        'Access-Control-Request-Method': 'POST',
+        Origin: 'https://example.com',
+      },
+      method: 'OPTIONS',
+    });
+
+    expect(response.headers.get('access-control-allow-origin')).toBeNull();
+  });
+
   it('reaches the ownership route instead of a public listing route', async () => {
     const response = await fetch(
       `${url}/marketplace/purchases/by-listing/any/ownership`,

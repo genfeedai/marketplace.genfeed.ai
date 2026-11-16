@@ -3,6 +3,9 @@ import { ValidationPipe } from '@nestjs/common';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import helmet from 'helmet';
 
+/** Where the operator reviews listings and reads sales. */
+const OPERATOR_CONSOLE_ORIGIN = 'https://console.genfeed.ai';
+
 /**
  * Settings shared by the real server and the tests that must see what the
  * server sends: proxy trust, security headers, CORS and request validation.
@@ -21,9 +24,19 @@ export function configureApp(app: NestExpressApplication): void {
   // stay readable cross-origin (CORS still decides who may call it).
   app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
 
-  const origins = [new URL(marketplaceConfig.marketplaceUrl).origin];
+  // The store, and the private operator console, which reviews listings and
+  // reads sales from the operator's browser with the operator's own token.
+  const origins = [
+    new URL(marketplaceConfig.marketplaceUrl).origin,
+    OPERATOR_CONSOLE_ORIGIN,
+  ];
   if (marketplaceConfig.nodeEnv === 'development') {
-    origins.push('http://localhost:3205', 'http://127.0.0.1:3205');
+    origins.push(
+      'http://localhost:3000',
+      'http://127.0.0.1:3000',
+      'http://localhost:3205',
+      'http://127.0.0.1:3205',
+    );
   }
 
   app.enableCors({

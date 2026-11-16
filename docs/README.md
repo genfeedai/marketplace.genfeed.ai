@@ -89,7 +89,10 @@ becomes 3200); `--marketplace-url` overrides it. The commands call
 `GET /admin/marketplace/listings` and
 `POST /admin/marketplace/listings/:id/approve` or `/reject`. Only a listing in
 `pending_review` can be approved or rejected, and the reject reason is shown to
-the seller. The local admin app on port 3205 calls the same routes.
+the seller. The local admin app on port 3205 calls the same routes. The
+private operator console (`https://console.genfeed.ai`, port 3000 locally)
+calls them from the operator's browser with the operator's own token, so the
+API's CORS list allows that origin next to the store.
 
 ## Production release
 
