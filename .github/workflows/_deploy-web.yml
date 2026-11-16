@@ -35,7 +35,7 @@ jobs:
           persist-credentials: false
       - uses: ./.github/actions/setup-bun-env
       - name: Install pinned Vercel CLI
-        run: bun add --global vercel@54.4.1
+        run: bun add --global vercel@65.16.0
       - name: Pull only the Marketplace project
         run: vercel pull --yes --environment=production --token="$VERCEL_TOKEN"
       - name: Configure public application origins
