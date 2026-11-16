@@ -202,11 +202,11 @@ describe.skipIf(!adminUrl)(
     });
 
     async function publishListing(body: Record<string, unknown>) {
-      const created = await request('/seller/listings', sellerToken, body);
+      const created = await request('/seller/listings', operatorToken, body);
       expect(created.status).toBe(201);
       const id: string = (await created.json()).data.id;
       expect(
-        (await request(`/seller/listings/${id}/submit`, sellerToken, {}))
+        (await request(`/seller/listings/${id}/submit`, operatorToken, {}))
           .status,
       ).toBe(201);
       expect(
