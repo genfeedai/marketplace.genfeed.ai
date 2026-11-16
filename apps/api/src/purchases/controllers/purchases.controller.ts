@@ -1,14 +1,18 @@
 import type { MarketplacePrincipal } from '@api/common/auth/marketplace-principal';
 import { getIdentity } from '@api/common/auth/marketplace-principal';
+import { MARKETPLACE_SERVICE_SCOPES } from '@api/common/auth/service-auth.constants';
 import { AutoSwagger } from '@api/common/decorators/auto-swagger.decorator';
 import { CurrentUser } from '@api/common/decorators/current-user.decorator';
 import { LogMethod } from '@api/common/decorators/log-method.decorator';
+import { Public } from '@api/common/decorators/public.decorator';
 import { RolesDecorator } from '@api/common/decorators/roles.decorator';
+import { ServiceScope } from '@api/common/decorators/service-scope.decorator';
 import {
   ValidatedBody,
   ValidatedQuery,
 } from '@api/common/decorators/validated-parameter.decorator';
 import { RolesGuard } from '@api/common/guards/roles.guard';
+import { ServiceAuthGuard } from '@api/common/guards/service-auth.guard';
 import type {
   JsonApiCollectionResponse,
   JsonApiSingleResponse,
@@ -28,6 +32,10 @@ import { ListingsService } from '@api/listings/services/listings.service';
 import { AdminPurchaseQueryDto } from '@api/purchases/dto/admin-purchase-query.dto';
 import { CheckoutDto } from '@api/purchases/dto/checkout.dto';
 import { PurchaseQueryDto } from '@api/purchases/dto/purchase-query.dto';
+import {
+  RecordCreditPurchaseDto,
+  RefundCreditPurchaseDto,
+} from '@api/purchases/dto/record-credit-purchase.dto';
 import { CheckoutService } from '@api/purchases/services/checkout.service';
 import { PurchasesService } from '@api/purchases/services/purchases.service';
 import { PURCHASE_RATE_LIMIT } from '@api/rate-limit';
@@ -44,11 +52,12 @@ import {
   Post,
   Query,
   Req,
+  Res,
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
-import type { Request } from 'express';
+import type { Request, Response } from 'express';
 
 @AutoSwagger()
 @ApiTags('Marketplace Purchases')
@@ -582,5 +591,63 @@ export class AdminMarketplaceController {
       SellerSerializer,
       data,
     ) as JsonApiCollectionResponse;
+  }
+}
+
+/**
+ * Routes only the Genfeed API calls, with a token it signs for itself. The
+ * main API takes a buyer's credits first, then records the purchase here.
+ */
+@AutoSwagger()
+@ApiTags('Marketplace Service Purchases')
+@Controller('marketplace/service/purchases')
+@Public()
+@UseGuards(ServiceAuthGuard)
+export class ServicePurchasesController {
+  constructor(
+    @Inject(PurchasesService)
+    private readonly purchasesService: PurchasesService,
+  ) {}
+
+  /** 201 for a new purchase, 200 when the call key already recorded one. */
+  @Post()
+  @ServiceScope(MARKETPLACE_SERVICE_SCOPES.recordPurchase)
+  @LogMethod({ logEnd: false, logError: true, logStart: true })
+  async recordCreditPurchase(
+    @Req() request: Request,
+    @Res({ passthrough: true }) response: Response,
+    @ValidatedBody(RecordCreditPurchaseDto) dto: RecordCreditPurchaseDto,
+  ): Promise<JsonApiSingleResponse> {
+    const { created, purchase } =
+      await this.purchasesService.recordCreditPurchase(dto);
+    response.status(created ? 201 : 200);
+
+    return serializeSingle(
+      request,
+      PurchaseSerializer,
+      purchase,
+    ) as JsonApiSingleResponse;
+  }
+
+  /** Refund a credit purchase by its call key; the item leaves the library. */
+  @Post('refund')
+  @ServiceScope(MARKETPLACE_SERVICE_SCOPES.refundPurchase)
+  @LogMethod({ logEnd: false, logError: true, logStart: true })
+  async refundCreditPurchase(
+    @Req() request: Request,
+    @ValidatedBody(RefundCreditPurchaseDto) dto: RefundCreditPurchaseDto,
+  ): Promise<JsonApiSingleResponse> {
+    const purchase = await this.purchasesService.refundCreditPurchase(
+      dto.idempotencyKey,
+    );
+    if (!purchase) {
+      throw new NotFoundException('No purchase was recorded under this key');
+    }
+
+    return serializeSingle(
+      request,
+      PurchaseSerializer,
+      purchase,
+    ) as JsonApiSingleResponse;
   }
 }

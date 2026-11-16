@@ -7,6 +7,7 @@ import { PrismaService } from '@api/common/prisma/prisma.service';
 import { QueryDefaultsUtil } from '@api/common/utils/query-defaults.util';
 import { Prisma } from '@api/generated/prisma/client';
 import { ListingsService } from '@api/listings/services/listings.service';
+import { getCreditPrice } from '@api/listings/utils/credit-price';
 import {
   EXTERNAL_CHECKOUT_MESSAGE,
   getExternalCheckoutProvider,
@@ -21,6 +22,7 @@ import { SellersService } from '@api/sellers/services/sellers.service';
 import { PurchaseStatus } from '@genfeedai/enums';
 import {
   BadRequestException,
+  ConflictException,
   Inject,
   Injectable,
   Logger,
@@ -300,6 +302,131 @@ export class PurchasesService {
     });
 
     return purchase;
+  }
+
+  /**
+   * Record a purchase the Genfeed API already took credits for. The price is
+   * the listing's own GEN price, so the caller cannot name a lower one. The
+   * call key makes a retry return the purchase the first call made; the same
+   * key for a different buyer, listing or amount is refused.
+   */
+  @HandleErrors('record credit purchase', 'purchases')
+  async recordCreditPurchase(input: {
+    buyerId: string;
+    creditsPaid: number;
+    idempotencyKey: string;
+    listingId: string;
+    organizationId: string;
+  }): Promise<{ created: boolean; purchase: PurchaseRecord }> {
+    const matchesCall = (purchase: PurchaseRecord): boolean =>
+      purchase.buyer === input.buyerId &&
+      purchase.listing === input.listingId &&
+      purchase.organization === input.organizationId &&
+      purchase.creditsPaid === input.creditsPaid;
+    const replay = async (): Promise<PurchaseRecord | null> => {
+      const row = await this.prisma.purchase.findUnique({
+        include: { listingRecord: true, sellerRecord: true },
+        where: { idempotencyKey: input.idempotencyKey },
+      });
+      if (!row) {
+        return null;
+      }
+      const purchase = mapPurchaseRecord(row);
+      if (!matchesCall(purchase)) {
+        throw new ConflictException(
+          'This idempotency key was used for a different purchase',
+        );
+      }
+      return purchase;
+    };
+
+    const existing = await replay();
+    if (existing) {
+      return { created: false, purchase: existing };
+    }
+
+    const listing = await this.listingsService.getPublishedListing(
+      input.listingId,
+    );
+    if (!listing) {
+      throw new NotFoundException('Listing not found');
+    }
+    const creditPrice = getCreditPrice(listing);
+    if (creditPrice === null) {
+      throw new BadRequestException('This listing cannot be paid with credits');
+    }
+    if (creditPrice !== input.creditsPaid) {
+      throw new ConflictException(
+        `The GEN price of this listing is ${creditPrice}`,
+      );
+    }
+    if (await this.hasAlreadyPurchased(input.listingId, input.buyerId)) {
+      throw new ConflictException('This buyer already owns this item');
+    }
+
+    let purchase: PurchaseRecord;
+    try {
+      purchase = await this.create({
+        buyer: input.buyerId,
+        creditsPaid: input.creditsPaid,
+        currency: listing.currency,
+        discount: 0,
+        idempotencyKey: input.idempotencyKey,
+        isDeleted: false,
+        listing: input.listingId,
+        listingSnapshot: {
+          price: listing.price,
+          title: listing.title,
+          type: listing.type,
+          version: listing.version,
+        } as Prisma.InputJsonValue,
+        organization: input.organizationId,
+        paymentMethod: 'credits',
+        platformFee: 0,
+        seller: listing.seller,
+        sellerEarnings: 0,
+        status: PurchaseStatus.COMPLETED,
+        subtotal: 0,
+        total: 0,
+      });
+    } catch (error) {
+      // A concurrent call with the same key won the insert; return its row.
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        const winner = await replay();
+        if (winner) {
+          return { created: false, purchase: winner };
+        }
+      }
+      throw error;
+    }
+
+    await this.addPurchaseToStats(purchase, 1);
+    return { created: true, purchase };
+  }
+
+  /**
+   * Refund a purchase made with credits, found by the call key that recorded
+   * it. The item leaves the buyer's library. Returns null when no purchase
+   * was recorded under the key.
+   */
+  @HandleErrors('refund credit purchase', 'purchases')
+  async refundCreditPurchase(
+    idempotencyKey: string,
+  ): Promise<PurchaseRecord | null> {
+    const row = await this.prisma.purchase.findUnique({
+      select: { id: true, paymentMethod: true },
+      where: { idempotencyKey },
+    });
+    if (!row) {
+      return null;
+    }
+    if (row.paymentMethod !== 'credits') {
+      throw new BadRequestException('This purchase was not paid with credits');
+    }
+    return (await this.refundPurchase(row.id, null)).purchase;
   }
 
   @HandleErrors('create purchase', 'purchases')

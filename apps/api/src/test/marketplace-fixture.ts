@@ -71,6 +71,16 @@ export interface MarketplaceFixture {
     organizationId: string,
     isSuperAdmin?: boolean,
   ): Promise<string>;
+  /**
+   * A token the Genfeed API would sign for a service call. Defaults are the
+   * valid ones; override one field to build a token the marketplace refuses.
+   */
+  serviceToken(options?: {
+    audience?: string;
+    subject?: string;
+    scope?: string | null;
+    lifetimeSeconds?: number;
+  }): Promise<string>;
   /** Run SQL as the database owner, bypassing the API, and return the rows. */
   sql<Row = Record<string, unknown>>(
     text: string,
@@ -264,6 +274,24 @@ export async function startMarketplaceFixture(
       .sign(key.privateKey);
   }
 
+  async function serviceToken(
+    options: Parameters<MarketplaceFixture['serviceToken']>[0] = {},
+  ): Promise<string> {
+    const issuedAt = Math.floor(Date.now() / 1000);
+    const claims: Record<string, unknown> =
+      options.scope === null
+        ? {}
+        : { scope: options.scope ?? 'purchases:record purchases:refund' };
+    return new SignJWT(claims)
+      .setProtectedHeader({ alg: 'EdDSA', kid: 'contract' })
+      .setSubject(options.subject ?? 'genfeed-api')
+      .setIssuer(ISSUER)
+      .setAudience(options.audience ?? 'marketplace-service')
+      .setIssuedAt(issuedAt)
+      .setExpirationTime(issuedAt + (options.lifetimeSeconds ?? 60))
+      .sign(key.privateKey);
+  }
+
   function signedStripeEvent(
     type: string,
     object: unknown,
@@ -373,6 +401,7 @@ export async function startMarketplaceFixture(
   return {
     request,
     token,
+    serviceToken,
     publishListing,
     startCheckout,
     sql: async (text, values) =>

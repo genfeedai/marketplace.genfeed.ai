@@ -97,6 +97,7 @@ export function mapPurchaseRecord(
   return {
     buyer: purchase.buyer,
     createdAt: purchase.createdAt,
+    creditsPaid: purchase.creditsPaid,
     currency: purchase.currency,
     discount: purchase.discount,
     discountCode: purchase.discountCode,
