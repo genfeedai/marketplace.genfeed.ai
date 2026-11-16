@@ -6,6 +6,9 @@ on:
       source_sha:
         required: true
         type: string
+  # The weekly dependency PR is pushed with GITHUB_TOKEN, which starts no
+  # `pull_request` run, so `deps-update.yml` starts this workflow on its branch.
+  workflow_dispatch:
   push:
     branches: [master]
   pull_request:
