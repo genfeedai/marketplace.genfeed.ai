@@ -12,6 +12,10 @@ import {
 import { MarketplaceConfigService } from '@api/config/config.service';
 import type { Prisma } from '@api/generated/prisma/client';
 import { ListingsService } from '@api/listings/services/listings.service';
+import {
+  EXTERNAL_CHECKOUT_MESSAGE,
+  getExternalCheckoutProvider,
+} from '@api/listings/utils/external-checkout';
 import { PurchasesService } from '@api/purchases/services/purchases.service';
 import { SellersService } from '@api/sellers/services/sellers.service';
 import { PurchaseStatus } from '@genfeedai/enums';
@@ -66,6 +70,10 @@ export class CheckoutService {
     const listing = await this.listingsService.getPublishedListing(listingId);
     if (!listing) {
       throw new NotFoundException('Listing not found');
+    }
+
+    if (getExternalCheckoutProvider(listing)) {
+      throw new BadRequestException(EXTERNAL_CHECKOUT_MESSAGE);
     }
 
     if (listing.pricingTier === 'premium') {

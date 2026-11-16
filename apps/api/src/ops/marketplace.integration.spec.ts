@@ -200,5 +200,104 @@ describe.skipIf(!adminUrl)(
         ).status,
       ).toBe(400);
     });
+
+    async function publishListing(body: Record<string, unknown>) {
+      const created = await request('/seller/listings', sellerToken, body);
+      expect(created.status).toBe(201);
+      const id: string = (await created.json()).data.id;
+      expect(
+        (await request(`/seller/listings/${id}/submit`, sellerToken, {}))
+          .status,
+      ).toBe(201);
+      expect(
+        (
+          await request(
+            `/admin/marketplace/listings/${id}/approve`,
+            operatorToken,
+            {},
+          )
+        ).status,
+      ).toBe(201);
+      return id;
+    }
+
+    it('claims a free skill and downloads its files', async () => {
+      const files = [
+        {
+          path: 'SKILL.md',
+          content: '---\nname: x-thread\n---\nWrite an X thread.',
+        },
+      ];
+      const skillId = await publishListing({
+        title: 'X Thread',
+        type: 'skill',
+        shortDescription: 'Write an X thread',
+        description: 'Open-source skill from genfeedai/skills',
+        price: 0,
+        downloadData: {
+          slug: 'x-thread',
+          description: 'Write a thread',
+          files,
+        },
+      });
+      const claim = await request(
+        `/marketplace/listings/${skillId}/claim`,
+        buyerToken,
+        {},
+      );
+      expect(claim.status).toBe(201);
+      const skillPurchaseId = (await claim.json()).data.id;
+      const download = await request(
+        `/marketplace/purchases/${skillPurchaseId}/download-data`,
+        buyerToken,
+      );
+      expect(download.status).toBe(200);
+      expect((await download.json()).data.attributes.downloadData).toEqual({
+        slug: 'x-thread',
+        description: 'Write a thread',
+        files,
+      });
+    });
+
+    it('lists the Skills Pro bundle but never sells or claims it in the store', async () => {
+      const bundleId = await publishListing({
+        title: 'Skills Pro Bundle',
+        type: 'skill',
+        shortDescription: 'All Skills Pro packs',
+        description: 'Delivered by receipt.',
+        price: 4900,
+        previewData: {
+          externalCheckout: { provider: 'skills-pro' },
+          packs: [{ slug: 'x-warmup-pro', name: 'X Warmup Pro' }],
+        },
+      });
+      const listed = await request(`/marketplace/listings/${bundleId}`);
+      expect(listed.status).toBe(200);
+      const attributes = (await listed.json()).data.attributes;
+      expect(attributes.price).toBe(4900);
+      expect(attributes.previewData.externalCheckout.provider).toBe(
+        'skills-pro',
+      );
+      const before = (
+        await (await request('/marketplace/purchases', buyerToken)).json()
+      ).data.length;
+      const checkout = await request(
+        `/marketplace/listings/${bundleId}/checkout`,
+        buyerToken,
+        {},
+      );
+      expect(checkout.status).toBe(400);
+      expect((await checkout.json()).message).toContain('bought on Genfeed');
+      const claim = await request(
+        `/marketplace/listings/${bundleId}/claim`,
+        buyerToken,
+        {},
+      );
+      expect(claim.status).toBe(400);
+      const after = (
+        await (await request('/marketplace/purchases', buyerToken)).json()
+      ).data.length;
+      expect(after).toBe(before);
+    });
   },
 );
