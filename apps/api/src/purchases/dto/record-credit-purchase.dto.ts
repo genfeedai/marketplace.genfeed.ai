@@ -1,5 +1,12 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsInt, IsNotEmpty, IsString, MaxLength, Min } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import {
+  IsInt,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  MaxLength,
+  Min,
+} from 'class-validator';
 
 export class RecordCreditPurchaseDto {
   @ApiProperty({ description: 'Listing the buyer paid for with credits' })
@@ -40,4 +47,36 @@ export class RefundCreditPurchaseDto {
   @IsNotEmpty()
   @MaxLength(200)
   idempotencyKey!: string;
+
+  @ApiPropertyOptional({
+    description:
+      'With the other call fields: when no purchase exists under the key, ' +
+      'record the key as refunded so a record call that is still in flight ' +
+      'cannot complete it later.',
+  })
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(36)
+  listingId?: string;
+
+  @ApiPropertyOptional({ description: 'Opaque id of the buyer' })
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(100)
+  buyerId?: string;
+
+  @ApiPropertyOptional({ description: 'Organization the credits came from' })
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(100)
+  organizationId?: string;
+
+  @ApiPropertyOptional({ description: 'Credits that were taken' })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  creditsPaid?: number;
 }
