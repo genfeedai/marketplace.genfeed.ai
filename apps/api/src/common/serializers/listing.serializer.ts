@@ -1,4 +1,5 @@
 import type { IJsonApiSerializer } from '@api/common/utils/response.util';
+import { getCreditPrice } from '@api/listings/utils/credit-price';
 
 class ListingSerializerClass implements IJsonApiSerializer {
   opts: Record<string, unknown> = {};
@@ -29,6 +30,12 @@ class ListingSerializerClass implements IJsonApiSerializer {
       delete attributes.comfyuiTemplate;
       delete attributes.rejectionReason;
     }
+
+    // The GEN credit price is always derived from the card price here, so it
+    // cannot drift from what the purchase route accepts.
+    attributes.creditPrice = getCreditPrice(
+      attributes as Parameters<typeof getCreditPrice>[0],
+    );
 
     // Flatten sellerData if present from $lookup
     if (attributes.sellerData && typeof attributes.sellerData === 'object') {

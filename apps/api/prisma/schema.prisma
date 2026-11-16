@@ -107,6 +107,8 @@ model Purchase {
   stripeSessionId       String?
   stripePaymentIntentId String?
   paymentMethod         String?
+  creditsPaid           Int?
+  idempotencyKey        String?   @unique @db.VarChar(200)
   status                String    @default("pending")
   failureReason         String?
   downloadCount         Int       @default(0)

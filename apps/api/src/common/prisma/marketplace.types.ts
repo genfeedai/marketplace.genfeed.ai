@@ -91,6 +91,7 @@ export interface PurchaseRecord {
   stripeSessionId?: string | null;
   stripePaymentIntentId?: string | null;
   paymentMethod?: string | null;
+  creditsPaid?: number | null;
   status: string;
   failureReason?: string | null;
   downloadCount: number;
