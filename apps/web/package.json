@@ -1,7 +1,7 @@
 {
   "dependencies": {
     "next": "16.4.6",
-    "posthog-js": "1.450.0",
+    "posthog-js": "1.454.2",
     "react": "19.3.1",
     "react-dom": "19.3.1"
   },
@@ -13,7 +13,7 @@
     "@typescript/native": "npm:typescript@7.0.2",
     "tailwindcss": "4.3.5",
     "typescript": "6.0.3",
-    "vitest": "5.1.0"
+    "vitest": "5.1.1"
   },
   "name": "@marketplace/web",
   "private": true,
