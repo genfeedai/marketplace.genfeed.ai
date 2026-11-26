@@ -135,4 +135,26 @@ export class CreateListingDto {
   @IsOptional()
   @IsString()
   changelog?: string;
+
+  @ApiProperty({
+    description:
+      'Where an official listing is synced from, such as "genfeedai/skills". Unique together with packageSlug.',
+    maxLength: 100,
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  packageSource?: string;
+
+  @ApiProperty({
+    description:
+      'The listing key inside its packageSource, such as a skill name',
+    maxLength: 200,
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  packageSlug?: string;
 }

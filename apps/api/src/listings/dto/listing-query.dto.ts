@@ -19,6 +19,22 @@ import {
 
 export class ListingQueryDto extends BaseQueryDto {
   @ApiProperty({
+    description: 'Filter listings by the source they are synced from',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  packageSource?: string;
+
+  @ApiProperty({
+    description: 'Filter listings by their key inside the source',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  packageSlug?: string;
+
+  @ApiProperty({
     description: 'Filter listings by type',
     enum: ListingType,
     enumName: 'ListingType',
