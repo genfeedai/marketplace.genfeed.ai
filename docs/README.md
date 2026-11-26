@@ -83,7 +83,7 @@ genfeed admin marketplace reject <listing id> --reason "<text>" --yes
 ```
 
 The CLI derives the Marketplace API URL from its Genfeed API URL
-(`api.example.com` becomes `api.marketplace.example.com`, local port 3010
+(`api.example.com` becomes `api.shop.example.com`, local port 3010
 becomes 3200); `--marketplace-url` overrides it. The commands call
 `GET /admin/marketplace/listings` and
 `POST /admin/marketplace/listings/:id/approve` or `/reject`. Only a listing in

@@ -117,8 +117,7 @@ export function formatCredits(credits: number): string {
 
 function marketplaceBaseUrl(): string {
   return (
-    process.env.NEXT_PUBLIC_MARKETPLACE_API_URL ||
-    'https://api.marketplace.genfeed.ai'
+    process.env.NEXT_PUBLIC_MARKETPLACE_API_URL || 'https://api.shop.genfeed.ai'
   ).replace(/\/+$/, '');
 }
 

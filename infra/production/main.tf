@@ -1,7 +1,7 @@
 data "aws_caller_identity" "current" {}
 locals {
   prefix            = "${var.project}-production-marketplace"
-  fqdn              = "api.marketplace.${var.domain}"
+  fqdn              = "api.shop.${var.domain}"
   hosted            = var.network
   secret_arn_prefix = "arn:aws:ssm:${var.region}:${data.aws_caller_identity.current.account_id}:parameter"
   image             = "${aws_ecr_repository.marketplace.repository_url}@${var.image_digest}"
@@ -12,7 +12,7 @@ locals {
     { name = "NODE_ENV", value = "production" },
     { name = "PORT", value = "3200" },
     { name = "GENFEED_API_URL", value = "https://api.${var.domain}" },
-    { name = "MARKETPLACE_URL", value = "https://marketplace.${var.domain}" },
+    { name = "MARKETPLACE_URL", value = "https://shop.${var.domain}" },
     { name = "BETTER_AUTH_ISSUER", value = "https://api.${var.domain}" },
     { name = "BETTER_AUTH_AUDIENCE", value = "https://api.${var.domain}" },
     { name = "BETTER_AUTH_JWKS_URL", value = "https://api.${var.domain}/v1/auth/jwks" },
@@ -117,7 +117,7 @@ resource "aws_ecs_task_definition" "operation" {
     logConfiguration = { logDriver = "awslogs", options = { "awslogs-group" = aws_cloudwatch_log_group.operations.name, "awslogs-region" = var.region, "awslogs-stream-prefix" = each.key } },
   }])
 }
-# marketplace.<domain> is a CNAME to Vercel, so a name below it with no CAA set of
+# shop.<domain> is a CNAME to Vercel, so a name below it with no CAA set of
 # its own inherits Vercel's CAA set, which does not allow Amazon. ACM then fails
 # the certificate with CAA_ERROR. Own the set here so issuance never depends on
 # the parent name.

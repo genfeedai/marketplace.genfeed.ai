@@ -147,8 +147,8 @@ jobs:
           set -euo pipefail
           tofu plan -input=false -out=dns.tfplan
           tofu apply -input=false dns.tfplan
-          curl --fail --retry 6 --retry-all-errors --retry-delay 10 "https://api.marketplace.$DOMAIN/health/ready"
-          curl --fail "https://api.marketplace.$DOMAIN/marketplace/listings?limit=1" | jq -e '.data | type == "array"'
+          curl --fail --retry 6 --retry-all-errors --retry-delay 10 "https://api.shop.$DOMAIN/health/ready"
+          curl --fail "https://api.shop.$DOMAIN/marketplace/listings?limit=1" | jq -e '.data | type == "array"'
       - name: Print Marketplace operation logs on failure
         if: failure()
         run: aws logs tail "/ecs/$PROJECT-production-marketplace/operations" --since 30m --format short || true

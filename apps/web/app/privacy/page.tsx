@@ -17,7 +17,7 @@ export default function PrivacyPage(): ReactNode {
     >
       <ContentSection heading="Scope">
         <p>
-          This policy covers the Genfeed store at marketplace.genfeed.ai (the
+          This policy covers the Genfeed store at shop.genfeed.ai (the
           &ldquo;Store&rdquo;). It explains what we collect, why we collect it,
           who we share it with, and the choices you have.
         </p>

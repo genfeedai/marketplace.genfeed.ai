@@ -10,7 +10,7 @@ request.
 
 **Preferred:** open a private report through GitHub's vulnerability reporting
 form at
-[github.com/genfeedai/marketplace.genfeed.ai/security/advisories/new](https://github.com/genfeedai/marketplace.genfeed.ai/security/advisories/new).
+[github.com/genfeedai/shop.genfeed.ai/security/advisories/new](https://github.com/genfeedai/shop.genfeed.ai/security/advisories/new).
 Only you and the maintainers can see it.
 
 **Alternative:** email [support@genfeed.ai](mailto:support@genfeed.ai) with

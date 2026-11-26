@@ -18,9 +18,9 @@ export default function TermsPage(): ReactNode {
       <ContentSection heading="1. Agreement">
         <p>
           These terms govern your access to and use of the Genfeed store at
-          marketplace.genfeed.ai (the &ldquo;Store&rdquo;). By browsing or
-          purchasing you agree to them. If you are using the Store on behalf of
-          an organisation, you confirm you are authorised to bind that
+          shop.genfeed.ai (the &ldquo;Store&rdquo;). By browsing or purchasing
+          you agree to them. If you are using the Store on behalf of an
+          organisation, you confirm you are authorised to bind that
           organisation.
         </p>
       </ContentSection>

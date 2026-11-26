@@ -101,7 +101,7 @@ describe('marketplace SEO contract', () => {
     const value = robots();
 
     expect(value.rules).toEqual({ userAgent: '*', allow: '/' });
-    expect(value.sitemap).toBe('https://marketplace.genfeed.ai/sitemap.xml');
+    expect(value.sitemap).toBe('https://shop.genfeed.ai/sitemap.xml');
   });
 
   test('keeps account and transient identities out of the index', () => {

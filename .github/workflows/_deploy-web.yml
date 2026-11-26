@@ -45,7 +45,7 @@ jobs:
           awk '!/^(NEXT_PUBLIC_GENFEED_API_URL|NEXT_PUBLIC_MARKETPLACE_API_URL|NEXT_PUBLIC_GENFEED_APP_URL)=/' "$env_file" > "$env_file.tmp"
           {
             printf 'NEXT_PUBLIC_GENFEED_API_URL=https://api.%s\n' "$DOMAIN"
-            printf 'NEXT_PUBLIC_MARKETPLACE_API_URL=https://api.marketplace.%s\n' "$DOMAIN"
+            printf 'NEXT_PUBLIC_MARKETPLACE_API_URL=https://api.shop.%s\n' "$DOMAIN"
             printf 'NEXT_PUBLIC_GENFEED_APP_URL=https://app.%s\n' "$DOMAIN"
           } >> "$env_file.tmp"
           mv "$env_file.tmp" "$env_file"
@@ -56,10 +56,10 @@ jobs:
       - name: Verify production pages and live catalog
         run: |
           set -euo pipefail
-          curl --fail --retry 6 --retry-all-errors --retry-delay 10 "https://marketplace.$DOMAIN"
-          curl --fail "https://marketplace.$DOMAIN/prompts" -o /tmp/marketplace-prompts.html
+          curl --fail --retry 6 --retry-all-errors --retry-delay 10 "https://shop.$DOMAIN"
+          curl --fail "https://shop.$DOMAIN/prompts" -o /tmp/marketplace-prompts.html
           if grep -q 'Catalog unavailable' /tmp/marketplace-prompts.html; then
             echo '::error::The deployed frontend could not reach its catalog'
             exit 1
           fi
-          curl --fail "https://api.marketplace.$DOMAIN/marketplace/listings?limit=1" | jq -e '.data | type == "array"'
+          curl --fail "https://api.shop.$DOMAIN/marketplace/listings?limit=1" | jq -e '.data | type == "array"'
