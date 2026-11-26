@@ -13,6 +13,7 @@ import { SellersService } from '@api/sellers/services/sellers.service';
 import { ListingStatus, SellerStatus } from '@genfeedai/contracts/enums';
 import {
   BadRequestException,
+  ConflictException,
   Inject,
   Injectable,
   NotFoundException,
@@ -266,6 +267,22 @@ export class ListingsService {
       throw new NotFoundException('Seller not found');
     }
 
+    if (dto.packageSource && dto.packageSlug) {
+      // The key is unique across deleted rows too, so look at every row.
+      const existing = await this.prisma.listing.findFirst({
+        select: { id: true },
+        where: {
+          packageSlug: dto.packageSlug,
+          packageSource: dto.packageSource,
+        },
+      });
+      if (existing) {
+        throw new ConflictException(
+          `A listing for ${dto.packageSource}/${dto.packageSlug} already exists`,
+        );
+      }
+    }
+
     const slug = await this.generateListingSlug(seller.slug, dto.title);
 
     return this.create({
@@ -276,6 +293,8 @@ export class ListingsService {
       downloadData: (dto.downloadData ?? {}) as Prisma.InputJsonValue,
       isDeleted: false,
       organization: organizationId,
+      packageSlug: dto.packageSlug,
+      packageSource: dto.packageSource,
       previewData: (dto.previewData ?? {}) as Prisma.InputJsonValue,
       previewImages: dto.previewImages ?? [],
       previewVideo: dto.previewVideo,
@@ -491,6 +510,14 @@ export class ListingsService {
 
     if (query.type) {
       where.type = query.type;
+    }
+
+    if (query.packageSource) {
+      where.packageSource = query.packageSource;
+    }
+
+    if (query.packageSlug) {
+      where.packageSlug = query.packageSlug;
     }
 
     const search = query.search?.trim().slice(0, 200);
