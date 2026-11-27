@@ -1,12 +1,16 @@
 import EmptyState from '@components/empty-state';
 import PageHeader from '@components/page-header';
 import type { ReactNode } from 'react';
-import { fetchPublicContent } from '@/lib/public-content';
+import { fetchPublicContent, getViewCount } from '@/lib/public-content';
 
 export default async function LeaderboardPage(): Promise<ReactNode> {
   const result = await fetchPublicContent('posts', { limit: 100 });
-  const rankedPosts = [...result.items]
-    .sort((left, right) => (right.totalViews ?? 0) - (left.totalViews ?? 0))
+  const rankedPosts = result.items
+    .flatMap((post) => {
+      const views = getViewCount(post);
+      return views === null ? [] : [{ post, views }];
+    })
+    .sort((left, right) => right.views - left.views)
     .slice(0, 20);
 
   return (
@@ -32,7 +36,7 @@ export default async function LeaderboardPage(): Promise<ReactNode> {
 
       {result.status === 'success' && rankedPosts.length > 0 && (
         <ol className="space-y-3">
-          {rankedPosts.map((post, index) => (
+          {rankedPosts.map(({ post, views }, index) => (
             <li
               key={post.id}
               className="grid grid-cols-[3rem_1fr_auto] items-center gap-4 rounded-lg border border-white/10 bg-white/5 p-4 card-glow"
@@ -49,7 +53,7 @@ export default async function LeaderboardPage(): Promise<ReactNode> {
                 </p>
               </div>
               <span className="whitespace-nowrap text-sm text-white/70">
-                {post.totalViews ?? 0} views
+                {views.toLocaleString('en-US')} views
               </span>
             </li>
           ))}
