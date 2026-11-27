@@ -43,7 +43,7 @@ token is needed: every checkout is from the same repository and approved SHA.
 | Variable | Meaning |
 | --- | --- |
 | `AWS_REGION` | Region of the existing network, database and Marketplace resources. |
-| `AWS_DEPLOY_ROLE_ARN` | Dedicated Marketplace deploy role, with GitHub OIDC trust for `repo:genfeedai/shop.genfeed.ai:environment:production`. |
+| `AWS_DEPLOY_ROLE_ARN` | Dedicated Marketplace deploy role, with GitHub OIDC trust for the ID-based subject `repo:<owner>@<owner-id>/<repository>@<repository-id>:environment:production`. Read the exact prefix with `gh api repos/genfeedai/shop.genfeed.ai/actions/oidc/customization/sub`; the plain `repo:<owner>/<repository>` form is not sent. |
 | `PROJECT` | Resource prefix and ECR repository prefix. |
 | `DOMAIN` | Base domain: API is `api.shop.<DOMAIN>`, web is `shop.<DOMAIN>`. |
 | `TF_STATE_BUCKET` | Terraform backend bucket. Sharing a bucket does not share the state key. |
