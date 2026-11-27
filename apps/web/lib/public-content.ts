@@ -161,9 +161,22 @@ function getPublicMediaUrl(
   return `${getApiBaseUrl()}/public/${resource}/${encodeURIComponent(id)}/${filenameByResource[resource]}`;
 }
 
+/**
+ * A post's view count, or null when the API carries none (the post has no
+ * analytics yet, or its brand keeps them private). Null is not zero: a post
+ * with no count is shown without one and left out of a ranking.
+ */
+function getViewCount(post: { totalViews?: unknown }): number | null {
+  const { totalViews } = post;
+  return typeof totalViews === 'number' && Number.isFinite(totalViews)
+    ? totalViews
+    : null;
+}
+
 export {
   fetchPublicContent,
   getApiBaseUrl,
   getPublicMediaUrl,
+  getViewCount,
   parseCollection,
 };

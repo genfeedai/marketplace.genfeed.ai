@@ -1,7 +1,7 @@
 import EmptyState from '@components/empty-state';
 import PageHeader from '@components/page-header';
 import type { ReactNode } from 'react';
-import { fetchPublicContent } from '@/lib/public-content';
+import { fetchPublicContent, getViewCount } from '@/lib/public-content';
 
 function getExternalUrl(value: string | undefined): string | null {
   if (!value) return null;
@@ -44,6 +44,7 @@ export default async function PostsPage(): Promise<ReactNode> {
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {result.items.map((post) => {
             const externalUrl = getExternalUrl(post.url);
+            const views = getViewCount(post);
 
             return (
               <article
@@ -54,9 +55,11 @@ export default async function PostsPage(): Promise<ReactNode> {
                   <span className="text-xs font-semibold uppercase tracking-wider text-white/40">
                     {post.platform ?? 'Genfeed'}
                   </span>
-                  <span className="text-sm text-white/50">
-                    {post.totalViews ?? 0} views
-                  </span>
+                  {views !== null && (
+                    <span className="text-sm text-white/50">
+                      {views.toLocaleString('en-US')} views
+                    </span>
+                  )}
                 </div>
                 <h2 className="text-lg font-semibold text-white">
                   {post.label ?? 'Untitled post'}
