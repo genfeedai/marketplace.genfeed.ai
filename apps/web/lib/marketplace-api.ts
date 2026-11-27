@@ -51,6 +51,17 @@ export function parseCollection(payload: unknown): Resource[] {
   return payload.data.map(parseResource);
 }
 
+/** Number of pages the API reports for a collection; 1 when it reports none. */
+export function parsePageCount(payload: unknown): number {
+  if (!record(payload) || !record(payload.links)) return 1;
+  const pagination = payload.links.pagination;
+  if (!record(pagination)) return 1;
+  const pages = pagination.pages;
+  return typeof pages === 'number' && Number.isInteger(pages) && pages > 0
+    ? pages
+    : 1;
+}
+
 export function parseSingle(payload: unknown): Resource {
   if (!record(payload))
     throw new Error('Marketplace returned an invalid response.');
