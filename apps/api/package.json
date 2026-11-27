@@ -1,11 +1,11 @@
 {
   "dependencies": {
-    "@aws-sdk/client-ssm": "3.1170.0",
+    "@aws-sdk/client-ssm": "3.1176.0",
     "@genfeedai/contracts": "0.1.0",
-    "@nestjs/common": "12.5.1",
+    "@nestjs/common": "12.6.0",
     "@nestjs/config": "12.1.1",
-    "@nestjs/core": "12.5.1",
-    "@nestjs/platform-express": "12.5.1",
+    "@nestjs/core": "12.6.0",
+    "@nestjs/platform-express": "12.6.0",
     "@nestjs/swagger": "12.1.2",
     "@nestjs/throttler": "6.8.0",
     "@prisma/adapter-pg": "7.10.1",
@@ -13,17 +13,17 @@
     "class-transformer": "0.5.1",
     "class-validator": "0.15.1",
     "helmet": "8.3.0",
-    "jose": "6.2.17",
+    "jose": "6.2.18",
     "pg": "8.23.1",
     "reflect-metadata": "0.2.2",
     "rxjs": "7.8.2",
     "slugify": "1.6.9",
-    "stripe": "23.1.0"
+    "stripe": "23.2.0"
   },
   "devDependencies": {
-    "@nestjs/cli": "12.0.13",
-    "@nestjs/schematics": "12.0.13",
-    "@nestjs/testing": "12.5.1",
+    "@nestjs/cli": "12.0.15",
+    "@nestjs/schematics": "12.0.16",
+    "@nestjs/testing": "12.6.0",
     "@types/express": "5.0.6",
     "@types/node": "26.6.6",
     "@types/pg": "8.23.1",
@@ -32,7 +32,7 @@
     "tsc-alias": "1.9.10",
     "tsconfig-paths": "4.2.0",
     "typescript": "6.0.3",
-    "vitest": "5.1.0"
+    "vitest": "5.1.1"
   },
   "name": "@marketplace/api",
   "private": true,
