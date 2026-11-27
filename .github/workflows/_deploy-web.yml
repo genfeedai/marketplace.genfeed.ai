@@ -51,6 +51,31 @@ jobs:
           mv "$env_file.tmp" "$env_file"
       - name: Build approved Marketplace source
         run: vercel build --prod --token="$VERCEL_TOKEN"
+      - name: Point the Vercel project at the shop address
+        run: |
+          set -euo pipefail
+          domain="shop.$DOMAIN"
+          api=https://api.vercel.com
+          auth="Authorization: Bearer $VERCEL_TOKEN"
+          out=/tmp/vercel.json
+          status="$(curl -sS -H "$auth" -o "$out" -w '%{http_code}' \
+            "$api/v9/projects/$VERCEL_PROJECT_ID/domains/$domain?teamId=$VERCEL_ORG_ID")"
+          if [[ "$status" == 404 ]]; then
+            status="$(curl -sS -X POST -H "$auth" -H 'Content-Type: application/json' \
+              -d "{\"name\":\"$domain\"}" -o "$out" -w '%{http_code}' \
+              "$api/v10/projects/$VERCEL_PROJECT_ID/domains?teamId=$VERCEL_ORG_ID")"
+          fi
+          [[ "$status" == 200 ]] || { cat "$out"; exit 1; }
+          jq '{name, verified, verification}' "$out"
+          jq -e '.verified' "$out" > /dev/null
+          curl -sS --fail-with-body -H "$auth" \
+            "$api/v6/domains/$domain/config?teamId=$VERCEL_ORG_ID&projectIdOrName=$VERCEL_PROJECT_ID" |
+            jq '{configuredBy, misconfigured, recommendedCNAME}'
+          status="$(curl -sS -X PATCH -H "$auth" -H 'Content-Type: application/json' \
+            -d "{\"name\":\"$domain\"}" -o "$out" -w '%{http_code}' \
+            "$api/v9/projects/$VERCEL_PROJECT_ID?teamId=$VERCEL_ORG_ID")"
+          [[ "$status" == 200 ]] || { jq '.error' "$out"; exit 1; }
+          jq '{name, repository: .link.repo}' "$out"
       - name: Deploy Marketplace
         run: vercel deploy --prebuilt --prod --token="$VERCEL_TOKEN"
       - name: Verify production pages and live catalog
@@ -63,3 +88,10 @@ jobs:
             exit 1
           fi
           curl --fail "https://api.shop.$DOMAIN/marketplace/listings?limit=1" | jq -e '.data | type == "array"'
+      - name: Remove the old web address
+        run: |
+          set -euo pipefail
+          out=/tmp/vercel.json
+          status="$(curl -sS -X DELETE -H "Authorization: Bearer $VERCEL_TOKEN" -o "$out" -w '%{http_code}' \
+            "https://api.vercel.com/v9/projects/$VERCEL_PROJECT_ID/domains/marketplace.$DOMAIN?teamId=$VERCEL_ORG_ID")"
+          [[ "$status" == 200 || "$status" == 404 ]] || { cat "$out"; exit 1; }
