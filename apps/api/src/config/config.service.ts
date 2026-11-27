@@ -54,7 +54,7 @@ export class MarketplaceConfigService {
   get marketplaceUrl(): string {
     return this.configService.get<string>(
       'MARKETPLACE_URL',
-      'https://marketplace.genfeed.ai',
+      'https://shop.genfeed.ai',
     );
   }
 

@@ -43,9 +43,9 @@ token is needed: every checkout is from the same repository and approved SHA.
 | Variable | Meaning |
 | --- | --- |
 | `AWS_REGION` | Region of the existing network, database and Marketplace resources. |
-| `AWS_DEPLOY_ROLE_ARN` | Dedicated Marketplace deploy role, with GitHub OIDC trust for `repo:genfeedai/marketplace.genfeed.ai:environment:production`. |
+| `AWS_DEPLOY_ROLE_ARN` | Dedicated Marketplace deploy role, with GitHub OIDC trust for `repo:genfeedai/shop.genfeed.ai:environment:production`. |
 | `PROJECT` | Resource prefix and ECR repository prefix. |
-| `DOMAIN` | Base domain: API is `api.marketplace.<DOMAIN>`, web is `marketplace.<DOMAIN>`. |
+| `DOMAIN` | Base domain: API is `api.shop.<DOMAIN>`, web is `shop.<DOMAIN>`. |
 | `TF_STATE_BUCKET` | Terraform backend bucket. Sharing a bucket does not share the state key. |
 | `TF_STATE_KEY` | Marketplace-only key beginning with `marketplace/`. Never use another app's key. |
 | `RDS_INSTANCE_ID` | Existing PostgreSQL instance hosting the dedicated Marketplace database. |
@@ -106,8 +106,8 @@ must be the current master head, so it moves once a fix has merged.
   migration task is idempotent, and every attempt takes another RDS snapshot.
 - The API domain stays unpointed until the service has a healthy target, so a
   failed attempt never serves traffic.
-- `api.marketplace.<DOMAIN>` carries its own CAA set that allows Amazon. Without
-  it the lookup climbs to `marketplace.<DOMAIN>`, which is a CNAME to Vercel, and
+- `api.shop.<DOMAIN>` carries its own CAA set that allows Amazon. Without
+  it the lookup climbs to `shop.<DOMAIN>`, which is a CNAME to Vercel, and
   ACM fails the certificate with `CAA_ERROR`. A certificate in `FAILED` cannot
   be validated again, so changing the CAA set replaces the certificate.
 - `listener_priority` must be a number no other application uses on the shared
@@ -122,14 +122,14 @@ Provisioning creates the `marketplace` database with distinct
 `marketplace_runtime` and `marketplace_migrator` roles. Keep TLS verification
 and the runtime's readable RDS CA bundle enabled.
 
-Configure the Stripe webhook for `https://api.marketplace.<DOMAIN>/webhooks/stripe`
+Configure the Stripe webhook for `https://api.shop.<DOMAIN>/webhooks/stripe`
 with its dedicated signing secret and the checkout completed, checkout expired
 and charge refunded events. Payment
 parameters must exist before infrastructure changes; the workflow checks their
 metadata without printing secret values.
 
 Genfeed is an external identity provider. Its generic
-`BETTER_AUTH_TRUSTED_ORIGINS` setting must allow `https://marketplace.<DOMAIN>`;
+`BETTER_AUTH_TRUSTED_ORIGINS` setting must allow `https://shop.<DOMAIN>`;
 Marketplace releases never modify or deploy the identity provider. The API
 validates its signed Better Auth JWTs against that provider's public JWKS.
 

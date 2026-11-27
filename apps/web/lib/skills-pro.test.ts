@@ -73,14 +73,14 @@ describe('Skills Pro checkout', () => {
         Response.json({ url: 'https://checkout.stripe.com/c/pay/cs_test_1' }),
       );
     vi.stubGlobal('fetch', request);
-    await startSkillsProCheckout('https://marketplace.genfeed.ai/');
+    await startSkillsProCheckout('https://shop.genfeed.ai/');
     expect(request.mock.calls[0][0]).toBe(
       'https://api.example.com/v1/skills-pro/checkout',
     );
     expect(JSON.parse(request.mock.calls[0][1].body)).toEqual({
-      cancelUrl: 'https://marketplace.genfeed.ai/skills',
+      cancelUrl: 'https://shop.genfeed.ai/skills',
       successUrl:
-        'https://marketplace.genfeed.ai/skills/purchased?session_id={CHECKOUT_SESSION_ID}',
+        'https://shop.genfeed.ai/skills/purchased?session_id={CHECKOUT_SESSION_ID}',
     });
     expect(assign).toHaveBeenCalledWith(
       'https://checkout.stripe.com/c/pay/cs_test_1',

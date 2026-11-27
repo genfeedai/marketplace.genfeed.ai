@@ -1,6 +1,6 @@
 import type { Metadata, MetadataRoute } from 'next';
 
-const MARKETPLACE_ORIGIN = 'https://marketplace.genfeed.ai';
+const MARKETPLACE_ORIGIN = 'https://shop.genfeed.ai';
 const RETIRED_SELLER_SLUGS = ['blog', 'featured', 'free'] as const;
 
 interface IndexableRoute {

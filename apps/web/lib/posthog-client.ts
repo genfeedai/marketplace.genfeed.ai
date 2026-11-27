@@ -1,7 +1,7 @@
 import type { PostHogConfig } from 'posthog-js';
 
 /**
- * Anonymous, cookieless journey tracking for marketplace.genfeed.ai.
+ * Anonymous, cookieless journey tracking for shop.genfeed.ai.
  * Form values and copied content are excluded from autocapture.
  */
 export function buildMarketplacePostHogOptions(

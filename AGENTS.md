@@ -21,8 +21,8 @@ Consumes `@genfeedai/*` packages from NPM:
 
 ## Domain
 
-- Production: `marketplace.genfeed.ai`
-- API: `api.marketplace.genfeed.ai`
+- Production: `shop.genfeed.ai`
+- API: `api.shop.genfeed.ai`
 
 ## Architecture
 
