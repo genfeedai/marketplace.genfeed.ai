@@ -18,6 +18,18 @@ export interface Listing {
   externalCheckout: 'skills-pro' | null;
   /** Public listing data: what the bundle contains, for example. */
   previewData: Record<string, unknown>;
+  /** The card picture; null when the listing has none or it is not on an allowed host. */
+  thumbnail: string | null;
+  /** Pictures for the listing page, only from allowed hosts. */
+  previewImages: string[];
+  /** The clip for the listing page; null when absent or not on an allowed host. */
+  previewVideo: string | null;
+  /** What the listing makes, from `previewData.mediaType`. */
+  outputType: 'video' | 'image' | 'image-edit' | null;
+  /** Width to height of the media, like `9:16`; null when unknown. */
+  mediaAspectRatio: string | null;
+  /** One line that says what the media shows. */
+  mediaAlt: string;
 }
 
 export class MarketplaceError extends Error {
@@ -72,6 +84,28 @@ export function text(value: unknown): string {
   return typeof value === 'string' ? value : '';
 }
 
+/**
+ * Media is shown only from the hosts the store already allows for images
+ * (`images.remotePatterns` in `next.config.ts`): https on `genfeed.ai`
+ * subdomains. Any other address is dropped, never rendered.
+ */
+export function allowedMediaUrl(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  try {
+    const url = new URL(value);
+    return url.protocol === 'https:' &&
+      !url.username &&
+      !url.password &&
+      url.hostname.endsWith('.genfeed.ai')
+      ? url.href
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+const OUTPUT_TYPES = ['video', 'image', 'image-edit'] as const;
+
 export function listingFromResource(resource: Resource): Listing {
   const a = resource.attributes;
   if (
@@ -83,7 +117,20 @@ export function listingFromResource(resource: Resource): Listing {
     throw new Error('Marketplace returned an invalid listing.');
   }
   const previewData = record(a.previewData) ? a.previewData : {};
+  const outputType =
+    OUTPUT_TYPES.find((type) => type === previewData.mediaType) ?? null;
+  const aspectRatio = text(previewData.aspectRatio);
   return {
+    thumbnail: allowedMediaUrl(a.thumbnail),
+    previewImages: Array.isArray(a.previewImages)
+      ? a.previewImages.flatMap((image) => allowedMediaUrl(image) ?? [])
+      : [],
+    previewVideo: allowedMediaUrl(a.previewVideo),
+    outputType,
+    mediaAspectRatio: /^[1-9]\d*:[1-9]\d*$/.test(aspectRatio)
+      ? aspectRatio
+      : null,
+    mediaAlt: text(previewData.mediaAlt),
     id: resource.id,
     title: a.title,
     slug: a.slug,

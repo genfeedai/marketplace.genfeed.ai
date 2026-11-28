@@ -16,6 +16,12 @@ function listing(overrides: Partial<Listing>): Listing {
     creditPrice: 2175,
     externalCheckout: null,
     previewData: {},
+    thumbnail: null,
+    previewImages: [],
+    previewVideo: null,
+    outputType: null,
+    mediaAspectRatio: null,
+    mediaAlt: '',
     ...overrides,
   };
 }
