@@ -1,7 +1,8 @@
+import { ListingPageMedia, outputTypeLabel } from '@components/listing-media';
 import PurchaseAction from '@components/purchase-action';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import type { ReactNode } from 'react';
+import { cache, type ReactNode } from 'react';
 import {
   formatCredits,
   formatPrice,
@@ -28,18 +29,42 @@ interface ListingPageProps {
 
 export const dynamic = 'force-dynamic';
 
+/** One read per request: the page and its metadata share it. */
+const loadListing = cache(
+  async (sellerSlug: string, listingSlug: string): Promise<Listing> =>
+    listingFromResource(
+      parseSingle(
+        await publicRequest(
+          `/marketplace/listings/${encodeURIComponent(sellerSlug)}/${encodeURIComponent(listingSlug)}`,
+        ),
+      ),
+    ),
+);
+
 export async function generateMetadata({
   params,
 }: ListingPageProps): Promise<Metadata> {
   const { sellerSlug, listingSlug } = await params;
   assertActiveSellerSlug(sellerSlug);
 
-  const title = listingSlug.replaceAll('-', ' ');
+  let listing: Listing;
+  try {
+    listing = await loadListing(sellerSlug, listingSlug);
+  } catch (cause) {
+    if (cause instanceof MarketplaceError && cause.status === 404) notFound();
+    // The page itself says the listing is unavailable; never build a title from the slug.
+    return createNoIndexMetadata({
+      title: 'Listing unavailable',
+      description: 'We could not load this listing. Please try again shortly.',
+      path: `/${sellerSlug}/${listingSlug}`,
+    });
+  }
 
   return createNoIndexMetadata({
-    title,
-    description: 'A product from the Genfeed store.',
+    title: listing.title,
+    description: listing.shortDescription || listing.description,
     path: `/${sellerSlug}/${listingSlug}`,
+    image: listing.thumbnail ?? undefined,
   });
 }
 
@@ -51,13 +76,7 @@ export default async function ListingPage({
 
   let listing: Listing;
   try {
-    listing = listingFromResource(
-      parseSingle(
-        await publicRequest(
-          `/marketplace/listings/${encodeURIComponent(sellerSlug)}/${encodeURIComponent(listingSlug)}`,
-        ),
-      ),
-    );
+    listing = await loadListing(sellerSlug, listingSlug);
   } catch (cause) {
     if (cause instanceof MarketplaceError && cause.status === 404) notFound();
     return (
@@ -72,8 +91,12 @@ export default async function ListingPage({
 
   return (
     <main className="mx-auto max-w-4xl px-4 py-8">
+      <ListingPageMedia listing={listing} />
       <div className="mb-8">
-        <p className="mb-2 text-sm text-white/50">By Genfeed</p>
+        <p className="mb-2 text-sm text-white/50">
+          By Genfeed
+          {outputTypeLabel(listing) ? ` · ${outputTypeLabel(listing)}` : ''}
+        </p>
         <h1 className="text-3xl font-bold text-white mb-4">{listing.title}</h1>
         <p className="text-xl font-semibold">
           {formatPrice(listing.price, listing.currency)}

@@ -1,4 +1,5 @@
 import EmptyState from '@components/empty-state';
+import { ListingCardMedia, outputTypeLabel } from '@components/listing-media';
 import Link from 'next/link';
 import {
   formatPrice,
@@ -66,6 +67,12 @@ export default async function ProductCatalog({
             href={listingHref(listing.slug)}
             className="rounded-lg border border-white/10 bg-white/5 p-6 hover:bg-white/10"
           >
+            <ListingCardMedia listing={listing} />
+            {outputTypeLabel(listing) && (
+              <p className="mb-1 text-xs text-white/50">
+                {outputTypeLabel(listing)}
+              </p>
+            )}
             <h2 className="text-lg font-semibold text-white">
               {listing.title}
             </h2>

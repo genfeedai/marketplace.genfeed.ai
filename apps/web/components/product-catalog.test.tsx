@@ -54,6 +54,28 @@ describe('product catalog', () => {
     expect(html).toContain('$9.00');
   });
 
+  test('shows a preset card picture and says what the preset makes', async () => {
+    stubCatalog([
+      {
+        ...listing('1', 'UGC selfie ad', 'genfeed/ugc-selfie-ad', 0),
+        attributes: {
+          ...listing('1', 'UGC selfie ad', 'genfeed/ugc-selfie-ad', 0)
+            .attributes,
+          thumbnail: 'https://cdn.genfeed.ai/presets/poster.jpg',
+          previewData: { mediaType: 'video', aspectRatio: '9:16' },
+        },
+      },
+      listing('2', 'Plain preset', 'genfeed/plain-preset', 0),
+    ]);
+
+    const html = renderToStaticMarkup(await ProductCatalog({ type: 'preset' }));
+
+    expect(html).toContain('src="https://cdn.genfeed.ai/presets/poster.jpg"');
+    expect(html).toContain('>Video<');
+    expect(html.match(/<img/g)).toHaveLength(1);
+    expect(html).toContain('Plain preset');
+  });
+
   test('asks for every product type when no type is given', async () => {
     vi.stubEnv('NEXT_PUBLIC_MARKETPLACE_API_URL', 'https://api.example.com');
     const request = stubCatalog([

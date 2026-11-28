@@ -167,11 +167,13 @@ function createMetadata({
   description,
   path,
   index,
+  image,
 }: {
   title: string;
   description: string;
   path: string;
   index: boolean;
+  image?: string;
 }): Metadata {
   return {
     title,
@@ -183,11 +185,13 @@ function createMetadata({
       title,
       description,
       url: path,
+      ...(image ? { images: [image] } : {}),
     },
     twitter: {
-      card: 'summary',
+      card: image ? 'summary_large_image' : 'summary',
       title,
       description,
+      ...(image ? { images: [image] } : {}),
     },
     robots: index
       ? { index: true, follow: true }
@@ -205,12 +209,14 @@ function createNoIndexMetadata({
   title,
   description,
   path,
+  image,
 }: {
   title: string;
   description: string;
   path: string;
+  image?: string;
 }): Metadata {
-  return createMetadata({ title, description, path, index: false });
+  return createMetadata({ title, description, path, index: false, image });
 }
 
 function absoluteMarketplaceUrl(path: string): string {
